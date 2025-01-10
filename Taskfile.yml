@@ -1,0 +1,91 @@
+# https://taskfile.dev
+
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+  migrate:
+    # cmds:
+    #   - migrate -path db/migrations -database "postgres://${DIGIHUB_POSTGRES_USER}:${DIGIHUB_POSTGRES_PASSWORD}@${DIGIHUB_POSTGRES_HOST}:${DIGIHUB_POSTGRES_PORT}/${DIGIHUB_POSTGRES_DB}?sslmode=${DIGIHUB_POSTGRES_SSL_MODE}" {{.cmd}}
+    cmds:
+      - goose {{.cmd}}
+  restore:
+    desc: "Restore the PostgreSQL database from a .dump file with the --clean option"
+    cmds:
+      - export PGPASSWORD=${DIGIHUB_POSTGRES_PASSWORD}
+      - pg_restore --no-owner --clean -h ${DIGIHUB_POSTGRES_HOST} -p ${DIGIHUB_POSTGRES_PORT} -U ${DIGIHUB_POSTGRES_USER} -d ${DIGIHUB_POSTGRES_DB} ./backups/{{.file}}
+    silent: false
+  create-migration:
+    # cmds:
+    #   - migrate create -ext sql -dir db/migrations/ {{.name}} -tz UTC
+    cmds:
+      - goose create {{.name}} sql
+  seed:
+    cmds:
+      # - go run ./cmd/bin/main.go seed -total={{.total}} -table={{.table}}
+      - go run ./cmd/bin/main.go seed -table={{.table}}
+  dev:
+    cmds:
+      - go run ./cmd/bin/main.go
+  daemon:
+    cmds:
+      - pmgo
+  ws:
+    cmds:
+      - go run ./cmd/bin/main.go ws --port=8080
+  build:
+    cmds:
+      - go build -o ./digihub-app ./cmd/bin/main.go
+  build-dev:
+    cmds:
+      - git pull
+      - go build -o ./digihub-app ./cmd/bin/main.go
+      - immortalctl stop digihub-dev
+      # - immortalctl halt digihub-dev
+      - mv ./digihub-app ../binaries/digihub-dev
+      # - immortal -c ../binaries/digihub-dev/digihub-dev.yaml
+      - immortalctl start digihub-dev
+      - immortalctl status
+  build-staging:
+    cmds:
+      - git pull
+      - go build -o ./digihub-app ./cmd/bin/main.go
+      - immortalctl stop digihub-staging
+      # - immortalctl halt digihub-staging
+      - mv ./digihub-app ../binaries/digihub-staging
+      # - immortal -c ../binaries/digihub-staging/digihub-staging.yaml
+      - immortalctl start digihub-staging
+      - immortalctl status
+  build-production:
+    cmds:
+      - git pull
+      - go build -o ./digihub-app ./cmd/bin/main.go
+      - immortalctl stop digihub-production
+      # - immortalctl halt digihub-production
+      - mv ./digihub-app ../binaries/digihub-production
+      # - immortal -c ../binaries/digihub-production/digihub-production.yaml
+      - immortalctl start digihub-production
+      - immortalctl status
+  lint-fix:
+    cmds:
+      - gofmt -w .
+  lint-ci:
+    cmds:
+      - golangci-lint run
+  nats:
+    cmds:
+      - nats-server --js
+  commit:
+    cmds:
+      - task lint-fix
+      - task lint-ci
+      - git add .
+      - git commit -m "{{.msg}}"
