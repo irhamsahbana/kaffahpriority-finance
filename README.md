@@ -1,6 +1,6 @@
-# Digihub Backend
+# Kaffah Priority Finance Backend
 
-Backend of Digihub project.
+Backend of Kaffah Priority Finance project.
 
 ## Developer Guide
 

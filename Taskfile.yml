@@ -43,36 +43,36 @@ tasks:
       - go run ./cmd/bin/main.go ws --port=8080
   build:
     cmds:
-      - go build -o ./digihub-app ./cmd/bin/main.go
+      - go build -o ./kpf-app ./cmd/bin/main.go
   build-dev:
     cmds:
       - git pull
-      - go build -o ./digihub-app ./cmd/bin/main.go
-      - immortalctl stop digihub-dev
-      # - immortalctl halt digihub-dev
-      - mv ./digihub-app ../binaries/digihub-dev
-      # - immortal -c ../binaries/digihub-dev/digihub-dev.yaml
-      - immortalctl start digihub-dev
+      - go build -o ./kpf-app ./cmd/bin/main.go
+      - immortalctl stop kpf-dev
+      # - immortalctl halt kpf-dev
+      - mv ./kpf-app ../binaries/kpf-dev
+      # - immortal -c ../binaries/kpf-dev/kpf-dev.yaml
+      - immortalctl start kpf-dev
       - immortalctl status
   build-staging:
     cmds:
       - git pull
-      - go build -o ./digihub-app ./cmd/bin/main.go
-      - immortalctl stop digihub-staging
-      # - immortalctl halt digihub-staging
-      - mv ./digihub-app ../binaries/digihub-staging
-      # - immortal -c ../binaries/digihub-staging/digihub-staging.yaml
-      - immortalctl start digihub-staging
+      - go build -o ./kpf-app ./cmd/bin/main.go
+      - immortalctl stop kpf-staging
+      # - immortalctl halt kpf-staging
+      - mv ./kpf-app ../binaries/kpf-staging
+      # - immortal -c ../binaries/kpf-staging/kpf-staging.yaml
+      - immortalctl start kpf-staging
       - immortalctl status
   build-production:
     cmds:
       - git pull
-      - go build -o ./digihub-app ./cmd/bin/main.go
-      - immortalctl stop digihub-production
-      # - immortalctl halt digihub-production
-      - mv ./digihub-app ../binaries/digihub-production
-      # - immortal -c ../binaries/digihub-production/digihub-production.yaml
-      - immortalctl start digihub-production
+      - go build -o ./kpf-app ./cmd/bin/main.go
+      - immortalctl stop kpf-production
+      # - immortalctl halt kpf-production
+      - mv ./kpf-app ../binaries/kpf-production
+      # - immortal -c ../binaries/kpf-production/kpf-production.yaml
+      - immortalctl start kpf-production
       - immortalctl status
   lint-fix:
     cmds:
