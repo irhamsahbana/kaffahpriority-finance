@@ -44,7 +44,9 @@ func (r *GetStudentsReq) SetDefault() {
 
 type Student struct {
 	Common
-	IsActive bool `json:"is_active" db:"is_active"`
+	IsActive      bool    `json:"is_active" db:"is_active"`
+	RegisteredAt  *string `json:"registered_at" db:"registered_at"`
+	LastPaymentAt *string `json:"last_payment_at"`
 }
 
 type GetStudentsResp struct {

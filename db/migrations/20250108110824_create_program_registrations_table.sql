@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     deleted_at TIMESTAMP WITH TIME ZONE,
 
     FOREIGN KEY (program_id) REFERENCES programs (id),
+    FOREIGN KEY (lecturer_id) REFERENCES lecturers (id),
+    FOREIGN KEY (marketer_id) REFERENCES marketers (id),
     FOREIGN KEY (student_id) REFERENCES students (id)
 );
 -- +goose StatementEnd
