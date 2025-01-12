@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -61,10 +62,11 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			hr_fee,
 			marketer_gifts_fee,
 			closing_fee_for_office,
-			closing_fee_for_reward
+			closing_fee_for_reward,
+			days
 		) VALUES (
 		 	?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 
@@ -73,6 +75,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
+		pq.Array(req.Days),
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to insert data")
@@ -134,6 +137,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
+			days = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -145,6 +149,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
+		pq.Array(req.Days),
 		req.Id,
 	)
 	if err != nil {

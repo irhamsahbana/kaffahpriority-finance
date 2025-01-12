@@ -3,9 +3,11 @@ package seeds
 import (
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -198,6 +200,7 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 			detail    *string
 			priceStr  = row[3]
 			price     float64
+			daysStr   = row[4]
 		)
 
 		if id == "" {
@@ -230,8 +233,22 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 			price = priceFloat
 		}
 
-		query := "INSERT INTO programs (id, name, detail, price) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
-		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price)
+		// convert to []int
+		days := make([]int, 0)
+		if daysStr != "" { // example: "1|2|3"
+			daysStrArr := strings.Split(daysStr, "|")
+			for _, dayStr := range daysStrArr {
+				day, err := strconv.Atoi(dayStr)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to parse days")
+					return err
+				}
+				days = append(days, day)
+			}
+		}
+
+		query := "INSERT INTO programs (id, name, detail, price, days) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price, pq.Array(days))
 		if err != nil {
 			log.Error().Err(err).Msg("failed to insert program")
 			return err

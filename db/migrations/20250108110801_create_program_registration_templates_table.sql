@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     lecturer_id CHAR(26) NOT NULL,
     marketer_id CHAR(26) NOT NULL,
     student_id CHAR(26) NOT NULL,
+    days int[] NOT NULL DEFAULT '{}',
     program_fee DECIMAL(19, 4) NOT NULL,
     administration_fee DECIMAL(19, 4) NOT NULL,
     foreign_lecturer_fee DECIMAL(19, 4),

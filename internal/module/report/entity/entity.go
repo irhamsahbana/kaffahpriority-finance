@@ -23,6 +23,7 @@ type CreateTemplateReq struct {
 	ClosingFeeForOffice   *float64     `json:"closing_fee_for_office" validate:"omitempty,min=0"`
 	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" validate:"omitempty,min=0"`
 	AdditionalStudents    []AddStudent `json:"additional_students" validate:"required,dive"`
+	Days                  []int        `json:"days" validate:"required,unique_in_slice,dive,min=1,max=7"`
 }
 
 type AddStudent struct {

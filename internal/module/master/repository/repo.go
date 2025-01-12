@@ -253,7 +253,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 			id,
 			name,
 			price,
-			number_of_meetings
+			days
 		FROM
 			programs
 		WHERE

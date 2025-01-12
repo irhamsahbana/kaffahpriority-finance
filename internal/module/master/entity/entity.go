@@ -1,6 +1,10 @@
 package entity
 
-import "codebase-app/pkg/types"
+import (
+	"codebase-app/pkg/types"
+
+	"github.com/lib/pq"
+)
 
 type Common struct {
 	Id   string `json:"id" db:"id"`
@@ -78,8 +82,8 @@ func (r *GetProgramsReq) SetDefault() {
 
 type Program struct {
 	Common
-	Price         float64 `json:"price" db:"price"`
-	NumOfMeetings int     `json:"number_of_meetings" db:"number_of_meetings"`
+	Price float64       `json:"price" db:"price"`
+	Days  pq.Int64Array `json:"days" db:"days"`
 }
 
 type GetProgramsResp struct {
