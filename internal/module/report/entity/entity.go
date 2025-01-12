@@ -51,5 +51,12 @@ type CreateTemplateResp struct {
 	Id string `json:"id"`
 }
 
-type XxxResult struct {
+type UpdateTemplateReq struct {
+	Id string `params:"id" validate:"ulid"`
+
+	CreateTemplateReq
+}
+
+type UpdateTemplateResp struct {
+	Id string `json:"id"`
 }

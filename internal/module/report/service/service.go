@@ -21,3 +21,7 @@ func NewReportService(repo ports.ReportRepository) *reportService {
 func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
 	return s.repo.CreateTemplate(ctx, req)
 }
+
+func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateReq) (*entity.UpdateTemplateResp, error) {
+	return s.repo.UpdateTemplate(ctx, req)
+}
