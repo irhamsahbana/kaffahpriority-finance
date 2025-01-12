@@ -118,6 +118,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 		SELECT
 			COUNT (*) OVER() AS total_data,
 			id,
+			identifier,
 			name
 		FROM
 			students
@@ -128,6 +129,15 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 	if req.IsActive != "" {
 		query += ` AND is_active = ?`
 		args = append(args, req.IsActive)
+	}
+
+	if req.Q != "" {
+		query += ` AND (
+			name ILIKE '%' || ? || '%' OR
+			identifier ILIKE '%' || ? || '%'
+		)
+		`
+		args = append(args, req.Q, req.Q)
 	}
 
 	query += ` LIMIT ? OFFSET ?`
