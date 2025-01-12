@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     administration_fee DECIMAL(19, 4) NOT NULL,
     foreign_lecturer_fee DECIMAL(19, 4),
     night_learning_fee DECIMAL(19, 4),
-    marketer_commision_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
+    marketer_commission_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
     overpayment_fee DECIMAL(19, 4),
     hr_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
     marketer_gifts_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
 
     FOREIGN KEY (program_id) REFERENCES programs (id),
     FOREIGN KEY (lecturer_id) REFERENCES lecturers (id),
-    FOREIGN KEY (marketer_id) REFERENCES users (id),
+    FOREIGN KEY (marketer_id) REFERENCES marketers (id),
     FOREIGN KEY (student_id) REFERENCES students (id),
     FOREIGN KEY (user_id) REFERENCES users (id),
 

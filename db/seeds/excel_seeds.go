@@ -1,9 +1,10 @@
 package seeds
 
 import (
+	"regexp"
 	"strconv"
-	"strings"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
@@ -52,11 +53,31 @@ func SeedExcel(db *sqlx.DB, sheetName string) error {
 		if errSeed != nil {
 			return errSeed
 		}
-		// case "users":
-		// 	errSeed = excelSeeder.SeedUsers(tx)
-		// 	if errSeed != nil {
-		// 		return errSeed
-		// 	}
+	case "programs":
+		errSeed = excelSeeder.SeedPrograms(tx)
+		if errSeed != nil {
+			return errSeed
+		}
+	case "lecturers":
+		errSeed = excelSeeder.SeedLecturers(tx)
+		if errSeed != nil {
+			return errSeed
+		}
+	case "marketers":
+		errSeed = excelSeeder.SeedMarketers(tx)
+		if errSeed != nil {
+			return errSeed
+		}
+	case "students":
+		errSeed = excelSeeder.SeedStudents(tx)
+		if errSeed != nil {
+			return errSeed
+		}
+	case "users":
+		errSeed = excelSeeder.SeedUsers(tx)
+		if errSeed != nil {
+			return errSeed
+		}
 	}
 
 	if err := excelSeeder.file.Save(); err != nil {
@@ -68,83 +89,6 @@ func SeedExcel(db *sqlx.DB, sheetName string) error {
 		log.Error().Err(err).Msg("failed to commit transaction")
 		return err
 	}
-
-	return nil
-}
-
-func (s *excelSeed) SeedRoles(tx *sqlx.Tx) error {
-	rows, err := s.file.GetRows("roles")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows from excel")
-		return err
-	}
-
-	idsInSheet := make([]string, len(rows)-1)
-	lastRow := len(rows) - 1
-	// insert into db
-	for i, row := range rows {
-		if i == 0 { // skip header
-			continue
-		}
-
-		var (
-			id   = row[0]
-			name = row[1]
-		)
-
-		// if id is empty then add ULID to it, and when done it should be saved to db
-		// and file
-		if id == "" {
-			id = ulid.Make().String()
-			rowNumber := strconv.Itoa(i + 1)
-			cell := "A" + rowNumber
-			s.file.SetCellValue("roles", cell, id)
-		} else {
-			// check id is valid ULID
-			if _, err := ulid.Parse(id); err != nil {
-				log.Error().Err(err).Msg("invalid ULID")
-				return err
-			}
-		}
-
-		idsInSheet[i-1] = id
-
-		query := "INSERT INTO roles (id, name) VALUES (?, ?) ON CONFLICT DO NOTHING"
-		_, err := tx.Exec(s.db.Rebind(query), id, name)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to insert role")
-			return err
-		}
-	}
-
-	// get all roles from db that are not in the sheet
-	type role struct {
-		Id   string `db:"id"`
-		Name string `db:"name"`
-	}
-	var rolesNotInSheet []role
-
-	query, args, err := sqlx.In("SELECT id, name FROM roles WHERE id NOT IN (?)", idsInSheet)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create query for roles not in sheet")
-		return err
-	}
-	err = tx.Select(&rolesNotInSheet, s.db.Rebind(query), args...)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get roles not in sheet")
-		return err
-	}
-
-	// append roles not in sheet to the sheet
-	for i, role := range rolesNotInSheet {
-		rowNumber := strconv.Itoa(lastRow + i + 2)
-		cellA := "A" + rowNumber
-		cellB := "B" + rowNumber
-		s.file.SetCellValue("roles", cellA, role.Id)
-		s.file.SetCellValue("roles", cellB, role.Name)
-	}
-
-	log.Info().Msg("roles seeded successfully!")
 
 	return nil
 }
@@ -231,12 +175,121 @@ func (s *excelSeed) SeedPermissions(tx *sqlx.Tx) error {
 	return nil
 }
 
-func (s *excelSeed) SeedUsers(tx *sqlx.Tx) error {
-	rows, err := s.file.GetRows("users")
+func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
+	rows, err := s.file.GetRows("programs")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get rows from excel")
 		return err
 	}
+
+	idsInSheet := make([]string, len(rows)-1)
+	lastRow := len(rows) - 1
+	re := regexp.MustCompile(`\D`)
+	// insert into db
+	for i, row := range rows {
+		if i == 0 { // skip header
+			continue
+		}
+
+		var (
+			id        = row[0]
+			name      = row[1]
+			detailStr = row[2]
+			detail    *string
+			priceStr  = row[3]
+			price     float64
+		)
+
+		if id == "" {
+			id = ulid.Make().String()
+			rowNumber := strconv.Itoa(i + 1)
+			cell := "A" + rowNumber
+			s.file.SetCellValue("programs", cell, id)
+		} else {
+			if _, err := ulid.Parse(id); err != nil {
+				log.Error().Err(err).Msg("invalid ULID")
+				return err
+			}
+		}
+		idsInSheet[i-1] = id
+
+		if detailStr == "" {
+			detail = nil
+		} else {
+			detail = &detailStr
+		}
+
+		if priceStr == "" {
+			price = 0
+		} else {
+			priceFloat, err := strconv.ParseFloat(re.ReplaceAllString(priceStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse price")
+				return err
+			}
+			price = priceFloat
+		}
+
+		query := "INSERT INTO programs (id, name, detail, price) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to insert program")
+			return err
+		}
+	}
+
+	// get all programs from db that are not in the sheet
+	type program struct {
+		Id     string   `db:"id"`
+		Name   string   `db:"name"`
+		Detail *string  `db:"detail"`
+		Price  *float64 `db:"price"`
+	}
+
+	var programsNotInSheet []program
+
+	query, args, err := sqlx.In("SELECT id, name, detail, price FROM programs WHERE id NOT IN (?)", idsInSheet)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create query for programs not in sheet")
+		return err
+	}
+
+	err = tx.Select(&programsNotInSheet, s.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get programs not in sheet")
+		return err
+	}
+
+	// append programs not in sheet to the sheet
+	for i, program := range programsNotInSheet {
+		rowNumber := strconv.Itoa(lastRow + i + 2)
+		cellA := "A" + rowNumber
+		cellB := "B" + rowNumber
+		cellC := "C" + rowNumber
+		cellD := "D" + rowNumber
+		s.file.SetCellValue("programs", cellA, program.Id)
+		s.file.SetCellValue("programs", cellB, program.Name)
+		if program.Detail != nil {
+			s.file.SetCellValue("programs", cellC, *program.Detail)
+		}
+		if program.Price != nil {
+			s.file.SetCellValue("programs", cellD, *program.Price)
+		}
+	}
+
+	log.Info().Msg("programs seeded successfully!")
+	return nil
+}
+
+func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
+	rows, err := s.file.GetRows("lecturers")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows from excel")
+		return err
+	}
+
+	idsInSheet := make([]string, len(rows)-1)
+	lastRow := len(rows) - 1
 
 	// insert into db
 	for i, row := range rows {
@@ -245,30 +298,17 @@ func (s *excelSeed) SeedUsers(tx *sqlx.Tx) error {
 		}
 
 		var (
-			id          = row[0]
-			name        = row[1]
-			branchName  = row[2]
-			sectionName = row[3]
-			RoleName    = row[4]
-			email       = row[5]
-			password    = row[6]
+			id    = row[0]
+			name  = row[1]
+			email string
+			phone string
 		)
 
-		// manipulate data
-		switch strings.ToUpper(RoleName) {
-		case "SERVICE ADVISOR":
-			RoleName = "service_advisor"
-		case "MRA":
-			RoleName = "technician"
-		case "ADMIN":
-			RoleName = "admin"
+		if isset(row, 2) {
+			email = row[2]
 		}
-
-		// bcrypt password
-		passwordHashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to hash password")
-			return err
+		if isset(row, 3) {
+			phone = row[3]
 		}
 
 		// if id is empty then add ULID to it, and when done it should be saved to db
@@ -277,78 +317,295 @@ func (s *excelSeed) SeedUsers(tx *sqlx.Tx) error {
 			id = ulid.Make().String()
 			rowNumber := strconv.Itoa(i + 1)
 			cell := "A" + rowNumber
-			s.file.SetCellValue("users", cell, id)
+			s.file.SetCellValue("lecturers", cell, id)
+		} else {
+			// check id is valid ULID
+			if _, err := ulid.Parse(id); err != nil {
+				log.Error().Err(err).Msg("invalid ULID")
+				return err
+			}
 		}
 
-		// make sure email is in lowercase
-		email = strings.ToLower(email)
+		if email == "" {
+			email = gofakeit.Email()
+		}
+		if phone == "" {
+			phone = gofakeit.Phone()
+		}
 
-		// check id is valid ULID
-		if _, err := ulid.Parse(id); err != nil {
-			log.Error().Err(err).Msg("invalid ULID")
+		idsInSheet[i-1] = id
+
+		query := "INSERT INTO lecturers (id, name, phone, email) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, name, phone, email)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to insert lecturer")
 			return err
-		}
-
-		switch strings.ToUpper(RoleName) {
-		case "ADMIN":
-			query := `
-			INSERT INTO users (
-				id, role_id, name, email, password
-			) VALUES (
-				?,
-				(SELECT id FROM roles WHERE name = ?),
-				?,
-				?,
-				?
-			) ON CONFLICT (id) DO UPDATE SET
-				role_id = (SELECT id FROM roles WHERE name = ?),
-				name = ?,
-				email = ?,
-				password = ?
-		`
-
-			_, err = tx.Exec(s.db.Rebind(query),
-				id, RoleName, name, email, string(passwordHashed),
-				RoleName, name, email, string(passwordHashed),
-			)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to insert user")
-				return err
-			}
-		default:
-			//  on conflict update
-			query := `
-			INSERT INTO users (
-				id, name, branch_id, section_id, role_id, email, password
-			) VALUES (
-				?,
-				?,
-				(SELECT id FROM branches WHERE UPPER(name) = UPPER(?)),
-				(SELECT id FROM potencies WHERE UPPER(name) = UPPER(?)),
-				(SELECT id FROM roles WHERE name = ?),
-				?,
-				?
-			) ON CONFLICT (id) DO UPDATE SET
-				name = ?,
-				branch_id = (SELECT id FROM branches WHERE UPPER(name) = UPPER(?)),
-				section_id = (SELECT id FROM potencies WHERE UPPER(name) = UPPER(?)),
-				role_id = (SELECT id FROM roles WHERE name = ?),
-				email = ?,
-				password = ?
-		`
-
-			_, err = tx.Exec(s.db.Rebind(query),
-				id, name, branchName, sectionName, RoleName, email, string(passwordHashed),
-				name, branchName, sectionName, RoleName, email, string(passwordHashed),
-			)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to insert user")
-				return err
-			}
 		}
 	}
 
-	log.Info().Msg("users seeded successfully!")
+	// get all lecturers from db that are not in the sheet
+	type lecturer struct {
+		Id    string  `db:"id"`
+		Name  string  `db:"name"`
+		Phone *string `db:"phone"`
+		Email *string `db:"email"`
+	}
 
+	var lecturersNotInSheet []lecturer
+
+	query, args, err := sqlx.In("SELECT id, name, phone, email FROM lecturers WHERE id NOT IN (?)", idsInSheet)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create query for lecturers not in sheet")
+		return err
+	}
+
+	err = tx.Select(&lecturersNotInSheet, s.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get lecturers not in sheet")
+		return err
+	}
+
+	// append lecturers not in sheet to the sheet
+	for i, lecturer := range lecturersNotInSheet {
+		rowNumber := strconv.Itoa(lastRow + i + 2)
+		cellA := "A" + rowNumber
+		cellB := "B" + rowNumber
+		cellC := "C" + rowNumber
+		cellD := "D" + rowNumber
+		s.file.SetCellValue("lecturers", cellA, lecturer.Id)
+		s.file.SetCellValue("lecturers", cellB, lecturer.Name)
+		if lecturer.Phone != nil {
+			s.file.SetCellValue("lecturers", cellC, *lecturer.Phone)
+		}
+		if lecturer.Email != nil {
+			s.file.SetCellValue("lecturers", cellD, *lecturer.Email)
+		}
+	}
+
+	log.Info().Msg("lecturers seeded successfully!")
 	return nil
+}
+
+func (s *excelSeed) SeedMarketers(tx *sqlx.Tx) error {
+	rows, err := s.file.GetRows("marketers")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows from excel")
+		return err
+	}
+
+	idsInSheet := make([]string, len(rows)-1)
+	lastRow := len(rows) - 1
+	// insert into db
+	for i, row := range rows {
+		if i == 0 { // skip header
+			continue
+		}
+
+		var (
+			id    = row[0]
+			name  = row[1]
+			email string
+			phone string
+		)
+
+		if isset(row, 2) {
+			email = row[2]
+		}
+		if isset(row, 3) {
+			phone = row[3]
+		}
+
+		// if id is empty then add ULID to it, and when done it should be saved to db
+		// and file
+		if id == "" {
+			id = ulid.Make().String()
+			rowNumber := strconv.Itoa(i + 1)
+			cell := "A" + rowNumber
+			s.file.SetCellValue("marketers", cell, id)
+		} else {
+			// check id is valid ULID
+			if _, err := ulid.Parse(id); err != nil {
+				log.Error().Err(err).Msg("invalid ULID")
+				return err
+			}
+		}
+
+		if email == "" {
+			email = gofakeit.Email()
+		}
+		if phone == "" {
+			phone = gofakeit.Phone()
+		}
+
+		idsInSheet[i-1] = id
+
+		query := "INSERT INTO marketers (id, name, phone, email) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, name, phone, email)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to insert marketer")
+			return err
+		}
+	}
+
+	// get all marketers from db that are not in the sheet
+	type marketer struct {
+		Id    string  `db:"id"`
+		Name  string  `db:"name"`
+		Phone *string `db:"phone"`
+		Email *string `db:"email"`
+	}
+
+	var marketersNotInSheet []marketer
+
+	query, args, err := sqlx.In("SELECT id, name, phone, email FROM marketers WHERE id NOT IN (?)", idsInSheet)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create query for marketers not in sheet")
+		return err
+	}
+
+	err = tx.Select(&marketersNotInSheet, s.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get marketers not in sheet")
+		return err
+	}
+
+	// append marketers not in sheet to the sheet
+	for i, marketer := range marketersNotInSheet {
+		rowNumber := strconv.Itoa(lastRow + i + 2)
+		cellA := "A" + rowNumber
+		cellB := "B" + rowNumber
+		cellC := "C" + rowNumber
+		cellD := "D" + rowNumber
+		s.file.SetCellValue("marketers", cellA, marketer.Id)
+		s.file.SetCellValue("marketers", cellB, marketer.Name)
+		if marketer.Phone != nil {
+			s.file.SetCellValue("marketers", cellC, *marketer.Phone)
+		}
+		if marketer.Email != nil {
+			s.file.SetCellValue("marketers", cellD, *marketer.Email)
+		}
+	}
+
+	log.Info().Msg("marketers seeded successfully!")
+	return nil
+}
+
+func (s *excelSeed) SeedStudents(tx *sqlx.Tx) error {
+	rows, err := s.file.GetRows("students")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows from excel")
+		return err
+	}
+
+	idsInSheet := make([]string, len(rows)-1)
+	lastRow := len(rows) - 1
+	// insert into db
+	for i, row := range rows {
+		if i == 0 { // skip header
+			continue
+		}
+
+		var (
+			id         = row[0]
+			identifier = row[1]
+			name       = row[2]
+		)
+
+		// if id is empty then add ULID to it, and when done it should be saved to db
+		// and file
+		if id == "" {
+			id = ulid.Make().String()
+			rowNumber := strconv.Itoa(i + 1)
+			cell := "A" + rowNumber
+			s.file.SetCellValue("students", cell, id)
+		} else {
+			// check id is valid ULID
+			if _, err := ulid.Parse(id); err != nil {
+				log.Error().Err(err).Msg("invalid ULID")
+				return err
+			}
+		}
+
+		idsInSheet[i-1] = id
+
+		query := "INSERT INTO students (id, identifier, name) VALUES (?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, identifier, name)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to insert student")
+			return err
+		}
+	}
+
+	// get all students from db that are not in the sheet
+	type student struct {
+		Id         string `db:"id"`
+		Identifier string `db:"identifier"`
+		Name       string `db:"name"`
+	}
+
+	var studentsNotInSheet []student
+
+	query, args, err := sqlx.In("SELECT id, identifier, name FROM students WHERE id NOT IN (?)", idsInSheet)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create query for students not in sheet")
+		return err
+	}
+
+	err = tx.Select(&studentsNotInSheet, s.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get students not in sheet")
+		return err
+	}
+
+	// append students not in sheet to the sheet
+	for i, student := range studentsNotInSheet {
+		rowNumber := strconv.Itoa(lastRow + i + 2)
+		cellA := "A" + rowNumber
+		cellB := "B" + rowNumber
+		cellC := "C" + rowNumber
+		s.file.SetCellValue("students", cellA, student.Id)
+		s.file.SetCellValue("students", cellB, student.Identifier)
+		s.file.SetCellValue("students", cellC, student.Name)
+	}
+
+	log.Info().Msg("students seeded successfully!")
+	return nil
+}
+
+func (s *excelSeed) SeedUsers(tx *sqlx.Tx) error {
+	query := `
+		INSERT INTO users (id, role_id, name, email, password)
+		VALUES (
+			?, (SELECT id FROM roles WHERE name = ?), ?, ?, ?
+		)
+		ON CONFLICT DO NOTHING
+	`
+
+	query = s.db.Rebind(query)
+	password, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to hash password")
+		return err
+	}
+
+	// insert into db
+	_, err = tx.Exec(query,
+		ulid.Make().String(),
+		"Super Admin",
+		"super admin",
+		"superadmin@kp.com",
+		string(password),
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to insert user")
+		return err
+	}
+
+	log.Info().Msg("users seeded successfully!")
+	return nil
+}
+
+func isset(arr []string, index int) bool {
+	return (len(arr) > index)
 }

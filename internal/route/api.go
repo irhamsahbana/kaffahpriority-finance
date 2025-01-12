@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	m "codebase-app/internal/middleware"
+	reportHandler "codebase-app/internal/module/report/handler"
 	userHandler "codebase-app/internal/module/user/handler"
 
 	"codebase-app/pkg/response"
@@ -17,6 +18,7 @@ func SetupRoutes(app *fiber.App) {
 	app.Get("/storage/private/:filename", m.ValidateSignedURL, storageFile)
 
 	userHandler.NewUserHandler().Register(app.Group("/users"))
+	reportHandler.NewReportHandler().Register(app.Group("/reports"))
 
 	// // fallback route
 	app.Use(func(c *fiber.Ctx) error {
