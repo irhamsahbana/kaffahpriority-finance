@@ -8,6 +8,7 @@ type Common struct {
 }
 
 type GetMarketersReq struct {
+	Q string `query:"q" validate:"omitempty,min=3"`
 	types.MetaQuery
 }
 
@@ -15,12 +16,18 @@ func (r *GetMarketersReq) SetDefault() {
 	r.MetaQuery.SetDefault()
 }
 
+type Marketer struct {
+	Common
+	Phone *string `json:"phone" db:"phone"`
+}
+
 type GetMarketersResp struct {
-	Items []Common   `json:"items"`
+	Items []Marketer `json:"items"`
 	Meta  types.Meta `json:"meta"`
 }
 
 type GetLecturersReq struct {
+	Q string `query:"q" validate:"omitempty,min=3"`
 	types.MetaQuery
 }
 
@@ -28,8 +35,13 @@ func (r *GetLecturersReq) SetDefault() {
 	r.MetaQuery.SetDefault()
 }
 
+type Lecturer struct {
+	Common
+	Phone *string `json:"phone" db:"phone"`
+}
+
 type GetLecturersResp struct {
-	Items []Common   `json:"items"`
+	Items []Lecturer `json:"items"`
 	Meta  types.Meta `json:"meta"`
 }
 

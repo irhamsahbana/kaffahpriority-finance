@@ -25,35 +25,48 @@ func NewMasterRepository() *masterRepo {
 func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error) {
 	type dao struct {
 		TotalData int `db:"total_data"`
-		entity.Common
+		entity.Marketer
 	}
 
 	var (
 		resp = new(entity.GetMarketersResp)
 		data = make([]dao, 0)
+		args = make([]any, 0, 3)
 	)
-	resp.Items = make([]entity.Common, 0)
+	resp.Items = make([]entity.Marketer, 0)
 
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
 			id,
-			name
+			name,
+			phone
 		FROM
 			marketers
 		WHERE
 			deleted_at IS NULL
-		LIMIT ? OFFSET ?
 	`
 
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
+	if req.Q != "" {
+		query += ` AND (
+			name ILIKE '%' || ? || '%' OR
+			phone ILIKE '%' || ? || '%'
+		)
+		`
+		args = append(args, req.Q, req.Q)
+	}
+
+	query += ` LIMIT ? OFFSET ?`
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetMarketers - failed to query marketers")
 		return nil, err
 	}
 
 	for _, d := range data {
 		resp.Meta.TotalData = d.TotalData
-		resp.Items = append(resp.Items, d.Common)
+		resp.Items = append(resp.Items, d.Marketer)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
@@ -64,35 +77,48 @@ func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersR
 func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error) {
 	type dao struct {
 		TotalData int `db:"total_data"`
-		entity.Common
+		entity.Lecturer
 	}
 
 	var (
 		resp = new(entity.GetLecturersResp)
 		data = make([]dao, 0)
+		args = make([]any, 0, 3)
 	)
-	resp.Items = make([]entity.Common, 0)
+	resp.Items = make([]entity.Lecturer, 0)
 
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
 			id,
-			name
+			name,
+			phone
 		FROM
 			lecturers
 		WHERE
 			deleted_at IS NULL
-		LIMIT ? OFFSET ?
 	`
 
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
+	if req.Q != "" {
+		query += ` AND (
+			name ILIKE '%' || ? || '%' OR
+			phone ILIKE '%' || ? || '%'
+		)
+		`
+		args = append(args, req.Q, req.Q)
+	}
+
+	query += ` LIMIT ? OFFSET ?`
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturers - failed to query lecturers")
 		return nil, err
 	}
 
 	for _, d := range data {
 		resp.Meta.TotalData = d.TotalData
-		resp.Items = append(resp.Items, d.Common)
+		resp.Items = append(resp.Items, d.Lecturer)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
