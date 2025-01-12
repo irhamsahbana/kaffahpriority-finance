@@ -27,3 +27,17 @@ func (r *Meta) CountTotalPage(page, paginate, totalData int) {
 		r.TotalPage = 1
 	}
 }
+
+type MetaQuery struct {
+	Page     int `json:"page" validate:"required"`
+	Paginate int `json:"paginate" validate:"required"`
+}
+
+func (r *MetaQuery) SetDefault() {
+	if r.Page < 1 {
+		r.Page = 1
+	}
+	if r.Paginate < 1 {
+		r.Paginate = 10
+	}
+}
