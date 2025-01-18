@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     marketer_gifts_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
     closing_fee_for_office DECIMAL(19, 4),
     closing_fee_for_reward DECIMAL(19, 4),
+    days INT[] DEFAULT '{}' NOT NULL,
     -- cfo 2 section
     mentor_detail_fee DECIMAL(19, 4),
     hr_detail_fee DECIMAL(19, 4),

@@ -47,7 +47,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		hr_fee,
 		marketer_gifts_fee,
 		closing_fee_for_office,
-		closing_fee_for_reward
+		closing_fee_for_reward,
+		days
 		)
 		SELECT
 			?,
@@ -70,7 +71,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			prt.hr_fee,
 			prt.marketer_gifts_fee,
 			prt.closing_fee_for_office,
-			prt.closing_fee_for_reward
+			prt.closing_fee_for_reward,
+			prt.days
 		FROM
 			program_registration_templates prt
 		JOIN
