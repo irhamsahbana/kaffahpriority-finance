@@ -29,3 +29,7 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 func (s *reportService) GetTemplates(ctx context.Context, req *entity.GetTemplatesReq) (*entity.GetTemplatesResp, error) {
 	return s.repo.GetTemplates(ctx, req)
 }
+
+func (s *reportService) GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error) {
+	return s.repo.GetTemplate(ctx, req)
+}

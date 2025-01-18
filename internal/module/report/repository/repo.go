@@ -4,7 +4,9 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/internal/module/report/ports"
+	"codebase-app/pkg/errmsg"
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -213,7 +215,14 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.student_id,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
-			s.name AS student_name
+			s.name AS student_name,
+			prt.program_fee +
+			COALESCE(prt.foreign_lecturer_fee, 0) +
+			COALESCE(prt.night_learning_fee, 0) +
+			COALESCE(prt.overpayment_fee, 0)
+			AS monthly_fee,
+			prt.created_at,
+			prt.updated_at
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -238,16 +247,16 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 	for _, item := range data {
 		resp.Meta.TotalData = item.TotalData
 		templateIds = append(templateIds, item.Id)
+		item.Students = make([]entity.AddStudent, 0)
 		resp.Items = append(resp.Items, item.TemplateItem)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
 
 	if len(templateIds) > 0 {
-		log.Debug().Any("templateIds", templateIds).Msg("repo::GetTemplates - templateIds")
 		type daos struct {
 			PrtId string `db:"prt_id"`
-			entity.StudentItem
+			entity.AddStudent
 		}
 		var (
 			daosData = make([]daos, 0)
@@ -255,7 +264,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		query = `
 			SELECT
 				adds.prt_id,
-				adds.student_id as id,
+				adds.student_id,
 				CASE
 					WHEN s.id IS NULL THEN adds.name
 					ELSE s.name
@@ -282,13 +291,79 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		}
 
 		for i, item := range resp.Items {
-			resp.Items[i].Students = make([]entity.StudentItem, 0)
 			for _, data := range daosData {
 				if item.Id == data.PrtId {
-					resp.Items[i].Students = append(resp.Items[i].Students, data.StudentItem)
+					resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				}
 			}
 		}
+	}
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error) {
+	var (
+		resp = new(entity.GetTemplateResp)
+	)
+	resp.Students = make([]entity.AddStudent, 0)
+
+	query := `
+		SELECT
+			prt.*,
+			l.name AS lecturer_name,
+			m.name AS marketer_name,
+			s.name AS student_name,
+			p.name AS program_name
+		FROM
+			program_registration_templates prt
+		JOIN
+			lecturers l
+			ON prt.lecturer_id = l.id
+		JOIN
+			marketers m
+			ON prt.marketer_id = m.id
+		JOIN
+			students s
+			ON prt.student_id = s.id
+		JOIN
+			programs p
+			ON prt.program_id = p.id
+		WHERE
+			prt.id = ?
+			AND prt.deleted_at IS NULL
+	`
+
+	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msg("repo::GetTemplate - data not found")
+			return nil, errmsg.NewCustomErrors(404).SetMessage("Template tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplate - failed to fetch data")
+		return nil, err
+	}
+
+	query = `
+		SELECT
+			adds.student_id,
+			CASE
+				WHEN s.id IS NULL THEN adds.name
+				ELSE s.name
+			END AS name
+		FROM
+			prt_additional_students adds
+		LEFT JOIN
+			students s
+			ON adds.student_id = s.id
+		WHERE
+			adds.prt_id = ?
+	`
+
+	err = r.db.SelectContext(ctx, &resp.Students, r.db.Rebind(query), req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplate - failed to fetch additional students")
+		return nil, err
 	}
 
 	return resp, nil
