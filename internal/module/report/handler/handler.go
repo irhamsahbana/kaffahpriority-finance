@@ -34,6 +34,8 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/templates", m.AuthBearer, h.getTemplates)
 	router.Put("/templates/:id", m.AuthBearer, h.updateTemplate)
 	router.Get("/templates/:id", m.AuthBearer, h.getTemplate)
+
+	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
 }
 
 func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
@@ -156,4 +158,33 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
+	var (
+		req = new(entity.CreateRegistrationsReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(&req.Registrations); err != nil {
+		log.Warn().Err(err).Msg("handler::createRegistrations - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::createRegistrations - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.CreateRegistrations(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response.Success(nil, ""))
 }

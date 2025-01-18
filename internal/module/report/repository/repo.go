@@ -29,20 +29,20 @@ func NewReportRepository() *reportRepo {
 func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::CreateTemplate - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to begin transaction")
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Msg("repo::CreateTemplate - failed to rollback transaction")
+				log.Error().Err(errRB).Any("req", req).Msg("repo::CreateTemplate - failed to rollback transaction")
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Msg("repo::CreateTemplate - failed to commit transaction")
+			log.Error().Err(errCommit).Any("req", req).Msg("repo::CreateTemplate - failed to commit transaction")
 		}
 	}()
 

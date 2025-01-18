@@ -33,3 +33,7 @@ func (s *reportService) GetTemplates(ctx context.Context, req *entity.GetTemplat
 func (s *reportService) GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error) {
 	return s.repo.GetTemplate(ctx, req)
 }
+
+func (s *reportService) CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error {
+	return s.repo.CreateRegistrations(ctx, req)
+}
