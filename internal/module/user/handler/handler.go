@@ -28,8 +28,7 @@ func NewUserHandler() *userHandler {
 }
 
 func (h *userHandler) Register(router fiber.Router) {
-	v1 := router.Group("/v1")
-	v1.Post("/login", h.login)
+	router.Post("/login", h.login)
 }
 
 func (h *userHandler) login(c *fiber.Ctx) error {

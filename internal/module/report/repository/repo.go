@@ -209,10 +209,15 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 	query := `
 		SELECT
 			COUNT(*) OVER() AS total_data,
+			/*
 			prt.id,
 			prt.marketer_id,
 			prt.lecturer_id,
 			prt.student_id,
+			prt.created_at,
+			prt.updated_at,
+			*/
+			prt.*,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,
@@ -220,9 +225,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.foreign_lecturer_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
-			AS monthly_fee,
-			prt.created_at,
-			prt.updated_at
+			AS monthly_fee
 		FROM
 			program_registration_templates prt
 		JOIN
