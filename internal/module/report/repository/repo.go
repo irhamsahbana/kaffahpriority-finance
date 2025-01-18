@@ -191,3 +191,105 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 
 	return resp, nil
 }
+
+func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesReq) (*entity.GetTemplatesResp, error) {
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.TemplateItem
+	}
+	var (
+		data        = make([]dao, 0, req.Paginate)
+		templateIds = make([]string, 0)
+		resp        = new(entity.GetTemplatesResp)
+	)
+	resp.Items = make([]entity.TemplateItem, 0)
+
+	query := `
+		SELECT
+			COUNT(*) OVER() AS total_data,
+			prt.id,
+			prt.marketer_id,
+			prt.lecturer_id,
+			prt.student_id,
+			l.name AS lecturer_name,
+			m.name AS marketer_name,
+			s.name AS student_name
+		FROM
+			program_registration_templates prt
+		JOIN
+			lecturers l
+			ON prt.lecturer_id = l.id
+		JOIN
+			marketers m
+			ON prt.marketer_id = m.id
+		JOIN
+			students s
+			ON prt.student_id = s.id
+		WHERE
+			prt.deleted_at IS NULL
+	`
+
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query))
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch data")
+		return nil, err
+	}
+
+	for _, item := range data {
+		resp.Meta.TotalData = item.TotalData
+		templateIds = append(templateIds, item.Id)
+		resp.Items = append(resp.Items, item.TemplateItem)
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	if len(templateIds) > 0 {
+		log.Debug().Any("templateIds", templateIds).Msg("repo::GetTemplates - templateIds")
+		type daos struct {
+			PrtId string `db:"prt_id"`
+			entity.StudentItem
+		}
+		var (
+			daosData = make([]daos, 0)
+		)
+		query = `
+			SELECT
+				adds.prt_id,
+				adds.student_id as id,
+				CASE
+					WHEN s.id IS NULL THEN adds.name
+					ELSE s.name
+				END AS name
+			FROM
+				prt_additional_students adds
+			LEFT JOIN
+				students s
+				ON adds.student_id = s.id
+			WHERE adds.prt_id IN (?)
+		`
+
+		query, args, err := sqlx.In(query, templateIds)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to build query")
+			return nil, err
+		}
+
+		query = r.db.Rebind(query)
+		err = r.db.SelectContext(ctx, &daosData, query, args...)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch additional students")
+			return nil, err
+		}
+
+		for i, item := range resp.Items {
+			resp.Items[i].Students = make([]entity.StudentItem, 0)
+			for _, data := range daosData {
+				if item.Id == data.PrtId {
+					resp.Items[i].Students = append(resp.Items[i].Students, data.StudentItem)
+				}
+			}
+		}
+	}
+
+	return resp, nil
+}

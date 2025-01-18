@@ -31,8 +31,36 @@ func NewReportHandler() *reportHandler {
 
 func (h *reportHandler) Register(router fiber.Router) {
 	router.Post("/templates", m.AuthBearer, h.createTemplate)
+	router.Get("/templates", m.AuthBearer, h.getTemplates)
 	router.Put("/templates/:id", m.AuthBearer, h.updateTemplate)
+}
 
+func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetTemplatesReq)
+		v   = adapter.Adapters.Validator
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getTemplates - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getTemplates - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetTemplates(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
 }
 
 func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
