@@ -218,6 +218,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.updated_at,
 			*/
 			prt.*,
+			p.name AS program_name,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,
@@ -237,6 +238,9 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		JOIN
 			students s
 			ON prt.student_id = s.id
+		JOIN
+			programs p
+			ON prt.program_id = p.id
 		WHERE
 			prt.deleted_at IS NULL
 	`
