@@ -40,7 +40,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		program_fee,
 		program_meetings,
 		administration_fee,
-		foreign_lecturer_fee,
+		foreign_learning_fee,
 		night_learning_fee,
 		marketer_commission_fee,
 		overpayment_fee,
@@ -64,7 +64,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 				WHEN ? = TRUE THEN prt.administration_fee
 				ELSE NULL
 			END,
-			prt.foreign_lecturer_fee,
+			prt.foreign_learning_fee,
 			prt.night_learning_fee,
 			prt.marketer_commission_fee,
 			prt.overpayment_fee,

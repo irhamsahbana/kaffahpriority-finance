@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     days INT[] NOT NULL DEFAULT '{}',
     program_fee DECIMAL(19, 4),
     administration_fee DECIMAL(19, 4),
-    foreign_lecturer_fee DECIMAL(19, 4),
+    foreign_learning_fee DECIMAL(19, 4),
     night_learning_fee DECIMAL(19, 4),
     marketer_commission_fee DECIMAL(19, 4) DEFAULT 0,
     overpayment_fee DECIMAL(19, 4),

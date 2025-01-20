@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     program_meetings INT NOT NULL,
     program_meetings_completed INT DEFAULT 0 NOT NULL,
     administration_fee DECIMAL(19, 4),
-    foreign_lecturer_fee DECIMAL(19, 4),
+    foreign_learning_fee DECIMAL(19, 4),
     night_learning_fee DECIMAL(19, 4),
     marketer_commission_fee DECIMAL(19, 4) DEFAULT 0 NOT NULL,
     overpayment_fee DECIMAL(19, 4),

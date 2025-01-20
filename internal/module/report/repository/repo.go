@@ -122,7 +122,7 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 			student_id = ?,
 			program_fee = ?,
 			administration_fee = ?,
-			foreign_lecturer_fee = ?,
+			foreign_learning_fee = ?,
 			night_learning_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
@@ -209,7 +209,7 @@ func (r *reportRepo) UpdateTemplateFinance(ctx context.Context, req *entity.Upda
 		UPDATE program_registration_templates SET
 			program_fee = ?,
 			administration_fee = ?,
-			foreign_lecturer_fee = ?,
+			foreign_learning_fee = ?,
 			night_learning_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
@@ -269,7 +269,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			m.name AS marketer_name,
 			s.name AS student_name,
 			COALESCE(prt.program_fee, 0) +
-			COALESCE(prt.foreign_lecturer_fee, 0) +
+			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
 			AS monthly_fee
@@ -458,7 +458,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.program_name,
 			pr.program_fee,
 			pr.administration_fee,
-			pr.foreign_lecturer_fee,
+			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
@@ -469,7 +469,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.created_at,
 			pr.updated_at,
 			pr.program_fee +
-			COALESCE(pr.foreign_lecturer_fee, 0) +
+			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
@@ -573,7 +573,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.program_name,
 			pr.program_fee,
 			pr.administration_fee,
-			pr.foreign_lecturer_fee,
+			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
@@ -670,7 +670,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			program_name = (SELECT name FROM programs WHERE id = ?),
 			program_fee = ?,
 			administration_fee = ?,
-			foreign_lecturer_fee = ?,
+			foreign_learning_fee = ?,
 			night_learning_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,

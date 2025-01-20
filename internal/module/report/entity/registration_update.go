@@ -13,7 +13,7 @@ type UpdateRegistrationReq struct {
 	StudentId             string       `json:"student_id" validate:"ulid"`
 	ProgramFee            float64      `json:"program_fee" validate:"required"`
 	AdministrationFee     *float64     `json:"administration_fee" validate:"omitempty,min=0"`
-	FLFee                 *float64     `json:"foreign_lecturer_fee" validate:"omitempty,min=0"`
+	FLFee                 *float64     `json:"foreign_learning_fee" validate:"omitempty,min=0"`
 	NLFee                 *float64     `json:"night_learning_fee" validate:"omitempty,min=0"`
 	MarketerCommissionFee float64      `json:"marketer_commission_fee" validate:"min=0"`
 	OverpaymentFee        *float64     `json:"overpayment_fee" validate:"omitempty,min=0"`
