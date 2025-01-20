@@ -8,6 +8,7 @@ import (
 
 type GetTemplatesReq struct {
 	types.MetaQuery
+	IsFinanceUpdateRequired string `query:"is_finance_update_required" validate:"omitempty,oneof=true false"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {
@@ -33,11 +34,11 @@ type TemplateItem struct {
 	MonthlyFee            float64       `json:"monthly_fee" db:"monthly_fee"`
 	Students              []AddStudent  `json:"additional_students"`
 	Days                  pq.Int64Array `json:"days" db:"days"`
-	ProgramFee            float64       `json:"program_fee" db:"program_fee"`
-	AdministrationFee     float64       `json:"administration_fee" db:"administration_fee"`
+	ProgramFee            *float64      `json:"program_fee" db:"program_fee"`
+	AdministrationFee     *float64      `json:"administration_fee" db:"administration_fee"`
 	FLFee                 *float64      `json:"foreign_lecturer_fee" db:"foreign_lecturer_fee"`
 	NLFee                 *float64      `json:"night_learning_fee" db:"night_learning_fee"`
-	MarketerCommissionFee float64       `json:"marketer_commission_fee" db:"marketer_commission_fee"`
+	MarketerCommissionFee *float64      `json:"marketer_commission_fee" db:"marketer_commission_fee"`
 	OverpaymentFee        *float64      `json:"overpayment_fee" db:"overpayment_fee"`
 	HRFee                 float64       `json:"hr_fee" db:"hr_fee"`
 	MarketerGiftsFee      float64       `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
