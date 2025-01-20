@@ -22,7 +22,9 @@ func (r *GetMarketersReq) SetDefault() {
 
 type Marketer struct {
 	Common
-	Phone *string `json:"phone" db:"phone"`
+	StudentManagerId string  `json:"student_manager_id" db:"student_manager_id"`
+	StudentManager   string  `json:"student_manager_name" db:"student_manager_name"`
+	Phone            *string `json:"phone" db:"phone"`
 }
 
 type GetMarketersResp struct {

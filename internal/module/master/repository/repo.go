@@ -38,19 +38,24 @@ func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersR
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
-			id,
-			name,
+			m.id,
+			m.student_manager_id,
+			m.name,
+			sm.name AS student_manager_name,
 			phone
 		FROM
-			marketers
+			marketers m
+		JOIN
+			student_managers sm
+			ON m.student_manager_id = sm.id
 		WHERE
-			deleted_at IS NULL
+			m.deleted_at IS NULL
 	`
 
 	if req.Q != "" {
 		query += ` AND (
-			name ILIKE '%' || ? || '%' OR
-			phone ILIKE '%' || ? || '%'
+			m.name ILIKE '%' || ? || '%' OR
+			m.phone ILIKE '%' || ? || '%'
 		)
 		`
 		args = append(args, req.Q, req.Q)

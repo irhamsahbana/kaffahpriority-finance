@@ -66,6 +66,11 @@ func SeedExcel(db *sqlx.DB, sheetName string) error {
 		if errSeed != nil {
 			return errSeed
 		}
+	case "student_managers":
+		errSeed = excelSeeder.SeedStudentManagers(tx)
+		if errSeed != nil {
+			return errSeed
+		}
 	case "marketers":
 		errSeed = excelSeeder.SeedMarketers(tx)
 		if errSeed != nil {
