@@ -128,6 +128,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.closing_fee_for_reward,
 			pr.created_at,
 			pr.updated_at,
+			pr.notes,
 			pr.program_fee +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
@@ -243,6 +244,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.closing_fee_for_reward,
 			pr.created_at,
 			pr.updated_at,
+			pr.notes,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,

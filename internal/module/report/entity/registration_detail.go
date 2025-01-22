@@ -24,6 +24,7 @@ type GetRegistrationResp struct {
 	MarketerGiftsFee      float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice   *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
+	Notes                 *string      `json:"notes" db:"notes"`
 	Students              []AddStudent `json:"students"`
 	CreatedAt             string       `json:"created_at" db:"created_at"`
 	UpdatedAt             string       `json:"updated_at" db:"updated_at"`
