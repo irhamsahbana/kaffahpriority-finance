@@ -4,9 +4,7 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/module/master/entity"
 	"codebase-app/internal/module/master/ports"
-	"codebase-app/pkg/errmsg"
 	"context"
-	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -237,92 +235,6 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 		if v, ok := lastPaymentAt[student.Id]; ok {
 			resp.Items[i].LastPaymentAt = v
 		}
-	}
-
-	return resp, nil
-}
-
-func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error) {
-	type dao struct {
-		TotalData int `db:"total_data"`
-		entity.Program
-	}
-
-	var (
-		resp = new(entity.GetProgramsResp)
-		data = make([]dao, 0)
-		args = make([]any, 0, 3)
-	)
-	resp.Items = make([]entity.Program, 0)
-
-	query := `
-		SELECT
-			COUNT (*) OVER() AS total_data,
-			id,
-			name,
-			price,
-			days,
-			lecturer_fee,
-			commission_fee,
-			price - lecturer_fee - commission_fee AS profit
-		FROM
-			programs
-		WHERE
-			deleted_at IS NULL
-		`
-
-	if req.Q != "" {
-		query += ` AND name ILIKE '%' || ? || '%'`
-		args = append(args, req.Q)
-	}
-
-	query += `
-		LIMIT ? OFFSET ?
-	`
-	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
-
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetPrograms - failed to query programs")
-		return nil, err
-	}
-
-	for _, d := range data {
-		resp.Meta.TotalData = d.TotalData
-		resp.Items = append(resp.Items, d.Program)
-	}
-
-	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
-
-	return resp, nil
-}
-
-func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error) {
-	var (
-		resp = new(entity.GetProgramResp)
-	)
-	query := `
-		SELECT
-			id,
-			name,
-			price,
-			days,
-			lecturer_fee,
-			commission_fee,
-			price - lecturer_fee - commission_fee AS profit
-		FROM
-			programs
-		WHERE
-			id = ?
-			AND deleted_at IS NULL
-	`
-
-	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id); err != nil {
-		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetProgram - program not found")
-			return nil, errmsg.NewCustomErrors(404).SetMessage("Program not found")
-		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetProgram - failed to query program")
-		return nil, err
 	}
 
 	return resp, nil

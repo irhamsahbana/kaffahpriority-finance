@@ -34,6 +34,10 @@ func (s *masterService) GetStudents(ctx context.Context, req *entity.GetStudents
 	return s.repo.GetStudents(ctx, req)
 }
 
+func (s *masterService) CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error) {
+	return s.repo.CreateProgram(ctx, req)
+}
+
 func (s *masterService) GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error) {
 	return s.repo.GetPrograms(ctx, req)
 }

@@ -34,6 +34,8 @@ func (h *masterHandler) Register(router fiber.Router) {
 	router.Get("/lecturers", m.AuthBearer, h.getLecturers)
 	router.Get("/students", m.AuthBearer, h.getStudents)
 	router.Get("/student-managers", m.AuthBearer, h.getStudentManagers)
+
+	router.Post("/programs", m.AuthBearer, h.createProgram)
 	router.Get("/programs", m.AuthBearer, h.getPrograms)
 	router.Get("/programs/:id", m.AuthBearer, h.getProgram)
 }
@@ -114,57 +116,6 @@ func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetStudents(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.JSON(response.Success(resp, ""))
-}
-
-func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetProgramsReq)
-		v   = adapter.Adapters.Validator
-	)
-
-	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getPrograms - failed to parse request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.SetDefault()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getPrograms - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetPrograms(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.JSON(response.Success(resp, ""))
-}
-
-func (h *masterHandler) getProgram(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetProgramReq)
-		v   = adapter.Adapters.Validator
-	)
-
-	req.Id = c.Params("id")
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getProgram - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetProgram(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

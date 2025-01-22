@@ -10,6 +10,8 @@ type MasterRepository interface {
 	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetStudents(ctx context.Context, req *entity.GetStudentsReq) (*entity.GetStudentsResp, error)
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
+
+	CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error)
 	GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error)
 	GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error)
 }
@@ -19,6 +21,8 @@ type MasterService interface {
 	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetStudents(ctx context.Context, req *entity.GetStudentsReq) (*entity.GetStudentsResp, error)
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
+
+	CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error)
 	GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error)
 	GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error)
 }
