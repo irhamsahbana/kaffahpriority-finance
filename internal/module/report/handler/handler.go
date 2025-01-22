@@ -41,6 +41,8 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
 	router.Get("/registrations/:id", m.AuthBearer, h.getRegistration)
 
+	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
+
 	// TODO: list of lectures and their programs + students (group by lecture)
 }
 
@@ -302,6 +304,34 @@ func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetRegistration(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetLecturerProgramsReq)
+		v   = adapter.Adapters.Validator
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getLecturerPrograms - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerPrograms - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetLecturerPrograms(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

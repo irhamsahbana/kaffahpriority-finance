@@ -53,3 +53,7 @@ func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetReg
 func (s *reportService) GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error) {
 	return s.repo.GetRegistration(ctx, req)
 }
+
+func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
+	return s.repo.GetLecturerPrograms(ctx, req)
+}
