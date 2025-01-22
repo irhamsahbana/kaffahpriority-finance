@@ -76,6 +76,7 @@ type GetStudentsResp struct {
 
 type GetProgramsReq struct {
 	types.MetaQuery
+	Q string `query:"q" validate:"omitempty,min=2"`
 }
 
 func (r *GetProgramsReq) SetDefault() {

@@ -251,6 +251,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 	var (
 		resp = new(entity.GetProgramsResp)
 		data = make([]dao, 0)
+		args = make([]any, 0, 3)
 	)
 	resp.Items = make([]entity.Program, 0)
 
@@ -268,10 +269,19 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 			programs
 		WHERE
 			deleted_at IS NULL
+		`
+
+	if req.Q != "" {
+		query += ` AND name ILIKE '%' || ? || '%'`
+		args = append(args, req.Q)
+	}
+
+	query += `
 		LIMIT ? OFFSET ?
 	`
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetPrograms - failed to query programs")
 		return nil, err
 	}
