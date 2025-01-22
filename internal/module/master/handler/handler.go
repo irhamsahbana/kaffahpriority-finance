@@ -33,6 +33,7 @@ func (h *masterHandler) Register(router fiber.Router) {
 	router.Get("/marketers", m.AuthBearer, h.getMarketers)
 	router.Get("/lecturers", m.AuthBearer, h.getLecturers)
 	router.Get("/students", m.AuthBearer, h.getStudents)
+	router.Get("/student-managers", m.AuthBearer, h.getStudentManagers)
 	router.Get("/programs", m.AuthBearer, h.getPrograms)
 	router.Get("/programs/:id", m.AuthBearer, h.getProgram)
 }
@@ -164,6 +165,34 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetProgram(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.JSON(response.Success(resp, ""))
+}
+
+func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetStudentManagersReq)
+		v   = adapter.Adapters.Validator
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getStudentManagers - failed to parse request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getStudentManagers - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetStudentManagers(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

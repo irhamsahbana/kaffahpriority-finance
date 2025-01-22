@@ -22,6 +22,10 @@ func (s *masterService) GetMarketers(ctx context.Context, req *entity.GetMarkete
 	return s.repo.GetMarketers(ctx, req)
 }
 
+func (s *masterService) GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error) {
+	return s.repo.GetStudentManagers(ctx, req)
+}
+
 func (s *masterService) GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error) {
 	return s.repo.GetLecturers(ctx, req)
 }

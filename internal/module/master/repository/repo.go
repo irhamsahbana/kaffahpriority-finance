@@ -317,3 +317,42 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 
 	return resp, nil
 }
+
+func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error) {
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.StudentManager
+	}
+
+	var (
+		resp = new(entity.GetStudentManagersResp)
+		data = make([]dao, 0)
+	)
+	resp.Items = make([]entity.StudentManager, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			id,
+			name
+		FROM
+			student_managers
+		WHERE
+			deleted_at IS NULL
+		LIMIT ? OFFSET ?
+	`
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetStudentManagers - failed to query student managers")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Meta.TotalData = d.TotalData
+		resp.Items = append(resp.Items, d.StudentManager)
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
