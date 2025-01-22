@@ -260,7 +260,10 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 			id,
 			name,
 			price,
-			days
+			days,
+			lecturer_fee,
+			commission_fee,
+			price - lecturer_fee - commission_fee AS profit
 		FROM
 			programs
 		WHERE
@@ -292,7 +295,10 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 			id,
 			name,
 			price,
-			days
+			days,
+			lecturer_fee,
+			commission_fee,
+			price - lecturer_fee - commission_fee AS profit
 		FROM
 			programs
 		WHERE

@@ -84,8 +84,11 @@ func (r *GetProgramsReq) SetDefault() {
 
 type Program struct {
 	Common
-	Price float64       `json:"price" db:"price"`
-	Days  pq.Int64Array `json:"days" db:"days"`
+	Price         float64       `json:"price" db:"price"`
+	CommissionFee float64       `json:"commission_fee" db:"commission_fee"`
+	LecturerFee   float64       `json:"lecturer_fee" db:"lecturer_fee"`
+	Profit        float64       `json:"profit" db:"profit"`
+	Days          pq.Int64Array `json:"days" db:"days"`
 }
 
 type GetProgramsResp struct {

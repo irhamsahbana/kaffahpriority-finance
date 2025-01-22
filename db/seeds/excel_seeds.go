@@ -195,18 +195,26 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 	re := regexp.MustCompile(`\D`)
 	// insert into db
 	for i, row := range rows {
+		if len(row) < 5 {
+			log.Error().Any("row", row).Msg("invalid row")
+			return errmsg.NewCustomErrors(400).SetMessage("invalid row")
+		}
 		if i == 0 { // skip header
 			continue
 		}
 
 		var (
-			id        = row[0]
-			name      = row[1]
-			detailStr = row[2]
-			detail    *string
-			priceStr  = row[3]
-			price     float64
-			daysStr   = row[4]
+			id               = row[0]
+			name             = row[1]
+			detailStr        = row[2]
+			detail           *string
+			priceStr         = row[3]
+			price            float64
+			daysStr          = row[4]
+			commissionFee    float64
+			commissionFeeStr = row[5]
+			lecturerFee      float64
+			lecturerFeeStr   = row[6]
 		)
 
 		if id == "" {
@@ -239,6 +247,28 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 			price = priceFloat
 		}
 
+		if commissionFeeStr == "" {
+			commissionFee = 0
+		} else {
+			commissionFeeFloat, err := strconv.ParseFloat(re.ReplaceAllString(commissionFeeStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse commission fee")
+				return err
+			}
+			commissionFee = commissionFeeFloat
+		}
+
+		if lecturerFeeStr == "" {
+			lecturerFee = 0
+		} else {
+			lecturerFeeFloat, err := strconv.ParseFloat(re.ReplaceAllString(lecturerFeeStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse lecturer fee")
+				return err
+			}
+			lecturerFee = lecturerFeeFloat
+		}
+
 		// convert to []int
 		days := make([]int, 0)
 		if daysStr != "" { // example: "1|2|3"
@@ -253,8 +283,18 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 			}
 		}
 
-		query := "INSERT INTO programs (id, name, detail, price, days) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING"
-		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price, pq.Array(days))
+		query := `
+			INSERT INTO programs (id, name, detail, price, days, commission_fee, lecturer_fee)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT (id) DO UPDATE SET
+				name = EXCLUDED.name,
+				detail = EXCLUDED.detail,
+				price = EXCLUDED.price,
+				days = EXCLUDED.days,
+				commission_fee = EXCLUDED.commission_fee,
+				lecturer_fee = EXCLUDED.lecturer_fee
+			`
+		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price, pq.Array(days), commissionFee, lecturerFee)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to insert program")
 			return err
