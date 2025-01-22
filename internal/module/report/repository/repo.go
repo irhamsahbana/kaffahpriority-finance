@@ -60,15 +60,16 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			lecturer_id,
 			marketer_id,
 			student_id,
-			days
+			days,
+			notes
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		Id, req.UserId, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		pq.Array(req.Days),
+		pq.Array(req.Days), req.Notes,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to insert data")
