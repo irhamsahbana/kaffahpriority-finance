@@ -4,7 +4,9 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/module/master/entity"
 	"codebase-app/internal/module/master/ports"
+	"codebase-app/pkg/errmsg"
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -277,6 +279,35 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
+func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error) {
+	var (
+		resp = new(entity.GetProgramResp)
+	)
+	query := `
+		SELECT
+			id,
+			name,
+			price,
+			days
+		FROM
+			programs
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+
+	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id); err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msg("repo::GetProgram - program not found")
+			return nil, errmsg.NewCustomErrors(404).SetMessage("Program not found")
+		}
+		log.Error().Err(err).Any("req", req).Msg("repo::GetProgram - failed to query program")
+		return nil, err
+	}
 
 	return resp, nil
 }

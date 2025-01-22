@@ -2,6 +2,7 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	m "codebase-app/internal/middleware"
 	"codebase-app/internal/module/master/entity"
 	"codebase-app/internal/module/master/ports"
 	"codebase-app/internal/module/master/repository"
@@ -29,10 +30,11 @@ func NewMasterHandler() *masterHandler {
 }
 
 func (h *masterHandler) Register(router fiber.Router) {
-	router.Get("/marketers", h.getMarketers)
-	router.Get("/lecturers", h.getLecturers)
-	router.Get("/students", h.getStudents)
-	router.Get("/programs", h.getPrograms)
+	router.Get("/marketers", m.AuthBearer, h.getMarketers)
+	router.Get("/lecturers", m.AuthBearer, h.getLecturers)
+	router.Get("/students", m.AuthBearer, h.getStudents)
+	router.Get("/programs", m.AuthBearer, h.getPrograms)
+	router.Get("/programs/:id", m.AuthBearer, h.getProgram)
 }
 
 func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
@@ -139,6 +141,29 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetPrograms(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.JSON(response.Success(resp, ""))
+}
+
+func (h *masterHandler) getProgram(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetProgramReq)
+		v   = adapter.Adapters.Validator
+	)
+
+	req.Id = c.Params("id")
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getProgram - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetProgram(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

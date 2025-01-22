@@ -92,3 +92,11 @@ type GetProgramsResp struct {
 	Items []Program  `json:"items"`
 	Meta  types.Meta `json:"meta"`
 }
+
+type GetProgramReq struct {
+	Id string `params:"id" validate:"ulid"`
+}
+
+type GetProgramResp struct {
+	Program
+}
