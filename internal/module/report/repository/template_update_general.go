@@ -35,18 +35,6 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 			lecturer_id = ?,
 			marketer_id = ?,
 			student_id = ?,
-			/*
-			program_fee = ?,
-			administration_fee = ?,
-			foreign_learning_fee = ?,
-			night_learning_fee = ?,
-			marketer_commission_fee = ?,
-			overpayment_fee = ?,
-			hr_fee = ?,
-			marketer_gifts_fee = ?,
-			closing_fee_for_office = ?,
-			closing_fee_for_reward = ?,
-			*/
 			days = ?,
 			updated_at = NOW()
 		WHERE
