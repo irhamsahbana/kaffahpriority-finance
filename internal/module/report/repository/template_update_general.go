@@ -36,6 +36,7 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 			marketer_id = ?,
 			student_id = ?,
 			days = ?,
+			notes = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -47,7 +48,7 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 		// req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		// req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		// req.ClosingFeeForOffice, req.ClosingFeeForReward,
-		pq.Array(req.Days),
+		pq.Array(req.Days), req.Notes,
 		req.Id,
 	)
 	if err != nil {

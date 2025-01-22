@@ -23,6 +23,7 @@ type UpdateRegistrationReq struct {
 	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" validate:"omitempty,min=0"`
 	Students              []AddStudent `json:"additional_students" validate:"required,dive"`
 	Days                  []int64      `json:"days" validate:"required,unique_in_slice,dive,min=1,max=7"`
+	Notes                 *string      `json:"notes" validate:"omitempty,max=255"`
 }
 
 func (r *UpdateRegistrationReq) Validate() error {

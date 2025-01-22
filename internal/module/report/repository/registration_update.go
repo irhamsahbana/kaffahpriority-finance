@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"context"
 
+	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -46,6 +47,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
 			days = ?,
+			note = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -56,7 +58,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
-		req.ClosingFeeForOffice, req.ClosingFeeForReward, req.Days,
+		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.Id,
 	)
 	if err != nil {

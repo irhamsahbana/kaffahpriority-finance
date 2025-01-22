@@ -15,6 +15,7 @@ type UpdateTemplateGeneralReq struct {
 	StudentId          string       `json:"student_id" validate:"ulid"`
 	AdditionalStudents []AddStudent `json:"additional_students" validate:"required,dive"`
 	Days               []int        `json:"days" validate:"required,unique_in_slice,dive,min=1,max=7"`
+	Notes              *string      `json:"notes" validate:"omitempty,max=255"`
 }
 
 func (req *UpdateTemplateGeneralReq) Validate() error {
