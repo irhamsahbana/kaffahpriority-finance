@@ -30,6 +30,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 			COUNT (*) OVER() AS total_data,
 			id,
 			name,
+			detail,
 			price,
 			days,
 			lecturer_fee,
@@ -74,6 +75,7 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 		SELECT
 			id,
 			name,
+			detail,
 			price,
 			days,
 			lecturer_fee,
@@ -128,16 +130,18 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 		INSERT INTO programs (
 			id,
 			name,
+			detail,
 			price,
 			days,
 			lecturer_fee,
 			commission_fee
-		) VALUES (?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query),
 		id,
 		req.Name,
+		req.Detail,
 		req.Price,
 		pq.Array(req.Days),
 		req.LecturerFee,
