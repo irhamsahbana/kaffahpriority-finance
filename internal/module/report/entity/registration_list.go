@@ -6,8 +6,8 @@ import (
 )
 
 type GetRegistrationsReq struct {
-	PaidAtFrom string `query:"paid_at_from"`
-	PaidAtTo   string `query:"paid_at_to"`
+	PaidAtFrom string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
+	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
 
 	types.MetaQuery
@@ -25,8 +25,8 @@ func (r *GetRegistrationsReq) SetDefault() {
 func (r *GetRegistrationsReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
 	if (r.PaidAtFrom != "" || r.PaidAtTo != "") && (r.PaidAtFrom == "" || r.PaidAtTo == "") { // if one of them is empty
-		err.Add("paid_at_from", "tanggal pembayaran mulai dan tanggal pembayaran selesai harus diisi")
-		err.Add("paid_at_to", "tanggal pembayaran mulai dan tanggal pembayaran selesai harus diisi")
+		err.Add("paid_at_from", "batas bawah tanggal pembayaran dan batas atas tanggal pembayaran harus diisi")
+		err.Add("paid_at_to", "batas bawah tanggal pembayaran dan batas atas tanggal pembayaran harus diisi")
 	}
 
 	if err.HasErrors() {
@@ -64,6 +64,7 @@ type RegisItem struct {
 	ClosingFeeForOffice   *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
 	Notes                 *string      `json:"notes" db:"notes"`
+	PaidAt                string       `json:"paid_at" db:"paid_at"`
 	CreatedAt             string       `json:"created_at" db:"created_at"`
 	UpdatedAt             string       `json:"updated_at" db:"updated_at"`
 }

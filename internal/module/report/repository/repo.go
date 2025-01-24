@@ -104,6 +104,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		data            = make([]dao, 0, req.Paginate)
 		registrationIds = make([]string, 0)
 		resp            = new(entity.GetRegistrationsResp)
+		args            = make([]any, 0, 3)
 	)
 	resp.Items = make([]entity.RegisItem, 0)
 
@@ -126,6 +127,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.marketer_gifts_fee,
 			pr.closing_fee_for_office,
 			pr.closing_fee_for_reward,
+			pr.paid_at,
 			pr.created_at,
 			pr.updated_at,
 			pr.notes,
@@ -155,7 +157,16 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.deleted_at IS NULL
 	`
 
-	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query))
+	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
+		query += `
+			AND pr.paid_at AT TIME ZONE ? BETWEEN
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+		`
+		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+	}
+
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to fetch data")
 		return nil, err

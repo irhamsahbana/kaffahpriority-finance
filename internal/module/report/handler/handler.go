@@ -280,6 +280,12 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
+	if err := req.Validate(); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistrations - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
 	resp, err := h.service.GetRegistrations(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
