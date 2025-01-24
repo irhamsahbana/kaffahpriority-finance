@@ -1,15 +1,39 @@
 package entity
 
 import (
+	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/types"
 )
 
 type GetRegistrationsReq struct {
+	PaidAtFrom string `query:"paid_at_from"`
+	PaidAtTo   string `query:"paid_at_to"`
+	Timezone   string `query:"timezone" validate:"required,timezone"`
+
 	types.MetaQuery
 }
 
 func (r *GetRegistrationsReq) SetDefault() {
 	r.MetaQuery.SetDefault()
+
+	if r.Timezone == "" {
+		r.Timezone = "Asia/Makassar"
+	}
+
+}
+
+func (r *GetRegistrationsReq) Validate() error {
+	err := errmsg.NewCustomErrors(400)
+	if (r.PaidAtFrom != "" || r.PaidAtTo != "") && (r.PaidAtFrom == "" || r.PaidAtTo == "") { // if one of them is empty
+		err.Add("paid_at_from", "tanggal pembayaran mulai dan tanggal pembayaran selesai harus diisi")
+		err.Add("paid_at_to", "tanggal pembayaran mulai dan tanggal pembayaran selesai harus diisi")
+	}
+
+	if err.HasErrors() {
+		return err
+	}
+
+	return nil
 }
 
 type GetRegistrationsResp struct {

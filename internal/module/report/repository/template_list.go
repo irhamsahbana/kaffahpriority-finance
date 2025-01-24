@@ -42,7 +42,11 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
-			AS monthly_fee
+			AS monthly_fee,
+			CASE
+				WHEN prt.program_fee IS NULL THEN TRUE
+				ELSE FALSE
+			END AS is_finance_update_required
 		FROM
 			program_registration_templates prt
 		JOIN
