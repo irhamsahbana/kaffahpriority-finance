@@ -8,11 +8,21 @@ import (
 
 type GetTemplatesReq struct {
 	types.MetaQuery
+	SortType                string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+	SortBy                  string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at"`
 	IsFinanceUpdateRequired string `query:"is_finance_update_required" validate:"omitempty,oneof=true false"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {
 	r.MetaQuery.SetDefault()
+
+	if r.SortType == "" {
+		r.SortType = "desc"
+	}
+
+	if r.SortBy == "" {
+		r.SortBy = "updated_at"
+	}
 }
 
 type GetTemplatesResp struct {

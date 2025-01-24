@@ -72,11 +72,19 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		}
 	}
 
-	query += `
-		ORDER BY
-			prt.id DESC
-		LIMIT ? OFFSET ?
-	`
+	sortMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+		"":     "DESC",
+	}
+
+	sortByMap := map[string]string{
+		"created_at": "prt.created_at",
+		"updated_at": "prt.updated_at",
+		"":           "prt.updated_at",
+	}
+
+	query += ` ORDER BY ` + sortByMap[req.SortBy] + ` ` + sortMap[req.SortType] + ` LIMIT ? OFFSET ? `
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate)
 	if err != nil {
