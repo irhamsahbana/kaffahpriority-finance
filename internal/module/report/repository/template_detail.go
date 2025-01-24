@@ -18,8 +18,10 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 	query := `
 		SELECT
 			prt.*,
+			m.student_manager_id,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
+			sm.name AS student_manager_name,
 			s.name AS student_name,
 			p.name AS program_name
 		FROM
@@ -30,6 +32,9 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 		JOIN
 			marketers m
 			ON prt.marketer_id = m.id
+		JOIN
+			student_managers sm
+			ON m.student_manager_id = sm.id
 		JOIN
 			students s
 			ON prt.student_id = s.id
