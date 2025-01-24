@@ -27,7 +27,7 @@ type GetTemplateResp struct {
 	MarketerGiftsFee      float64       `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice   *float64      `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward   *float64      `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
-	Students              []AddStudent  `json:"students"`
+	Students              []AddStudent  `json:"additional_students"`
 	Days                  pq.Int64Array `json:"days" db:"days"`
 	Notes                 *string       `json:"notes" db:"notes"`
 	CreatedAt             string        `json:"created_at" db:"created_at"`

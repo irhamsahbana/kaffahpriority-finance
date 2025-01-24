@@ -70,9 +70,10 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 	query += `
 		ORDER BY
 			prt.id DESC
+		LIMIT ? OFFSET ?
 	`
 
-	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query))
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch data")
 		return nil, err
