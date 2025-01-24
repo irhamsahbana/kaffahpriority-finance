@@ -17,6 +17,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		data        = make([]dao, 0, req.Paginate)
 		templateIds = make([]string, 0)
 		resp        = new(entity.GetTemplatesResp)
+		args        = make([]any, 0, 2)
 	)
 	resp.Items = make([]entity.TemplateItem, 0)
 
@@ -76,6 +77,31 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		}
 	}
 
+	if req.MarketerId != "" {
+		query += ` AND prt.marketer_id = ? `
+		args = append(args, req.MarketerId)
+	}
+
+	if req.StudentManagerId != "" {
+		query += ` AND m.student_manager_id = ? `
+		args = append(args, req.StudentManagerId)
+	}
+
+	if req.LecturerId != "" {
+		query += ` AND prt.lecturer_id = ? `
+		args = append(args, req.LecturerId)
+	}
+
+	if req.StudentId != "" {
+		query += ` AND prt.student_id = ? `
+		args = append(args, req.StudentId)
+	}
+
+	if req.ProgramId != "" {
+		query += ` AND prt.program_id = ? `
+		args = append(args, req.ProgramId)
+	}
+
 	sortMap := map[string]string{
 		"asc":  "ASC",
 		"desc": "DESC",
@@ -89,8 +115,9 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 	}
 
 	query += ` ORDER BY ` + sortByMap[req.SortBy] + ` ` + sortMap[req.SortType] + ` LIMIT ? OFFSET ? `
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
-	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate)
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch data")
 		return nil, err
