@@ -71,9 +71,9 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 	if req.IsFinanceUpdateRequired != "" {
 		if req.IsFinanceUpdateRequired == "true" {
-			query += ` AND prt.program_fee IS NULL `
+			query += ` AND prt.is_financially_cleared = FALSE `
 		} else {
-			query += ` AND prt.program_fee IS NOT NULL `
+			query += ` AND prt.is_financially_cleared = TRUE `
 		}
 	}
 

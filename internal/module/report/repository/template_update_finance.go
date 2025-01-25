@@ -39,6 +39,7 @@ func (r *reportRepo) UpdateTemplateFinance(ctx context.Context, req *entity.Upda
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
+			is_financially_cleared = TRUE,
 			updated_at = NOW()
 		WHERE
 			id = ?

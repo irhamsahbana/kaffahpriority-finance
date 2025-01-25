@@ -53,6 +53,17 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 	resp.Id = Id
 
 	query := `
+		WITH program AS (
+			SELECT
+				p.price AS program_fee,
+				p.lecturer_fee AS hr_fee,
+				p.commission_fee AS marketer_commission_fee
+			FROM
+				programs p
+			WHERE
+				p.id = ?
+				AND p.deleted_at IS NULL
+		)
 		INSERT INTO program_registration_templates (
 			id,
 			user_id,
@@ -61,13 +72,20 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			marketer_id,
 			student_id,
 			days,
-			notes
+			notes,
+			program_fee,
+			hr_fee,
+			marketer_commission_fee
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?
+			(SELECT program_fee FROM program),
+			(SELECT hr_fee FROM program),
+			(SELECT marketer_commission_fee FROM program)
 		)
 	`
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
+		req.ProgramId,
 		Id, req.UserId, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes,
 	)

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     closing_fee_for_office DECIMAL(19, 4),
     closing_fee_for_reward DECIMAL(19, 4),
     notes VARCHAR(255),
+    is_financially_cleared BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE,
