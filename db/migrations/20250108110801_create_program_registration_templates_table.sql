@@ -1,3 +1,4 @@
+-- Active: 1736401832474@@127.0.0.1@5432@kp_finance_dev@public
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS program_registration_templates (
@@ -28,10 +29,9 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     FOREIGN KEY (lecturer_id) REFERENCES lecturers (id),
     FOREIGN KEY (marketer_id) REFERENCES marketers (id),
     FOREIGN KEY (student_id) REFERENCES students (id),
-    FOREIGN KEY (user_id) REFERENCES users (id),
-
-    CONSTRAINT prt_fk_unique UNIQUE (program_id, lecturer_id, marketer_id, student_id)
+    FOREIGN KEY (user_id) REFERENCES users (id)
 );
+
 -- +goose StatementEnd
 
 -- +goose Down

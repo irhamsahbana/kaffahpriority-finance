@@ -46,6 +46,34 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		}
 	}()
 
+	isCombinationExist := false
+
+	queryCheckCombination := `
+		SELECT EXISTS (
+			SELECT
+				1
+			FROM
+				program_registration_templates prt
+			WHERE
+				prt.program_id = ?
+				AND prt.lecturer_id = ?
+				AND prt.marketer_id = ?
+				AND prt.student_id = ?
+				AND prt.deleted_at IS NULL
+		)
+	`
+
+	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCheckCombination), req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to check combination")
+		return nil, err
+	}
+
+	if isCombinationExist {
+		log.Warn().Any("req", req).Msg("repo::CreateTemplate - combination already exist")
+		return nil, errmsg.NewCustomErrors(409).SetMessage("Template sudah ada")
+	}
+
 	var (
 		Id   = ulid.Make().String()
 		resp = new(entity.CreateTemplateResp)
