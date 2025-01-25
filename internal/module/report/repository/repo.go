@@ -233,6 +233,26 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Q, req.Q)
 	}
 
+	if req.LecturerId != "" {
+		query += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerId)
+	}
+
+	if req.MarketerId != "" {
+		query += ` AND pr.marketer_id = ?`
+		args = append(args, req.MarketerId)
+	}
+
+	if req.StudentId != "" {
+		query += ` AND pr.student_id = ?`
+		args = append(args, req.StudentId)
+	}
+
+	if req.ProgramId != "" {
+		query += ` AND pr.program_id = ?`
+		args = append(args, req.ProgramId)
+	}
+
 	sortByMap := map[string]string{
 		"created_at": "pr.created_at",
 		"paid_at":    "pr.paid_at",

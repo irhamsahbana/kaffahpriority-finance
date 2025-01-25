@@ -11,6 +11,11 @@ type GetRegistrationsReq struct {
 	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
 
+	MarketerId string `query:"marketer_id" validate:"omitempty,ulid"`
+	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
+
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
 
