@@ -25,8 +25,8 @@ func (r *GetRegistrationsReq) SetDefault() {
 func (r *GetRegistrationsReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
 	if (r.PaidAtFrom != "" || r.PaidAtTo != "") && (r.PaidAtFrom == "" || r.PaidAtTo == "") { // if one of them is empty
-		err.Add("paid_at_from", "batas bawah tanggal pembayaran dan batas atas tanggal pembayaran harus diisi")
-		err.Add("paid_at_to", "batas bawah tanggal pembayaran dan batas atas tanggal pembayaran harus diisi")
+		err.Add("paid_at_from", "batas bawah tanggal pembayaran harus diisi")
+		err.Add("paid_at_to", "batas atas tanggal pembayaran harus diisi")
 	}
 
 	if err.HasErrors() {
