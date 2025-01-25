@@ -225,6 +225,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	}
 
+	if req.Q != "" {
+		query += ` AND (
+			pr.program_name ILIKE '%' || ? || '%' OR
+			s.name ILIKE '%' || ? || '%'
+		)`
+		args = append(args, req.Q, req.Q)
+	}
+
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to fetch data")
