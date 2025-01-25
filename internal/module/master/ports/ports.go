@@ -7,8 +7,13 @@ import (
 
 type MasterRepository interface {
 	GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error)
-	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
+
+	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
+	GetLecturer(ctx context.Context, req *entity.GetLecturerReq) (*entity.GetLecturerResp, error)
+	CreateLecturer(ctx context.Context, req *entity.CreateLecturerReq) (*entity.CreateLecturerResp, error)
+	UpdateLecturer(ctx context.Context, req *entity.UpdateLecturerReq) error
+	DeleteLecturer(ctx context.Context, req *entity.DeleteLecturerReq) error
 
 	GetStudents(ctx context.Context, req *entity.GetStudentsReq) (*entity.GetStudentsResp, error)
 	CreateStudent(ctx context.Context, req *entity.CreateStudentReq) (*entity.CreateStudentResp, error)
@@ -25,8 +30,13 @@ type MasterRepository interface {
 
 type MasterService interface {
 	GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error)
-	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
+
+	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
+	GetLecturer(ctx context.Context, req *entity.GetLecturerReq) (*entity.GetLecturerResp, error)
+	CreateLecturer(ctx context.Context, req *entity.CreateLecturerReq) (*entity.CreateLecturerResp, error)
+	UpdateLecturer(ctx context.Context, req *entity.UpdateLecturerReq) error
+	DeleteLecturer(ctx context.Context, req *entity.DeleteLecturerReq) error
 
 	GetStudents(ctx context.Context, req *entity.GetStudentsReq) (*entity.GetStudentsResp, error)
 	CreateStudent(ctx context.Context, req *entity.CreateStudentReq) (*entity.CreateStudentResp, error)

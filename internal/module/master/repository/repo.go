@@ -79,58 +79,6 @@ func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersR
 	return resp, nil
 }
 
-func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error) {
-	type dao struct {
-		TotalData int `db:"total_data"`
-		entity.Lecturer
-	}
-
-	var (
-		resp = new(entity.GetLecturersResp)
-		data = make([]dao, 0)
-		args = make([]any, 0, 3)
-	)
-	resp.Items = make([]entity.Lecturer, 0)
-
-	query := `
-		SELECT
-			COUNT (*) OVER() AS total_data,
-			id,
-			name,
-			phone
-		FROM
-			lecturers
-		WHERE
-			deleted_at IS NULL
-	`
-
-	if req.Q != "" {
-		query += ` AND (
-			name ILIKE '%' || ? || '%' OR
-			phone ILIKE '%' || ? || '%'
-		)
-		`
-		args = append(args, req.Q, req.Q)
-	}
-
-	query += ` LIMIT ? OFFSET ?`
-	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
-
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturers - failed to query lecturers")
-		return nil, err
-	}
-
-	for _, d := range data {
-		resp.Meta.TotalData = d.TotalData
-		resp.Items = append(resp.Items, d.Lecturer)
-	}
-
-	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
-
-	return resp, nil
-}
-
 func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error) {
 	type dao struct {
 		TotalData int `db:"total_data"`
