@@ -122,10 +122,11 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 	}
 
 	sortByMap := map[string]string{
-		"created_at": "pr.created_at",
-		"paid_at":    "pr.paid_at",
-		"updated_at": "pr.updated_at",
-		"":           "pr.paid_at",
+		"created_at":   "pr.created_at",
+		"paid_at":      "pr.paid_at",
+		"updated_at":   "pr.updated_at",
+		"student_name": "s.name",
+		"":             "pr.paid_at",
 	}
 
 	sortTypeMap := map[string]string{

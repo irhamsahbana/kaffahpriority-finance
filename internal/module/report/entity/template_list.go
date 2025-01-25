@@ -8,14 +8,16 @@ import (
 
 type GetTemplatesReq struct {
 	types.MetaQuery
-	SortType                string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
-	SortBy                  string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at"`
 	IsFinanceUpdateRequired string `query:"is_finance_update_required" validate:"omitempty,oneof=true false"`
-	MarketerId              string `query:"marketer_id" validate:"omitempty,ulid"`
-	StudentManagerId        string `query:"student_manager_id" validate:"omitempty,ulid"`
-	LecturerId              string `query:"lecturer_id" validate:"omitempty,ulid"`
-	StudentId               string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramId               string `query:"program_id" validate:"omitempty,ulid"`
+
+	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at student_name"`
+
+	MarketerId       string `query:"marketer_id" validate:"omitempty,ulid"`
+	StudentManagerId string `query:"student_manager_id" validate:"omitempty,ulid"`
+	LecturerId       string `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentId        string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramId        string `query:"program_id" validate:"omitempty,ulid"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {

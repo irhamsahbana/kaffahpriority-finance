@@ -16,7 +16,7 @@ type GetRegistrationsReq struct {
 	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
 	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
 
-	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at"`
+	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
 
 	types.MetaQuery
