@@ -28,7 +28,11 @@ func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersR
 			COUNT (*) OVER() AS total_data,
 			id,
 			name,
-			phone
+			phone,
+			CASE
+				WHEN registered_at IS NOT NULL THEN TO_CHAR(registered_at, 'YYYY-MM-DD')
+				ELSE NULL
+			END AS registered_at
 		FROM
 			lecturers
 		WHERE
@@ -67,8 +71,9 @@ func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLectu
 		INSERT INTO lecturers (
 			id,
 			name,
-			phone
-		) VALUES (?, ?, ?)
+			phone,
+			registered_at
+		) VALUES (?, ?, ?, ?)
 	`
 
 	var (
@@ -76,7 +81,8 @@ func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLectu
 		resp = new(entity.CreateLecturerResp)
 	)
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), Id, req.Name, req.Phone); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
+		Id, req.Name, req.Phone, req.RegisteredAt); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateLecturer - failed to create lecturer")
 		return nil, err
 	}
@@ -96,7 +102,11 @@ func (r *masterRepo) GetLecturer(ctx context.Context, req *entity.GetLecturerReq
 		SELECT
 			id,
 			name,
-			phone
+			phone,
+			CASE
+				WHEN registered_at IS NOT NULL THEN TO_CHAR(registered_at, 'YYYY-MM-DD')
+				ELSE NULL
+			END AS registered_at
 		FROM
 			lecturers
 		WHERE
@@ -124,13 +134,15 @@ func (r *masterRepo) UpdateLecturer(ctx context.Context, req *entity.UpdateLectu
 		SET
 			name = ?,
 			phone = ?,
+			registered_at = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Phone, req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
+		req.Name, req.Phone, req.RegisteredAt, req.Id); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturer - failed to update lecturer")
 		return err
 	}

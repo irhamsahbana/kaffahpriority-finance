@@ -13,7 +13,8 @@ func (r *GetLecturersReq) SetDefault() {
 
 type Lecturer struct {
 	Common
-	Phone *string `json:"phone" db:"phone"`
+	Phone        *string `json:"phone" db:"phone"`
+	RegisteredAt *string `json:"registered_at" db:"registered_at"`
 }
 
 type GetLecturersResp struct {
@@ -34,8 +35,9 @@ type GetLecturerResp struct {
 type CreateLecturerReq struct {
 	UserId string `validate:"ulid"`
 
-	Name  string  `json:"name" validate:"required,min=3"`
-	Phone *string `json:"phone" validate:"omitempty,min=9"`
+	Name         string  `json:"name" validate:"required,min=3"`
+	Phone        *string `json:"phone" validate:"omitempty,min=9"`
+	RegisteredAt *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type CreateLecturerResp struct {
@@ -45,9 +47,10 @@ type CreateLecturerResp struct {
 type UpdateLecturerReq struct {
 	UserId string `validate:"ulid"`
 
-	Id    string  `params:"id" validate:"required"`
-	Name  string  `json:"name" validate:"required,min=3"`
-	Phone *string `json:"phone" validate:"omitempty,min=9"`
+	Id           string  `params:"id" validate:"required"`
+	Name         string  `json:"name" validate:"required,min=3"`
+	Phone        *string `json:"phone" validate:"omitempty,min=9"`
+	RegisteredAt *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type DeleteLecturerReq struct {
