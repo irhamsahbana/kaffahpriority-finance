@@ -30,7 +30,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.lecturer_id,
 			prt.marketer_id,
 			prt.student_id,
-			s.identfier as student_identifier,
+			s.identifier as student_identifier,
 			prt.days,
 			prt.program_fee,
 			prt.administration_fee,
