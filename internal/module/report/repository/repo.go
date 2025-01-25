@@ -233,6 +233,22 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Q, req.Q)
 	}
 
+	sortByMap := map[string]string{
+		"created_at": "pr.created_at",
+		"paid_at":    "pr.paid_at",
+		"updated_at": "pr.updated_at",
+		"":           "pr.paid_at",
+	}
+
+	sortTypeMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+		"":     "DESC",
+	}
+
+	query += ` ORDER BY ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType] + ` LIMIT ? OFFSET ?`
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to fetch data")

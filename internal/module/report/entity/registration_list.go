@@ -11,6 +11,9 @@ type GetRegistrationsReq struct {
 	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
 
+	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at"`
+	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+
 	types.MetaQuery
 }
 
@@ -19,6 +22,14 @@ func (r *GetRegistrationsReq) SetDefault() {
 
 	if r.Timezone == "" {
 		r.Timezone = "Asia/Makassar"
+	}
+
+	if r.SortBy == "" {
+		r.SortBy = "paid_at"
+	}
+
+	if r.SortType == "" {
+		r.SortType = "desc"
 	}
 
 }
