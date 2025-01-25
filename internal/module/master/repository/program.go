@@ -91,7 +91,7 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id); err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msg("repo::GetProgram - program not found")
-			return nil, errmsg.NewCustomErrors(404).SetMessage("Program not found")
+			return nil, errmsg.NewCustomErrors(404).SetMessage("Program tidak ditemukan")
 		}
 		log.Error().Err(err).Any("req", req).Msg("repo::GetProgram - failed to query program")
 		return nil, err
@@ -155,4 +155,80 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 	resp.Id = id
 
 	return resp, nil
+}
+
+func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgramReq) (*entity.UpdateProgramResp, error) {
+	var (
+		resp    = new(entity.UpdateProgramResp)
+		isExist bool
+	)
+
+	queryExist := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM programs
+			WHERE id = ?
+			AND deleted_at IS NULL
+		)
+	`
+
+	if err := r.db.GetContext(ctx, &isExist, r.db.Rebind(queryExist), req.Id); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to check program exist")
+		return nil, err
+	}
+
+	if !isExist {
+		log.Warn().Any("req", req).Msg("repo::UpdateProgram - program not found")
+		return nil, errmsg.NewCustomErrors(404).SetMessage("Program tidak ditemukan")
+	}
+
+	query := `
+		UPDATE programs
+		SET
+			name = ?,
+			detail = ?,
+			price = ?,
+			days = ?,
+			lecturer_fee = ?,
+			commission_fee = ?
+		WHERE
+			id = ?
+	`
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query),
+		req.Name,
+		req.Detail,
+		req.Price,
+		pq.Array(req.Days),
+		req.LecturerFee,
+		req.CommissionFee,
+		req.Id,
+	)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to update program")
+		return nil, err
+	}
+
+	resp.Id = req.Id
+
+	return resp, nil
+}
+
+func (r *masterRepo) DeleteProgram(ctx context.Context, req *entity.DeleteProgramReq) error {
+	query := `
+		UPDATE programs
+		SET
+			deleted_at = NOW()
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::DeleteProgram - failed to delete program")
+		return err
+	}
+
+	return nil
 }

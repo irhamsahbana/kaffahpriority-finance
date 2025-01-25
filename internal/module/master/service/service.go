@@ -45,3 +45,11 @@ func (s *masterService) GetPrograms(ctx context.Context, req *entity.GetPrograms
 func (s *masterService) GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error) {
 	return s.repo.GetProgram(ctx, req)
 }
+
+func (s *masterService) UpdateProgram(ctx context.Context, req *entity.UpdateProgramReq) (*entity.UpdateProgramResp, error) {
+	return s.repo.UpdateProgram(ctx, req)
+}
+
+func (s *masterService) DeleteProgram(ctx context.Context, req *entity.DeleteProgramReq) error {
+	return s.repo.DeleteProgram(ctx, req)
+}

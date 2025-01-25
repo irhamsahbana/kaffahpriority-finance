@@ -41,12 +41,34 @@ type GetProgramResp struct {
 type CreateProgramReq struct {
 	Name          string  `json:"name" validate:"required,min=3"`
 	Detail        *string `json:"detail" validate:"omitempty,min=3"`
-	Price         float64 `json:"price" validate:"required,gt=0"`
-	CommissionFee float64 `json:"commission_fee" validate:"required,gt=0"`
-	LecturerFee   float64 `json:"lecturer_fee" validate:"required,gt=0"`
+	Price         float64 `json:"price" validate:"required,gte=0"`
+	CommissionFee float64 `json:"commission_fee" validate:"required,gte=0"`
+	LecturerFee   float64 `json:"lecturer_fee" validate:"required,gte=0"`
 	Days          []int64 `json:"days" validate:"required,min=1,dive,min=1,max=7"`
 }
 
 type CreateProgramResp struct {
+	Id string `json:"id"`
+}
+
+type UpdateProgramReq struct {
+	Id            string  `params:"id" validate:"required,ulid"`
+	Name          string  `json:"name" validate:"required,min=3"`
+	Detail        *string `json:"detail" validate:"omitempty,min=3"`
+	Price         float64 `json:"price" validate:"required,gt=0"`
+	CommissionFee float64 `json:"commission_fee" validate:"required,gte=0"`
+	LecturerFee   float64 `json:"lecturer_fee" validate:"required,gte=0"`
+	Days          []int64 `json:"days" validate:"required,min=1,dive,min=1,max=7"`
+}
+
+type UpdateProgramResp struct {
+	Id string `json:"id"`
+}
+
+type DeleteProgramReq struct {
+	Id string `params:"id" validate:"required,ulid"`
+}
+
+type DeleteProgramResp struct {
 	Id string `json:"id"`
 }

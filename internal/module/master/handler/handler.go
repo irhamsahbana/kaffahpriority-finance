@@ -38,6 +38,8 @@ func (h *masterHandler) Register(router fiber.Router) {
 	router.Post("/programs", m.AuthBearer, h.createProgram)
 	router.Get("/programs", m.AuthBearer, h.getPrograms)
 	router.Get("/programs/:id", m.AuthBearer, h.getProgram)
+	router.Put("/programs/:id", m.AuthBearer, h.updateProgram)
+	router.Delete("/programs/:id", m.AuthBearer, h.deleteProgram)
 }
 
 func (h *masterHandler) getMarketers(c *fiber.Ctx) error {

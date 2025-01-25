@@ -14,6 +14,8 @@ type MasterRepository interface {
 	CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error)
 	GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error)
 	GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error)
+	UpdateProgram(ctx context.Context, req *entity.UpdateProgramReq) (*entity.UpdateProgramResp, error)
+	DeleteProgram(ctx context.Context, req *entity.DeleteProgramReq) error
 }
 
 type MasterService interface {
@@ -25,4 +27,6 @@ type MasterService interface {
 	CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error)
 	GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error)
 	GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error)
+	UpdateProgram(ctx context.Context, req *entity.UpdateProgramReq) (*entity.UpdateProgramResp, error)
+	DeleteProgram(ctx context.Context, req *entity.DeleteProgramReq) error
 }
