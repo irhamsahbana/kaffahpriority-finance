@@ -64,6 +64,7 @@ type RegisItem struct {
 	MarketerId            string       `json:"marketer_id" db:"marketer_id"`
 	LecturerId            string       `json:"lecturer_id" db:"lecturer_id"`
 	StudentId             string       `json:"student_id" db:"student_id"`
+	StudentIdentifier     string       `json:"student_identifier" db:"student_identifier"`
 	ProgramName           string       `json:"program_name" db:"program_name"`
 	LecturerName          string       `json:"lecturer_name" db:"lecturer_name"`
 	MarketerName          string       `json:"marketer_name" db:"marketer_name"`

@@ -14,6 +14,7 @@ type GetTemplateResp struct {
 	StudentManagerId      string        `json:"student_manager_id" db:"student_manager_id"`
 	LecturerId            string        `json:"lecturer_id" db:"lecturer_id"`
 	StudentId             string        `json:"student_id" db:"student_id"`
+	StudentIdentifier     string        `json:"student_identifier" db:"student_identifier"`
 	ProgramName           string        `json:"program_name" db:"program_name"`
 	MarketerName          string        `json:"marketer_name" db:"marketer_name"`
 	StudentManagerName    string        `json:"student_manager_name" db:"student_manager_name"`
