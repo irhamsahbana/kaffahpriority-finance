@@ -63,6 +63,7 @@ type RegisItem struct {
 	MarketerGiftsFee      float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice   *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
+	Profit                float64      `json:"profit" db:"profit"`
 	Notes                 *string      `json:"notes" db:"notes"`
 	PaidAt                string       `json:"paid_at" db:"paid_at"`
 	CreatedAt             string       `json:"created_at" db:"created_at"`

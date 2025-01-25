@@ -154,6 +154,19 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
+			(
+				COALESCE(pr.administration_fee, 0)
+				+ COALESCE(pr.program_fee, 0)
+				+ COALESCE(pr.overpayment_fee, 0)
+				+ COALESCE(pr.night_learning_fee, 0)
+				+ COALESCE(pr.foreign_learning_fee, 0)
+				- COALESCE(pr.marketer_commission_fee, 0)
+				- COALESCE(pr.marketer_gifts_fee, 0)
+				- COALESCE(pr.hr_fee, 0)
+				- COALESCE(pr.overpayment_fee, 0)
+				- COALESCE(pr.closing_fee_for_office, 0)
+				- COALESCE(pr.closing_fee_for_reward, 0)
+			) AS profit,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name
@@ -274,6 +287,19 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.created_at,
 			pr.updated_at,
 			pr.notes,
+			(
+				COALESCE(pr.administration_fee, 0)
+				+ COALESCE(pr.program_fee, 0)
+				+ COALESCE(pr.overpayment_fee, 0)
+				+ COALESCE(pr.night_learning_fee, 0)
+				+ COALESCE(pr.foreign_learning_fee, 0)
+				- COALESCE(pr.marketer_commission_fee, 0)
+				- COALESCE(pr.marketer_gifts_fee, 0)
+				- COALESCE(pr.hr_fee, 0)
+				- COALESCE(pr.overpayment_fee, 0)
+				- COALESCE(pr.closing_fee_for_office, 0)
+				- COALESCE(pr.closing_fee_for_reward, 0)
+			) AS profit,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,

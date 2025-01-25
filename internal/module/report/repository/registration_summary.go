@@ -33,7 +33,6 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 					- COALESCE(pr.overpayment_fee, 0)
 					- COALESCE(pr.closing_fee_for_office, 0)
 					- COALESCE(pr.closing_fee_for_reward, 0)
-
 				)
 			, 0) AS total_profit
 		FROM
