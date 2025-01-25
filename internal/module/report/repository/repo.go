@@ -279,6 +279,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		resp.Meta.TotalData = item.TotalData
 		registrationIds = append(registrationIds, item.Id)
 		resp.Items = append(resp.Items, item.RegisItem)
+		resp.Items[len(resp.Items)-1].Students = make([]entity.AddStudent, 0)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
