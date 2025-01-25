@@ -42,6 +42,10 @@ func (s *reportService) CreateRegistrations(ctx context.Context, req *entity.Cre
 	return s.repo.CreateRegistrations(ctx, req)
 }
 
+func (s *reportService) CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error {
+	return s.repo.CopyRegistrations(ctx, req)
+}
+
 func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
 	return s.repo.UpdateRegistration(ctx, req)
 }

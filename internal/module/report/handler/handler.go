@@ -37,6 +37,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/templates/:id", m.AuthBearer, h.getTemplate)
 
 	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
+	router.Post("/copy-registrations", m.AuthBearer, h.copyRegistrations)
 	router.Get("/registration-summaries", m.AuthBearer, h.getSummaries)
 	router.Get("/registrations", m.AuthBearer, h.getRegistrations)
 	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
@@ -255,6 +256,35 @@ func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 	}
 
 	err := h.service.CreateRegistrations(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
+	var (
+		req = new(entity.CopyRegistrationsReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::copyRegistrations - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::copyRegistrations - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.CopyRegistrations(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

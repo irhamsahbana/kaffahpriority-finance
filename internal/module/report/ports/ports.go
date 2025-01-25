@@ -13,6 +13,7 @@ type ReportRepository interface {
 	UpdateTemplateFinance(ctx context.Context, req *entity.UpdateTemplateFinanceReq) (*entity.UpdateTemplateResp, error)
 
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
+	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
@@ -29,6 +30,7 @@ type ReportService interface {
 	UpdateTemplateFinance(ctx context.Context, req *entity.UpdateTemplateFinanceReq) (*entity.UpdateTemplateResp, error)
 
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
+	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
