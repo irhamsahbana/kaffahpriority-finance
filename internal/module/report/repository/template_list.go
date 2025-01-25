@@ -24,15 +24,28 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 	query := `
 		SELECT
 			COUNT(*) OVER() AS total_data,
-			/*
 			prt.id,
-			prt.marketer_id,
+			prt.user_id,
+			prt.program_id,
 			prt.lecturer_id,
+			prt.marketer_id,
 			prt.student_id,
+			prt.days,
+			prt.program_fee,
+			prt.administration_fee,
+			prt.foreign_learning_fee,
+			prt.night_learning_fee,
+			prt.marketer_commission_fee,
+			prt.overpayment_fee,
+			prt.hr_fee,
+			prt.marketer_gifts_fee,
+			prt.closing_fee_for_office,
+			prt.closing_fee_for_reward,
+			prt.notes,
 			prt.created_at,
 			prt.updated_at,
-			*/
-			prt.*,
+			prt.deleted_at,
+
 			m.student_manager_id,
 			p.name AS program_name,
 			l.name AS lecturer_name,
@@ -45,7 +58,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.overpayment_fee, 0)
 			AS monthly_fee,
 			CASE
-				WHEN prt.program_fee IS NULL THEN TRUE
+				WHEN prt.is_financially_cleared = FALSE THEN TRUE
 				ELSE FALSE
 			END AS is_finance_update_required
 		FROM
