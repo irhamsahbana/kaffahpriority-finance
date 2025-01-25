@@ -271,7 +271,7 @@ func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	if err := c.BodyParser(req); err != nil {
+	if err := c.BodyParser(&req.Registrations); err != nil {
 		log.Warn().Err(err).Msg("handler::copyRegistrations - invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}

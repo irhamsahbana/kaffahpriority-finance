@@ -219,6 +219,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		WHERE
 			adds.pr_id = ?
 	`
+	queryStudents = r.db.Rebind(queryStudents)
 
 	queryInsertStudents := `
 		INSERT INTO pr_additional_students (
@@ -228,6 +229,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			name
 		) VALUES (?, ?, ?, ?)
 	`
+	queryInsertStudents = r.db.Rebind(queryInsertStudents)
 
 	for _, item := range req.Registrations {
 		var prId = ulid.Make().String()
