@@ -7,8 +7,10 @@ import (
 )
 
 type GetProgramsReq struct {
-	types.MetaQuery
+	UserId string `validate:"ulid"`
+
 	Q string `query:"q" validate:"omitempty,min=2"`
+	types.MetaQuery
 }
 
 func (r *GetProgramsReq) SetDefault() {
@@ -31,7 +33,8 @@ type GetProgramsResp struct {
 }
 
 type GetProgramReq struct {
-	Id string `params:"id" validate:"ulid"`
+	UserId string `validate:"ulid"`
+	Id     string `params:"id" validate:"ulid"`
 }
 
 type GetProgramResp struct {
@@ -48,7 +51,8 @@ type CreateProgramReq struct {
 }
 
 type CreateProgramResp struct {
-	Id string `json:"id"`
+	UserId string `validate:"ulid"`
+	Id     string `json:"id"`
 }
 
 type UpdateProgramReq struct {
@@ -62,11 +66,13 @@ type UpdateProgramReq struct {
 }
 
 type UpdateProgramResp struct {
-	Id string `json:"id"`
+	UserId string `validate:"ulid"`
+	Id     string `json:"id"`
 }
 
 type DeleteProgramReq struct {
-	Id string `params:"id" validate:"required,ulid"`
+	UserId string `validate:"ulid"`
+	Id     string `params:"id" validate:"required,ulid"`
 }
 
 type DeleteProgramResp struct {
