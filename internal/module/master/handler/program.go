@@ -84,7 +84,7 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	return c.JSON(response.Success(resp, ""))
+	return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
 }
 
 func (h *masterHandler) updateProgram(c *fiber.Ctx) error {

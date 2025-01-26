@@ -90,7 +90,7 @@ func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	return c.JSON(response.Success(resp, ""))
+	return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
 }
 
 func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
