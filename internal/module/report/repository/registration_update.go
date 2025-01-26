@@ -47,7 +47,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
 			days = ?,
-			note = ?,
+			notes = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?

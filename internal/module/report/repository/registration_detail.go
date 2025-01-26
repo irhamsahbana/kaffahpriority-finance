@@ -22,8 +22,10 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.marketer_id,
 			pr.lecturer_id,
 			pr.student_id,
-			pr.days,
+			m.student_manager_id,
 			s.identifier AS student_identifier,
+			sm.name AS student_manager_name,
+			pr.days,
 			pr.program_name,
 			pr.program_fee,
 			pr.administration_fee,
@@ -63,6 +65,9 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 		JOIN
 			marketers m
 			ON pr.marketer_id = m.id
+		JOIN
+			student_managers sm
+			ON m.student_manager_id = sm.id
 		JOIN
 			students s
 			ON pr.student_id = s.id
