@@ -1,17 +1,12 @@
 package handler
 
 import (
-	"codebase-app/internal/adapter"
 	m "codebase-app/internal/middleware"
-	"codebase-app/internal/module/master/entity"
 	"codebase-app/internal/module/master/ports"
 	"codebase-app/internal/module/master/repository"
 	"codebase-app/internal/module/master/service"
-	"codebase-app/pkg/errmsg"
-	"codebase-app/pkg/response"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 )
 
 type masterHandler struct {
@@ -31,6 +26,10 @@ func NewMasterHandler() *masterHandler {
 
 func (h *masterHandler) Register(router fiber.Router) {
 	router.Get("/marketers", m.AuthBearer, h.getMarketers)
+	router.Get("/marketers/:id", m.AuthBearer, h.getMarketer)
+	router.Post("/marketers", m.AuthBearer, h.createMarketer)
+	router.Put("/marketers/:id", m.AuthBearer, h.updateMarketer)
+	router.Delete("/marketers/:id", m.AuthBearer, h.deleteMarketer)
 
 	router.Get("/student-managers", m.AuthBearer, h.getStudentManagers)
 	router.Get("/student-managers/:id", m.AuthBearer, h.getStudentManager)
@@ -55,32 +54,4 @@ func (h *masterHandler) Register(router fiber.Router) {
 	router.Get("/programs/:id", m.AuthBearer, h.getProgram)
 	router.Put("/programs/:id", m.AuthBearer, h.updateProgram)
 	router.Delete("/programs/:id", m.AuthBearer, h.deleteProgram)
-}
-
-func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetMarketersReq)
-		v   = adapter.Adapters.Validator
-	)
-
-	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getMarketers - failed to parse request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.SetDefault()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getMarketers - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetMarketers(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.JSON(response.Success(resp, ""))
 }

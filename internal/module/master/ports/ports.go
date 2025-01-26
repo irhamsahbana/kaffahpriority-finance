@@ -7,6 +7,10 @@ import (
 
 type MasterRepository interface {
 	GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error)
+	GetMarketer(ctx context.Context, req *entity.GetMarketerReq) (*entity.GetMarketerResp, error)
+	CreateMarketer(ctx context.Context, req *entity.CreateMarketerReq) (*entity.CreateMarketerResp, error)
+	UpdateMarketer(ctx context.Context, req *entity.UpdateMarketerReq) error
+	DeleteMarketer(ctx context.Context, req *entity.DeleteMarketerReq) error
 
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
 	CreateStudentManager(ctx context.Context, req *entity.CreateStudentManagerReq) (*entity.CreateStudentManagerResp, error)
@@ -35,6 +39,10 @@ type MasterRepository interface {
 
 type MasterService interface {
 	GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error)
+	GetMarketer(ctx context.Context, req *entity.GetMarketerReq) (*entity.GetMarketerResp, error)
+	CreateMarketer(ctx context.Context, req *entity.CreateMarketerReq) (*entity.CreateMarketerResp, error)
+	UpdateMarketer(ctx context.Context, req *entity.UpdateMarketerReq) error
+	DeleteMarketer(ctx context.Context, req *entity.DeleteMarketerReq) error
 
 	GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error)
 	CreateStudentManager(ctx context.Context, req *entity.CreateStudentManagerReq) (*entity.CreateStudentManagerResp, error)
