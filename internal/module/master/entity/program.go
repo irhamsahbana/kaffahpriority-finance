@@ -42,6 +42,8 @@ type GetProgramResp struct {
 }
 
 type CreateProgramReq struct {
+	UserId string `validate:"ulid"`
+
 	Name          string  `json:"name" validate:"required,min=3"`
 	Detail        *string `json:"detail" validate:"omitempty,min=3"`
 	Price         float64 `json:"price" validate:"required,gte=0"`
@@ -56,6 +58,8 @@ type CreateProgramResp struct {
 }
 
 type UpdateProgramReq struct {
+	UserId string `validate:"ulid"`
+
 	Id            string  `params:"id" validate:"required,ulid"`
 	Name          string  `json:"name" validate:"required,min=3"`
 	Detail        *string `json:"detail" validate:"omitempty,min=3"`

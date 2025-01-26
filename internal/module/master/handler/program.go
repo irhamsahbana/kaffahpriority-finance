@@ -2,6 +2,7 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	m "codebase-app/internal/middleware"
 	"codebase-app/internal/module/master/entity"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
@@ -14,7 +15,10 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 	var (
 		req = new(entity.GetProgramsReq)
 		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
+
+	req.UserId = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getPrograms - failed to parse request")
@@ -42,9 +46,11 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 	var (
 		req = new(entity.GetProgramReq)
 		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.Id = c.Params("id")
+	req.UserId = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getProgram - invalid request")
@@ -65,7 +71,10 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 	var (
 		req = new(entity.CreateProgramReq)
 		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
+
+	req.UserId = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createProgram - failed to parse request")
@@ -91,9 +100,11 @@ func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 	var (
 		req = new(entity.UpdateProgramReq)
 		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.Id = c.Params("id")
+	req.UserId = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateProgram - failed to parse request")
@@ -119,9 +130,11 @@ func (h *masterHandler) deleteProgram(c *fiber.Ctx) error {
 	var (
 		req = new(entity.DeleteProgramReq)
 		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.Id = c.Params("id")
+	req.UserId = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteProgram - invalid request")
