@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     id CHAR(26) PRIMARY KEY,
     user_id CHAR(26) NOT NULL,
     program_id CHAR(26) NOT NULL,
-    lecturer_id CHAR(26) NOT NULL,
+    lecturer_id CHAR(26),
     marketer_id CHAR(26) NOT NULL,
     student_id CHAR(26) NOT NULL,
     days INT[] NOT NULL DEFAULT '{}',

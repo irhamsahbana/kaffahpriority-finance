@@ -22,12 +22,8 @@ func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTe
 	return s.repo.CreateTemplate(ctx, req)
 }
 
-func (s *reportService) UpdateTemplateGeneral(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
-	return s.repo.UpdateTemplateGeneral(ctx, req)
-}
-
-func (s *reportService) UpdateTemplateFinance(ctx context.Context, req *entity.UpdateTemplateFinanceReq) (*entity.UpdateTemplateResp, error) {
-	return s.repo.UpdateTemplateFinance(ctx, req)
+func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
+	return s.repo.UpdateTemplate(ctx, req)
 }
 
 func (s *reportService) GetTemplates(ctx context.Context, req *entity.GetTemplatesReq) (*entity.GetTemplatesResp, error) {

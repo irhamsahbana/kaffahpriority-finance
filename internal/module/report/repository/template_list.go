@@ -64,7 +64,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			END AS is_finance_update_required
 		FROM
 			program_registration_templates prt
-		JOIN
+		LEFT JOIN
 			lecturers l
 			ON prt.lecturer_id = l.id
 		JOIN

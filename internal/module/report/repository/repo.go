@@ -55,14 +55,19 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 				program_registration_templates prt
 			WHERE
 				prt.program_id = ?
-				AND prt.lecturer_id = ?
 				AND prt.marketer_id = ?
 				AND prt.student_id = ?
+				AND (
+					(prt.lecturer_id IS NULL AND ?::TEXT IS NULL)
+					OR prt.lecturer_id = ?
+				)
 				AND prt.deleted_at IS NULL
 		)
 	`
 
-	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCheckCombination), req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId)
+	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCheckCombination),
+		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId,
+	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to check combination")
 		return nil, err
@@ -70,7 +75,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 
 	if isCombinationExist {
 		log.Warn().Any("req", req).Msg("repo::CreateTemplate - combination already exist")
-		return nil, errmsg.NewCustomErrors(409).SetMessage("Template sudah ada")
+		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
 	}
 
 	var (
@@ -100,14 +105,27 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			student_id,
 			days,
 			notes,
+
 			program_fee,
+			administration_fee,
+			foreign_learning_fee,
+			night_learning_fee,
+			marketer_commission_fee,
+			overpayment_fee,
 			hr_fee,
-			marketer_commission_fee
+			marketer_gifts_fee,
+			closing_fee_for_office,
+			closing_fee_for_reward
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?,
 			(SELECT program_fee FROM program),
+			?,
+			?,
+			?,
+			(SELECT marketer_commission_fee FROM program),
+			?,
 			(SELECT hr_fee FROM program),
-			(SELECT marketer_commission_fee FROM program)
+			?, ?, ?
 		)
 	`
 
@@ -115,6 +133,14 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.ProgramId,
 		Id, req.UserId, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes,
+
+		req.AdministrationFee,
+		req.FLFee,
+		req.NLFee,
+		req.OverpaymentFee,
+		req.MarketerGiftsFee,
+		req.ClosingFeeForOffice,
+		req.ClosingFeeForReward,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to insert data")

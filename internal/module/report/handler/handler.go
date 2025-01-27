@@ -32,8 +32,7 @@ func NewReportHandler() *reportHandler {
 func (h *reportHandler) Register(router fiber.Router) {
 	router.Post("/templates", m.AuthBearer, h.createTemplate)
 	router.Get("/templates", m.AuthBearer, h.getTemplates)
-	router.Put("/templates/:id/generals", m.AuthBearer, h.updateTemplateGeneral)
-	router.Put("/templates/:id/finances", m.AuthBearer, h.updateTemplateFinance)
+	router.Put("/templates/:id", m.AuthBearer, h.updateTemplate)
 	router.Get("/templates/:id", m.AuthBearer, h.getTemplate)
 
 	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
@@ -134,7 +133,7 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
 }
 
-func (h *reportHandler) updateTemplateGeneral(c *fiber.Ctx) error {
+func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	var (
 		req = new(entity.UpdateTemplateGeneralReq)
 		v   = adapter.Adapters.Validator
@@ -161,35 +160,7 @@ func (h *reportHandler) updateTemplateGeneral(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateTemplateGeneral(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
-}
-
-func (h *reportHandler) updateTemplateFinance(c *fiber.Ctx) error {
-	var (
-		req = new(entity.UpdateTemplateFinanceReq)
-		v   = adapter.Adapters.Validator
-	)
-
-	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateTemplate - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.Id = c.Params("id")
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.UpdateTemplateFinance(c.Context(), req)
+	resp, err := h.service.UpdateTemplate(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

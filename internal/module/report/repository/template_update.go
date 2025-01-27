@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
+	"codebase-app/pkg/errmsg"
 	"context"
 
 	"github.com/lib/pq"
@@ -9,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
+func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("repo::UpdateTemplate - failed to begin transaction")
@@ -29,6 +30,37 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 		}
 	}()
 
+	var isCombinationExist bool
+	queryCombination := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM program_registration_templates prt
+			WHERE
+				prt.program_id = ?
+				AND prt.marketer_id = ?
+				AND prt.student_id = ?
+				AND (
+					(prt.lecturer_id IS NULL AND ?::TEXT IS NULL)
+					OR prt.lecturer_id = ?
+				)
+				AND prt.id != ?
+				AND prt.deleted_at IS NULL
+		)
+	`
+
+	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCombination),
+		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId, req.Id,
+	)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to check combination")
+		return nil, err
+	}
+
+	if isCombinationExist {
+		log.Warn().Any("req", req).Msg("repo::UpdateTemplate - combination already exist")
+		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
+	}
+
 	query := `
 		UPDATE program_registration_templates SET
 			program_id = ?,
@@ -37,6 +69,18 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 			student_id = ?,
 			days = ?,
 			notes = ?,
+
+			program_fee = ?,
+			administration_fee = ?,
+			foreign_learning_fee = ?,
+			night_learning_fee = ?,
+			marketer_commission_fee = ?,
+			overpayment_fee = ?,
+			hr_fee = ?,
+			marketer_gifts_fee = ?,
+			closing_fee_for_office = ?,
+			closing_fee_for_reward = ?,
+			is_financially_cleared = TRUE,
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -45,10 +89,10 @@ func (r *reportRepo) UpdateTemplateGeneral(ctx context.Context, req *entity.Upda
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		// req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
-		// req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
-		// req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		pq.Array(req.Days), req.Notes,
+		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
+		req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		req.Id,
 	)
 	if err != nil {
