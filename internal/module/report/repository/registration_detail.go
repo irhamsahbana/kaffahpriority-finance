@@ -59,7 +59,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			p.name AS program_name
 		FROM
 			program_registrations pr
-		JOIN
+		LEFT JOIN
 			lecturers l
 			ON pr.lecturer_id = l.id
 		JOIN

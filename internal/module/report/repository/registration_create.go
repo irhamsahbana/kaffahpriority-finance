@@ -31,6 +31,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	query := `
 		INSERT INTO program_registrations (
 		id,
+		template_id,
 		user_id,
 		program_id,
 		lecturer_id,
@@ -52,6 +53,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		notes
 		)
 		SELECT
+			?,
 			?,
 			?,
 			prt.program_id,
@@ -111,7 +113,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		var students = make([]entity.AddStudent, 0)
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, req.UserId, item.IsFirstRegistration, item.TemplateId,
+			prId, item.TemplateId, req.UserId, item.IsFirstRegistration, item.TemplateId,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert data")
@@ -162,6 +164,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 	query := `
 		INSERT INTO program_registrations (
 		id,
+		template_id,
 		user_id,
 		program_id,
 		lecturer_id,
@@ -184,6 +187,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		)
 		SELECT
 			?,
+			pr.template_id,
 			?,
 			pr.program_id,
 			pr.lecturer_id,
