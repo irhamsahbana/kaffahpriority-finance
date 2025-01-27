@@ -8,7 +8,6 @@ import (
 
 type GetTemplatesReq struct {
 	types.MetaQuery
-	IsFinanceUpdateRequired string `query:"is_finance_update_required" validate:"omitempty,oneof=true false"`
 
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at student_name"`

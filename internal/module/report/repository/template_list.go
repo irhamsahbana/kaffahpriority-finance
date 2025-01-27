@@ -57,11 +57,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
-			AS monthly_fee,
-			CASE
-				WHEN prt.is_financially_cleared = FALSE THEN TRUE
-				ELSE FALSE
-			END AS is_finance_update_required
+			AS monthly_fee
 		FROM
 			program_registration_templates prt
 		LEFT JOIN
@@ -82,14 +78,6 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		WHERE
 			prt.deleted_at IS NULL
 	`
-
-	if req.IsFinanceUpdateRequired != "" {
-		if req.IsFinanceUpdateRequired == "true" {
-			query += ` AND prt.is_financially_cleared = FALSE `
-		} else {
-			query += ` AND prt.is_financially_cleared = TRUE `
-		}
-	}
 
 	if req.MarketerId != "" {
 		query += ` AND prt.marketer_id = ? `
