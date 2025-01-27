@@ -7,6 +7,8 @@ import (
 )
 
 type GetTemplatesReq struct {
+	UserId string `validate:"required,ulid"`
+
 	types.MetaQuery
 
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`

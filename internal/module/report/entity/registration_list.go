@@ -6,6 +6,8 @@ import (
 )
 
 type GetRegistrationsReq struct {
+	UserId string `validate:"required,ulid"`
+
 	Q          string `query:"q" validate:"omitempty,min=3"` // search by student name
 	PaidAtFrom string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`

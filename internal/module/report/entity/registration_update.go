@@ -6,6 +6,8 @@ import (
 )
 
 type UpdateRegistrationReq struct {
+	UserId string `validate:"required,ulid"`
+
 	Id                    string       `params:"id" validate:"ulid"`
 	ProgramId             string       `json:"program_id" validate:"ulid"`
 	MarketerId            string       `json:"marketer_id" validate:"ulid"`

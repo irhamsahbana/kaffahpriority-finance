@@ -3,6 +3,8 @@ package entity
 import "github.com/lib/pq"
 
 type GetTemplateReq struct {
+	UserId string `validate:"required,ulid"`
+
 	Id string `params:"id" validate:"ulid"`
 }
 

@@ -3,6 +3,8 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetLecturerProgramsReq struct {
+	UserId string `validate:"required,ulid"`
+
 	types.MetaQuery
 	IsFinanceUpdated string `query:"is_finance_updated" validate:"omitempty,oneof=true false"`
 }
