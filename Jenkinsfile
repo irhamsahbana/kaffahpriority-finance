@@ -10,23 +10,46 @@ pipeline {
     }
 
     stages {
+        stage('Initialize') {
+            steps {
+                echo "Pipeline started"
+            }
+        }
+
+        stage('Determine Branch') {
+            steps {
+                script {
+                    // Pastikan kita berada di branch yang benar
+                    sh "git fetch --all"
+                    sh "git checkout $(git rev-parse --abbrev-ref HEAD) || true"
+
+                    // Ambil nama branch dengan cara yang lebih aman
+                    env.ACTUAL_BRANCH = sh(script: "git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+
+                    echo "Detected branch: ${env.ACTUAL_BRANCH}"
+                }
+            }
+        }
+
         stage('Build') {
             steps {
-                echo "Building for branch ${env.BRANCH_NAME}"
+                echo "Building for branch ${env.ACTUAL_BRANCH}"
                 sh '/usr/local/go/bin/go mod tidy'
                 sh '/usr/local/go/bin/go build -o ${BE_BINARY_NAME} ./cmd/bin/main.go'
             }
         }
+
         stage('Test') {
             steps {
-                echo "Testing for branch ${env.BRANCH_NAME}"
-                // Tambahkan test script jika ada
+                echo "Testing for branch ${env.ACTUAL_BRANCH}"
+                // Tambahkan perintah test jika diperlukan
             }
         }
+
         stage('Deploy') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'dev') {
+                    if (env.ACTUAL_BRANCH == 'dev') {
                         echo "Deploying to DEV"
                         sh """
                         mkdir -p ${BE_BINARY_PATH_DEV}
@@ -34,7 +57,7 @@ pipeline {
                         systemctl stop ${BE_FINANCE_SERVICE_NAME_DEV}
                         systemctl start ${BE_FINANCE_SERVICE_NAME_DEV}
                         """
-                    } else if (env.BRANCH_NAME == 'production') {
+                    } else if (env.ACTUAL_BRANCH == 'production') {
                         echo "Deploying to PRODUCTION"
                         sh """
                         mkdir -p ${BE_BINARY_PATH_PROD}
@@ -43,7 +66,7 @@ pipeline {
                         systemctl start ${BE_FINANCE_SERVICE_NAME_PROD}
                         """
                     } else {
-                        echo "No deployment for branch ${env.BRANCH_NAME}"
+                        echo "No deployment for branch ${env.ACTUAL_BRANCH}"
                     }
                 }
             }
