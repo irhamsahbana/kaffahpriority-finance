@@ -21,10 +21,10 @@ pipeline {
                 script {
                     // Pastikan kita berada di branch yang benar
                     sh "git fetch --all"
-                    sh "git checkout $(git rev-parse --abbrev-ref HEAD) || true"
+                    sh """git checkout \$(git rev-parse --abbrev-ref HEAD) || true"""
 
                     // Ambil nama branch dengan cara yang lebih aman
-                    env.ACTUAL_BRANCH = sh(script: "git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                    env.ACTUAL_BRANCH = sh(script: """git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD""", returnStdout: true).trim()
 
                     echo "Detected branch: ${env.ACTUAL_BRANCH}"
                 }
