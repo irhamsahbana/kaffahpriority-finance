@@ -18,6 +18,10 @@ import (
 func SetupRoutes(app *fiber.App) {
 	app.Get("/storage/private/:filename", m.ValidateSignedURL, storageFile)
 
+	app.Get("/ping", func(c *fiber.Ctx) error {
+		return c.JSON(response.Success(nil, "Pong"))
+	})
+
 	userHandler.NewUserHandler().Register(app.Group("/users"))
 	reportHandler.NewReportHandler().Register(app.Group("/reports"))
 	masterHandler.NewMasterHandler().Register(app.Group("/masters"))
