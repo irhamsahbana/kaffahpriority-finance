@@ -21,11 +21,26 @@ pipeline {
                 script {
                     // Pastikan kita berada di branch yang benar
                     sh 'git fetch --all'
-                    sh 'git checkout $(git rev-parse --abbrev-ref HEAD) || true'
 
-                    // Ambil nama branch dengan cara yang lebih aman
-                    env.ACTUAL_BRANCH = sh(script: 'git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    // Pastikan kita tidak dalam detached HEAD
+                    sh '''
+                        BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --abbrev-ref HEAD)
+                        if [ "$BRANCH_NAME" = "HEAD" ]; then
+                            echo "Currently in detached HEAD. Checking out to the correct branch..."
+                            BRANCH_NAME=$(git for-each-ref --format="%(refname:short)" refs/remotes/origin/ | grep -E "^(dev|production)$" | head -n 1)
+                            if [ -n "$BRANCH_NAME" ]; then
+                                git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
+                            else
+                                echo "Failed to determine the correct branch."
+                                exit 1
+                            fi
+                        fi
+                        echo "Final detected branch: $BRANCH_NAME"
+                        echo "ACTUAL_BRANCH=$BRANCH_NAME" >> $WORKSPACE/branch.env
+                    '''
 
+                    // Load branch name from file
+                    env.ACTUAL_BRANCH = sh(script: 'cat $WORKSPACE/branch.env', returnStdout: true).trim()
                     echo "Detected branch: ${env.ACTUAL_BRANCH}"
                 }
             }
@@ -42,7 +57,6 @@ pipeline {
         stage('Test') {
             steps {
                 echo "Testing for branch ${env.ACTUAL_BRANCH}"
-                // Tambahkan perintah test jika diperlukan
             }
         }
 
