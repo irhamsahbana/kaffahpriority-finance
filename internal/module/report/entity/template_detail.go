@@ -37,4 +37,5 @@ type GetTemplateResp struct {
 	Notes                 *string       `json:"notes" db:"notes"`
 	CreatedAt             string        `json:"created_at" db:"created_at"`
 	UpdatedAt             string        `json:"updated_at" db:"updated_at"`
+	DeletedAt             *string       `json:"deleted_at" db:"deleted_at"`
 }
