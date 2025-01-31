@@ -31,17 +31,17 @@ pipeline {
                         echo "Deploying to DEV"
                         sh """
                         mkdir -p ${BE_BINARY_PATH_DEV}
-                        systemctl stop ${BE_FINANCE_SERVICE_NAME_DEV}
+                        sudo systemctl stop ${BE_FINANCE_SERVICE_NAME_DEV}
                         cp ${BE_BINARY_NAME} ${BE_BINARY_PATH_DEV}
-                        systemctl start ${BE_FINANCE_SERVICE_NAME_DEV}
+                        sudo systemctl start ${BE_FINANCE_SERVICE_NAME_DEV}
                         """
                     } else if (env.BRANCH_NAME == 'production') {
                         echo "Deploying to PRODUCTION"
                         sh """
                         mkdir -p ${BE_BINARY_PATH_PROD}
-                        systemctl stop ${BE_FINANCE_SERVICE_NAME_PROD}
+                        sudo systemctl stop ${BE_FINANCE_SERVICE_NAME_PROD}
                         cp ${BE_BINARY_NAME} ${BE_BINARY_PATH_PROD}
-                        systemctl start ${BE_FINANCE_SERVICE_NAME_PROD}
+                        sudo systemctl start ${BE_FINANCE_SERVICE_NAME_PROD}
                         """
                     } else {
                         echo "No deployment for branch ${env.ACTUAL_BRANCH}"
