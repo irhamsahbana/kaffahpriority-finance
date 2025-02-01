@@ -48,7 +48,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 			p.name AS program_name
 		FROM
 			program_registration_templates prt
-		JOIN
+		LEFT JOIN
 			lecturers l
 			ON prt.lecturer_id = l.id
 		JOIN
