@@ -104,6 +104,25 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		args = append(args, req.ProgramId)
 	}
 
+	if req.Q != "" {
+		query += ` AND (
+			s.name ILIKE ?
+			OR s.identifier ILIKE ?
+			OR p.name ILIKE ?
+			OR m.name ILIKE ?
+			OR sm.name ILIKE ?
+			OR l.name ILIKE ?
+		) `
+		args = append(args,
+			"%"+req.Q+"%",
+			"%"+req.Q+"%",
+			"%"+req.Q+"%",
+			"%"+req.Q+"%",
+			"%"+req.Q+"%",
+			"%"+req.Q+"%",
+		)
+	}
+
 	sortMap := map[string]string{
 		"asc":  "ASC",
 		"desc": "DESC",

@@ -7,6 +7,7 @@ import (
 )
 
 type GetTemplatesReq struct {
+	Q      string `query:"q" validate:"omitempty,min=3"`
 	UserId string `validate:"required,ulid"`
 
 	types.MetaQuery
