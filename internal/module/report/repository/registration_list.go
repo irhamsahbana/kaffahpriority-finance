@@ -38,6 +38,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
+			pr.mentor_detail_fee AS hr_fee_for_mentor,
+			pr.hr_detail_fee AS hr_fee_for_hr,
 			pr.marketer_gifts_fee,
 			pr.closing_fee_for_office,
 			pr.closing_fee_for_reward,

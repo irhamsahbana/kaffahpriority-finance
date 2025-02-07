@@ -4,10 +4,13 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/internal/module/report/ports"
+	"codebase-app/pkg/errmsg"
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var _ ports.ReportRepository = &reportRepo{}
@@ -140,4 +143,59 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
 
 	return resp, nil
+}
+
+func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to start transaction")
+		return err
+	}
+	defer tx.Rollback()
+
+	// get HR fee
+	queryFee := `SELECT hr_fee from program_registrations WHERE id = ? AND deleted_at IS NULL`
+	var hrFee decimal.Decimal
+	err = tx.GetContext(ctx, &hrFee, r.db.Rebind(queryFee), req.RegistrationId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Any("req", req).Msg("repo::DistributeHRFee - HR fee not found")
+			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to fetch HR fee")
+		return err
+	}
+
+	hrFeeForMentor := decimal.NewFromFloat(req.HRFeeForMentor)
+	hrFeeForHR := decimal.NewFromFloat(req.HRFeeForHR)
+
+	if hrFeeForMentor.Add(hrFeeForHR).GreaterThan(hrFee) || hrFeeForMentor.Add(hrFeeForHR).LessThan(hrFee) {
+		log.Warn().Any("req", req).Msg("repo::DistributeHRFee - HR fee is greater than total HR fee")
+		return errmsg.NewCustomErrors(400).SetMessage("Distribusi Pengeluaran SDM tidak boleh melebihi atau kurang dari total biaya SDM")
+	}
+
+	query := `
+		UPDATE
+			program_registrations
+		SET
+			mentor_detail_fee = ?,
+			hr_detail_fee = ?
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+		`
+
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.HRFeeForMentor, req.HRFeeForHR, req.RegistrationId)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::DjsonistributeHRFee - failed to update data")
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to commit transaction")
+		return err
+	}
+
+	return nil
 }

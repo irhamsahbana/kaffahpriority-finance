@@ -28,6 +28,8 @@ type GetRegistrationResp struct {
 	MarketerCommissionFee float64       `json:"marketer_commission_fee" db:"marketer_commission_fee"`
 	OverpaymentFee        *float64      `json:"overpayment_fee" db:"overpayment_fee"`
 	HRFee                 float64       `json:"hr_fee" db:"hr_fee"`
+	HRFeeForMentor        *float64      `json:"hr_fee_for_mentor" db:"hr_fee_for_mentor"`
+	HRFeeForHR            *float64      `json:"hr_fee_for_hr" db:"hr_fee_for_hr"`
 	MarketerGiftsFee      float64       `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice   *float64      `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward   *float64      `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`

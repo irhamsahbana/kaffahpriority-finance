@@ -61,3 +61,7 @@ func (s *reportService) GetSummaries(ctx context.Context, req *entity.GetSummari
 func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
 	return s.repo.GetLecturerPrograms(ctx, req)
 }
+
+func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
+	return s.repo.DistributeHRFee(ctx, req)
+}
