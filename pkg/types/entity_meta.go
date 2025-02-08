@@ -38,6 +38,6 @@ func (r *MetaQuery) SetDefault() {
 		r.Page = 1
 	}
 	if r.Paginate < 1 {
-		r.Paginate = 30
+		r.Paginate = 100
 	}
 }
