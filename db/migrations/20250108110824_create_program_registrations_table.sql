@@ -1,3 +1,4 @@
+-- Active: 1736401832474@@127.0.0.1@5432@kp_finance_dev
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS program_registrations (
@@ -25,6 +26,8 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     -- cfo 2 section
     mentor_detail_fee DECIMAL(19, 4),
     hr_detail_fee DECIMAL(19, 4),
+    mentor_detail_fee_used DECIMAL(19, 4),
+    notes_for_fund_distributions VARCHAR(255),
     used_at TIMESTAMP WITH TIME ZONE,
     -- general section
     notes VARCHAR(255),
