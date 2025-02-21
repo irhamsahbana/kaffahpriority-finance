@@ -53,7 +53,9 @@ type RegistrationListPerLecturerPerMonth struct {
 	IsUsed         *bool            `json:"is_used" db:"is_used"`
 	Notes          *string          `json:"notes" db:"notes"`
 
-	ProgramId  string  `json:"program_id" db:"program_id"`
-	LecturerId *string `json:"lecturer_id" db:"lecturer_id"`
-	StudentId  string  `json:"student_id" db:"student_id"`
+	ProgramId  string           `json:"program_id" db:"program_id"`
+	LecturerId *string          `json:"lecturer_id" db:"lecturer_id"`
+	StudentId  string           `json:"student_id" db:"student_id"`
+	FL         *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
+	NL         *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 }
