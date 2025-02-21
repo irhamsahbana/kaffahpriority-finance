@@ -18,6 +18,7 @@ type ReportRepository interface {
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
 
 	DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error
+	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
 
 	GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error)
 	GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error)
@@ -38,6 +39,7 @@ type ReportService interface {
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
 
 	DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error
+	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
 
 	GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error)
 	GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error)

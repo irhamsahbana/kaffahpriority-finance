@@ -69,3 +69,7 @@ func (s *reportService) GetRegistrationsPerLecturer(ctx context.Context, req *en
 func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
 	return s.repo.DistributeHRFee(ctx, req)
 }
+
+func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
+	return s.repo.UseHRfeeForLecturer(ctx, req)
+}
