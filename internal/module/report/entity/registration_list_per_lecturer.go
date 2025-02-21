@@ -41,6 +41,8 @@ type RegistrationListPerLecturer struct {
 	StudentName   string                                `json:"student_name" db:"student_name"`
 	ProgramName   string                                `json:"program_name" db:"program_name"`
 	Year          int                                   `json:"year"`
+	IsFL          bool                                  `json:"is_fl" db:"is_fl"`
+	IsNL          bool                                  `json:"is_nl" db:"is_nl"`
 	Registrations []RegistrationListPerLecturerPerMonth `json:"registrations"`
 }
 

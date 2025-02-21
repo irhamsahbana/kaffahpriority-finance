@@ -210,6 +210,14 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			} else {
 				// Jika bulan sudah ada dalam data, tambahkan ke Registrations
 				resp.Items[i].Registrations = append(resp.Items[i].Registrations, monthMap[m.Num])
+
+				// tambahkan keterangan FL dan NL
+				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].FL != nil {
+					resp.Items[i].IsFL = true
+				}
+				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].NL != nil {
+					resp.Items[i].IsNL = true
+				}
 			}
 		}
 
