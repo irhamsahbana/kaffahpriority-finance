@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
+	"codebase-app/pkg/errmsg"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -50,7 +51,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		closing_fee_for_office,
 		closing_fee_for_reward,
 		days,
-		notes
+		notes,
+		started_at
 		)
 		SELECT
 			?,
@@ -76,7 +78,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			prt.closing_fee_for_office,
 			prt.closing_fee_for_reward,
 			prt.days,
-			prt.notes
+			prt.notes,
+			NOW()
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -111,6 +114,49 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	for _, item := range req.Registrations {
 		var prId = ulid.Make().String()
 		var students = make([]entity.AddStudent, 0)
+
+		// check if program_id, lecturer_id, and student_id already exist in this month
+
+		queryCheck := `
+
+			SELECT EXISTS (
+				WITH template AS (
+					SELECT
+						prt.program_id,
+						prt.lecturer_id,
+						prt.student_id
+					FROM
+						program_registration_templates prt
+					WHERE
+						prt.id = ?
+						AND prt.deleted_at IS NULL
+				)
+				SELECT
+					1
+				FROM
+					program_registrations pr
+				WHERE
+					pr.program_id = (SELECT program_id FROM template)
+					AND pr.lecturer_id = (SELECT lecturer_id FROM template)
+					AND pr.student_id = (SELECT student_id FROM template)
+					AND EXTRACT(MONTH FROM pr.started_at) = EXTRACT(MONTH FROM NOW())
+					AND EXTRACT(YEAR FROM pr.started_at) = EXTRACT(YEAR FROM NOW())
+					AND pr.deleted_at IS NULL
+			)
+		`
+
+		var exist bool
+		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to check data")
+			return err
+		}
+
+		if exist {
+			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - data already exist")
+			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateId + ` sudah ada di bulan ini`)
+			return err
+		}
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
 			prId, item.TemplateId, req.UserId, item.IsFirstRegistration, item.TemplateId,
