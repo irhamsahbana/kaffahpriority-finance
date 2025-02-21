@@ -160,26 +160,6 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		return nil, err
 	}
 
-	for _, item := range dataPerMonth {
-		for i := range resp.Items {
-			// Mengambil nilai dari pointer, jika tidak nil
-			var lecturerId1, lecturerId2 string
-			if resp.Items[i].LecturerId != nil {
-				lecturerId1 = *resp.Items[i].LecturerId
-			}
-			if item.LecturerId != nil {
-				lecturerId2 = *item.LecturerId
-			}
-
-			// Melakukan perbandingan nilai LecturerId dengan mempertimbangkan kemungkinan nil
-			if (resp.Items[i].LecturerId == nil && item.LecturerId == nil) || (resp.Items[i].LecturerId != nil && item.LecturerId != nil && lecturerId1 == lecturerId2) &&
-				resp.Items[i].StudentId == item.StudentId &&
-				resp.Items[i].ProgramId == item.ProgramId {
-				resp.Items[i].Registrations = append(resp.Items[i].Registrations, item)
-			}
-		}
-	}
-
 	var allMonths = []struct {
 		Num  int
 		Name string
