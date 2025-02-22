@@ -38,13 +38,23 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 		return err
 	}
 
+	if req.UsedAmount == nil && req.Notes == nil {
+		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount and notes are nil")
+		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan atau catatan harus diisi")
+	}
+
+	if req.UsedAmount != nil && req.Notes != nil {
+		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount and notes are not nil")
+		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan dan catatan tidak boleh diisi bersamaan")
+	}
+
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(mentorDetailFee) {
-		log.Warn().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount greater than mentor detail fee")
+		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount greater than mentor detail fee")
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan melebihi jumlah yang tersedia")
 	}
 
 	if req.UsedAmount != nil && req.UsedAmount.LessThanOrEqual(decimal.Zero) {
-		log.Warn().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount less than or equal to 0")
+		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount less than or equal to 0")
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan harus lebih dari 0")
 	}
 
@@ -58,13 +68,8 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 			id = ?
 			AND deleted_at IS NULL
 	`
-	notes := req.Notes
 
-	if req.UsedAmount == nil {
-		notes = nil
-	}
-
-	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, notes, req.RegistrationId)
+	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, req.Notes, req.RegistrationId)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - failed to update mentor detail fee used")
 		return err
