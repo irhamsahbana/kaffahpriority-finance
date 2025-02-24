@@ -46,6 +46,14 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			students s ON pr.student_id = s.id
 		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
+		WHERE 1 = 1
+	`
+	if req.Q != "" {
+		query += ` AND (l.name ILIKE ? OR s.name ILIKE ?)`
+		args = append(args, "%"+req.Q+"%", "%"+req.Q+"%")
+	}
+
+	query += `
 		GROUP BY
 			pr.program_id,
 			pr.lecturer_id,
@@ -53,6 +61,10 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			l.name,
 			s.name,
 			p.name
+		ORDER BY
+			pr.lecturer_id ASC,
+			pr.student_id ASC,
+			p.name ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
