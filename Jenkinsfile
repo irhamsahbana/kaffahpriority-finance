@@ -4,8 +4,10 @@ pipeline {
     environment {
         BE_BINARY_NAME = "be-finance"
         BE_BINARY_PATH_DEV = "/opt/be-binaries/kaffah-priority-finance/dev"
+        BE_BINARY_PATH_STAGING = "/opt/be-binaries/kaffah-priority-finance/staging"
         BE_BINARY_PATH_PROD = "/opt/be-binaries/kaffah-priority-finance/prod"
         BE_FINANCE_SERVICE_NAME_DEV = "be-finance-dev.service"
+        BE_FINANCE_SERVICE_NAME_STAGING = "be-finance-staging.service"
         BE_FINANCE_SERVICE_NAME_PROD = "be-finance-prod.service"
     }
 
@@ -34,6 +36,14 @@ pipeline {
                         sudo systemctl stop ${BE_FINANCE_SERVICE_NAME_DEV}
                         cp ${BE_BINARY_NAME} ${BE_BINARY_PATH_DEV}
                         sudo systemctl start ${BE_FINANCE_SERVICE_NAME_DEV}
+                        """
+                    } else if () {
+                        echo "Deploying to STAGING"
+                        sh """
+                        mkdir -p ${BE_BINARY_PATH_STAGING}
+                        sudo systemctl stop ${BE_FINANCE_SERVICE_NAME_STAGING}
+                        cp ${BE_BINARY_NAME} ${BE_BINARY_PATH_STAGING}
+                        sudo systemctl start ${BE_FINANCE_SERVICE_NAME_STAGING}
                         """
                     } else if (env.BRANCH_NAME == 'production') {
                         echo "Deploying to PRODUCTION"
