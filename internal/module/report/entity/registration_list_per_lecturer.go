@@ -10,9 +10,11 @@ import (
 type GetRegistrationListPerLecturerReq struct {
 	UserId string `json:"user_id"`
 	types.MetaQuery
-	Q    string `query:"q"`
-	Year int    `query:"year"`
-	Tz   string `query:"timezone"`
+	Q          string `query:"q"`
+	LecturerId string `query:"lecturer_id"`
+	StudentId  string `query:"student_id"`
+	Year       int    `query:"year"`
+	Tz         string `query:"timezone"`
 }
 
 func (r *GetRegistrationListPerLecturerReq) SetDefault() {

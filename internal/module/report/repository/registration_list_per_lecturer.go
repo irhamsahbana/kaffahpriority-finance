@@ -53,6 +53,16 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		args = append(args, "%"+req.Q+"%", "%"+req.Q+"%")
 	}
 
+	if req.LecturerId != "" {
+		query += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerId)
+	}
+
+	if req.StudentId != "" {
+		query += ` AND pr.student_id = ?`
+		args = append(args, req.StudentId)
+	}
+
 	query += `
 		GROUP BY
 			pr.program_id,
@@ -140,6 +150,16 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		`
 
 	args = append(args, req.Tz, req.Tz, req.Year)
+
+	if req.LecturerId != "" {
+		query += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerId)
+	}
+
+	if req.StudentId != "" {
+		query += ` AND pr.student_id = ?`
+		args = append(args, req.StudentId)
+	}
 
 	if len(argsCombine) > 0 {
 		query += ` AND (`
