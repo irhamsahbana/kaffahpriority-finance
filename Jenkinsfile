@@ -37,7 +37,7 @@ pipeline {
                         cp ${BE_BINARY_NAME} ${BE_BINARY_PATH_DEV}
                         sudo systemctl start ${BE_FINANCE_SERVICE_NAME_DEV}
                         """
-                    } else if () {
+                    } else if (env.BRANCH_NAME == 'staging') {
                         echo "Deploying to STAGING"
                         sh """
                         mkdir -p ${BE_BINARY_PATH_STAGING}
