@@ -36,6 +36,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.administration_fee,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
+			pr.is_itp,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
@@ -45,6 +46,10 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
+			CASE
+				WHEN pr.lecturer_id IS NOT NULL THEN TRUE
+				ELSE FALSE
+			END AS is_mandatory_fields_completed,
 			pr.marketer_gifts_fee,
 			pr.closing_fee_for_office,
 			pr.closing_fee_for_reward,
@@ -113,6 +118,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			query += ` AND pr.mentor_detail_fee_used IS NOT NULL`
 		} else {
 			query += ` AND pr.mentor_detail_fee_used IS NULL`
+		}
+	}
+
+	if req.IsMandatoryFieldsCompleted != "" {
+		if req.IsMandatoryFieldsCompleted == "true" {
+			query += ` AND pr.lecturer_id IS NOT NULL`
+		} else {
+			query += ` AND pr.lecturer_id IS NULL`
 		}
 	}
 

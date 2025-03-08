@@ -19,7 +19,8 @@ type GetRegistrationsReq struct {
 	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
 
 	// mentor_detail_fee_used
-	IsLecturerFeeUsed string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
+	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
+	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
 
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
@@ -64,35 +65,37 @@ type GetRegistrationsResp struct {
 }
 
 type RegisItem struct {
-	Id                    string       `json:"id" db:"id"`
-	TemplateId            string       `json:"template_id" db:"template_id"`
-	ProgramId             string       `json:"program_id" db:"program_id"`
-	MarketerId            string       `json:"marketer_id" db:"marketer_id"`
-	LecturerId            *string      `json:"lecturer_id" db:"lecturer_id"`
-	StudentId             string       `json:"student_id" db:"student_id"`
-	StudentIdentifier     string       `json:"student_identifier" db:"student_identifier"`
-	ProgramName           string       `json:"program_name" db:"program_name"`
-	LecturerName          *string      `json:"lecturer_name" db:"lecturer_name"`
-	MarketerName          string       `json:"marketer_name" db:"marketer_name"`
-	StudentName           string       `json:"student_name" db:"student_name"`
-	MonthlyFee            float64      `json:"monthly_fee" db:"monthly_fee"`
-	Students              []AddStudent `json:"additional_students"`
-	ProgramFee            float64      `json:"program_fee" db:"program_fee"`
-	AdministrationFee     *float64     `json:"administration_fee" db:"administration_fee"`
-	FLFee                 *float64     `json:"foreign_learning_fee" db:"foreign_learning_fee"`
-	NLFee                 *float64     `json:"night_learning_fee" db:"night_learning_fee"`
-	MarketerCommissionFee float64      `json:"marketer_commission_fee" db:"marketer_commission_fee"`
-	OverpaymentFee        *float64     `json:"overpayment_fee" db:"overpayment_fee"`
-	HRFee                 float64      `json:"hr_fee" db:"hr_fee"`
-	HRFeeForMentor        *float64     `json:"hr_fee_for_mentor" db:"hr_fee_for_mentor"`
-	HRFeeForHR            *float64     `json:"hr_fee_for_hr" db:"hr_fee_for_hr"`
-	IsMentorDetailFeeUsed bool         `json:"is_mentor_detail_fee_used" db:"is_mentor_detail_fee_used"`
-	MarketerGiftsFee      float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
-	ClosingFeeForOffice   *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
-	ClosingFeeForReward   *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
-	Profit                float64      `json:"profit" db:"profit"`
-	Notes                 *string      `json:"notes" db:"notes"`
-	PaidAt                string       `json:"paid_at" db:"paid_at"`
-	CreatedAt             string       `json:"created_at" db:"created_at"`
-	UpdatedAt             string       `json:"updated_at" db:"updated_at"`
+	Id                         string       `json:"id" db:"id"`
+	TemplateId                 string       `json:"template_id" db:"template_id"`
+	ProgramId                  string       `json:"program_id" db:"program_id"`
+	MarketerId                 string       `json:"marketer_id" db:"marketer_id"`
+	LecturerId                 *string      `json:"lecturer_id" db:"lecturer_id"`
+	StudentId                  string       `json:"student_id" db:"student_id"`
+	StudentIdentifier          string       `json:"student_identifier" db:"student_identifier"`
+	IsMandatoryFieldsCompleted bool         `json:"is_mandatory_fields_completed" db:"is_mandatory_fields_completed"`
+	ProgramName                string       `json:"program_name" db:"program_name"`
+	LecturerName               *string      `json:"lecturer_name" db:"lecturer_name"`
+	MarketerName               string       `json:"marketer_name" db:"marketer_name"`
+	StudentName                string       `json:"student_name" db:"student_name"`
+	MonthlyFee                 float64      `json:"monthly_fee" db:"monthly_fee"`
+	Students                   []AddStudent `json:"additional_students"`
+	ProgramFee                 float64      `json:"program_fee" db:"program_fee"`
+	AdministrationFee          *float64     `json:"administration_fee" db:"administration_fee"`
+	FLFee                      *float64     `json:"foreign_learning_fee" db:"foreign_learning_fee"`
+	NLFee                      *float64     `json:"night_learning_fee" db:"night_learning_fee"`
+	IsITP                      bool         `json:"is_itp" db:"is_itp"`
+	MarketerCommissionFee      float64      `json:"marketer_commission_fee" db:"marketer_commission_fee"`
+	OverpaymentFee             *float64     `json:"overpayment_fee" db:"overpayment_fee"`
+	HRFee                      float64      `json:"hr_fee" db:"hr_fee"`
+	HRFeeForMentor             *float64     `json:"hr_fee_for_mentor" db:"hr_fee_for_mentor"`
+	HRFeeForHR                 *float64     `json:"hr_fee_for_hr" db:"hr_fee_for_hr"`
+	IsMentorDetailFeeUsed      bool         `json:"is_mentor_detail_fee_used" db:"is_mentor_detail_fee_used"`
+	MarketerGiftsFee           float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
+	ClosingFeeForOffice        *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
+	ClosingFeeForReward        *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
+	Profit                     float64      `json:"profit" db:"profit"`
+	Notes                      *string      `json:"notes" db:"notes"`
+	PaidAt                     string       `json:"paid_at" db:"paid_at"`
+	CreatedAt                  string       `json:"created_at" db:"created_at"`
+	UpdatedAt                  string       `json:"updated_at" db:"updated_at"`
 }
