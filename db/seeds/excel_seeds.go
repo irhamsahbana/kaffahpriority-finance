@@ -61,6 +61,11 @@ func SeedExcel(db *sqlx.DB, sheetName string) error {
 		if errSeed != nil {
 			return errSeed
 		}
+	case "academic_managers":
+		errSeed = excelSeeder.SeedAcademicManagers(tx)
+		if errSeed != nil {
+			return errSeed
+		}
 	case "lecturers":
 		errSeed = excelSeeder.SeedLecturers(tx)
 		if errSeed != nil {
@@ -344,6 +349,86 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 	return nil
 }
 
+func (s *excelSeed) SeedAcademicManagers(tx *sqlx.Tx) error {
+	rows, err := s.file.GetRows("academic_managers")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows from excel")
+		return err
+	}
+
+	idsInSheet := make([]string, len(rows)-1)
+	lastRow := len(rows) - 1
+
+	// insert into db
+	for i, row := range rows {
+		if i == 0 { // skip header
+			continue
+		}
+
+		var (
+			id   = row[0]
+			name = row[1]
+		)
+
+		// if id is empty then add ULID to it, and when done it should be saved to db
+		// and file
+		if id == "" {
+			id = ulid.Make().String()
+			rowNumber := strconv.Itoa(i + 1)
+			cell := "A" + rowNumber
+			s.file.SetCellValue("academic_managers", cell, id)
+		} else {
+			// check id is valid ULID
+			if _, err := ulid.Parse(id); err != nil {
+				log.Error().Err(err).Msg("invalid ULID")
+				return err
+			}
+		}
+
+		idsInSheet[i-1] = id
+
+		query := "INSERT INTO academic_managers (id, name) VALUES (?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, name)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to insert academic manager")
+			return err
+		}
+
+	}
+
+	// get all academic managers from db that are not in the sheet
+	type academicManager struct {
+		Id   string `db:"id"`
+		Name string `db:"name"`
+	}
+
+	var academicManagersNotInSheet []academicManager
+
+	query, args, err := sqlx.In("SELECT id, name FROM academic_managers WHERE id NOT IN (?)", idsInSheet)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create query for academic managers not in sheet")
+		return err
+	}
+
+	err = tx.Select(&academicManagersNotInSheet, s.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get academic managers not in sheet")
+		return err
+	}
+
+	// append academic managers not in sheet to the sheet
+	for i, academicManager := range academicManagersNotInSheet {
+		rowNumber := strconv.Itoa(lastRow + i + 2)
+		cellA := "A" + rowNumber
+		cellB := "B" + rowNumber
+		s.file.SetCellValue("academic_managers", cellA, academicManager.Id)
+		s.file.SetCellValue("academic_managers", cellB, academicManager.Name)
+	}
+
+	log.Info().Msg("academic managers seeded successfully!")
+	return nil
+}
+
 func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
 	rows, err := s.file.GetRows("lecturers")
 	if err != nil {
@@ -361,17 +446,18 @@ func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
 		}
 
 		var (
-			id    = row[0]
-			name  = row[1]
-			email string
-			phone string
+			id                = row[0]
+			academicManagerId = row[1]
+			name              = row[2]
+			email             string
+			phone             string
 		)
 
-		if isset(row, 2) {
-			email = row[2]
-		}
 		if isset(row, 3) {
-			phone = row[3]
+			email = row[3]
+		}
+		if isset(row, 4) {
+			phone = row[4]
 		}
 
 		// if id is empty then add ULID to it, and when done it should be saved to db
@@ -398,8 +484,8 @@ func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
 
 		idsInSheet[i-1] = id
 
-		query := "INSERT INTO lecturers (id, name, phone, email) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
-		_, err := tx.Exec(s.db.Rebind(query), id, name, phone, email)
+		query := "INSERT INTO lecturers (id, academic_manager_id, name, phone, email) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING"
+		_, err := tx.Exec(s.db.Rebind(query), id, academicManagerId, name, phone, email)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to insert lecturer")
 			return err
@@ -408,15 +494,16 @@ func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
 
 	// get all lecturers from db that are not in the sheet
 	type lecturer struct {
-		Id    string  `db:"id"`
-		Name  string  `db:"name"`
-		Phone *string `db:"phone"`
-		Email *string `db:"email"`
+		Id                string  `db:"id"`
+		AcademicManagerId string  `db:"academic_manager_id"`
+		Name              string  `db:"name"`
+		Phone             *string `db:"phone"`
+		Email             *string `db:"email"`
 	}
 
 	var lecturersNotInSheet []lecturer
 
-	query, args, err := sqlx.In("SELECT id, name, phone, email FROM lecturers WHERE id NOT IN (?)", idsInSheet)
+	query, args, err := sqlx.In("SELECT id, academic_manager_id, name, phone, email FROM lecturers WHERE id NOT IN (?)", idsInSheet)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create query for lecturers not in sheet")
 		return err
@@ -435,13 +522,15 @@ func (s *excelSeed) SeedLecturers(tx *sqlx.Tx) error {
 		cellB := "B" + rowNumber
 		cellC := "C" + rowNumber
 		cellD := "D" + rowNumber
+		cellE := "E" + rowNumber
 		s.file.SetCellValue("lecturers", cellA, lecturer.Id)
-		s.file.SetCellValue("lecturers", cellB, lecturer.Name)
+		s.file.SetCellValue("lecturers", cellB, lecturer.AcademicManagerId)
+		s.file.SetCellValue("lecturers", cellC, lecturer.Name)
 		if lecturer.Phone != nil {
-			s.file.SetCellValue("lecturers", cellC, *lecturer.Phone)
+			s.file.SetCellValue("lecturers", cellD, *lecturer.Phone)
 		}
 		if lecturer.Email != nil {
-			s.file.SetCellValue("lecturers", cellD, *lecturer.Email)
+			s.file.SetCellValue("lecturers", cellE, *lecturer.Email)
 		}
 	}
 

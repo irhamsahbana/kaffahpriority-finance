@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS program_registration_templates (
     administration_fee DECIMAL(19, 4),
     foreign_learning_fee DECIMAL(19, 4),
     night_learning_fee DECIMAL(19, 4),
+    is_itp BOOLEAN DEFAULT FALSE,
     marketer_commission_fee DECIMAL(19, 4) DEFAULT 0,
     overpayment_fee DECIMAL(19, 4),
     hr_fee DECIMAL(19, 4) DEFAULT 0,

@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS lecturers (
     id CHAR(26) PRIMARY KEY,
+    academic_manager_id CHAR(26) NOT NULL,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(255),
@@ -10,6 +11,7 @@ CREATE TABLE IF NOT EXISTS lecturers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE,
 
+    FOREIGN KEY (academic_manager_id) REFERENCES academic_managers (id),
     CONSTRAINT lecturers_email_unique UNIQUE (email),
     CONSTRAINT lecturers_phone_unique UNIQUE (phone)
 );
