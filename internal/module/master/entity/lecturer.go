@@ -13,8 +13,10 @@ func (r *GetLecturersReq) SetDefault() {
 
 type Lecturer struct {
 	Common
-	Phone        *string `json:"phone" db:"phone"`
-	RegisteredAt *string `json:"registered_at" db:"registered_at"`
+	AcademicManagerId   string  `json:"academic_manager_id" db:"academic_manager_id"`
+	AcademicManagerName string  `json:"academic_manager_name" db:"academic_manager_name"`
+	Phone               *string `json:"phone" db:"phone"`
+	RegisteredAt        *string `json:"registered_at" db:"registered_at"`
 }
 
 type GetLecturersResp struct {
@@ -35,9 +37,10 @@ type GetLecturerResp struct {
 type CreateLecturerReq struct {
 	UserId string `validate:"ulid"`
 
-	Name         string  `json:"name" validate:"required,min=3"`
-	Phone        *string `json:"phone" validate:"omitempty,min=9"`
-	RegisteredAt *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
+	AcademicManagerId string  `json:"academic_manager_id" validate:"required,ulid"`
+	Name              string  `json:"name" validate:"required,min=3"`
+	Phone             *string `json:"phone" validate:"omitempty,min=9"`
+	RegisteredAt      *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type CreateLecturerResp struct {
@@ -47,10 +50,11 @@ type CreateLecturerResp struct {
 type UpdateLecturerReq struct {
 	UserId string `validate:"ulid"`
 
-	Id           string  `params:"id" validate:"required"`
-	Name         string  `json:"name" validate:"required,min=3"`
-	Phone        *string `json:"phone" validate:"omitempty,min=9"`
-	RegisteredAt *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
+	Id                string  `params:"id" validate:"required"`
+	AcademicManagerId string  `json:"academic_manager_id" validate:"required,ulid,exist=academic_managers.id"`
+	Name              string  `json:"name" validate:"required,min=3"`
+	Phone             *string `json:"phone" validate:"omitempty,min=9"`
+	RegisteredAt      *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type DeleteLecturerReq struct {
