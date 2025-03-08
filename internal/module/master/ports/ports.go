@@ -18,6 +18,12 @@ type MasterRepository interface {
 	UpdateStudentManager(ctx context.Context, req *entity.UpdateStudentManagerReq) error
 	DeleteStudentManager(ctx context.Context, req *entity.DeleteStudentManagerReq) error
 
+	GetAcademicManagers(ctx context.Context, req *entity.GetAcademicManagersReq) (*entity.GetAcademicManagersResp, error)
+	CreateAcademicManager(ctx context.Context, req *entity.CreateAcademicManagerReq) (*entity.CreateAcademicManagerResp, error)
+	GetAcademicManager(ctx context.Context, req *entity.GetAcademicManagerReq) (*entity.GetAcademicManagerResp, error)
+	UpdateAcademicManager(ctx context.Context, req *entity.UpdateAcademicManagerReq) error
+	DeleteAcademicManager(ctx context.Context, req *entity.DeleteAcademicManagerReq) error
+
 	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetLecturer(ctx context.Context, req *entity.GetLecturerReq) (*entity.GetLecturerResp, error)
 	CreateLecturer(ctx context.Context, req *entity.CreateLecturerReq) (*entity.CreateLecturerResp, error)
@@ -49,6 +55,12 @@ type MasterService interface {
 	GetStudentManager(ctx context.Context, req *entity.GetStudentManagerReq) (*entity.GetStudentManagerResp, error)
 	UpdateStudentManager(ctx context.Context, req *entity.UpdateStudentManagerReq) error
 	DeleteStudentManager(ctx context.Context, req *entity.DeleteStudentManagerReq) error
+
+	GetAcademicManagers(ctx context.Context, req *entity.GetAcademicManagersReq) (*entity.GetAcademicManagersResp, error)
+	CreateAcademicManager(ctx context.Context, req *entity.CreateAcademicManagerReq) (*entity.CreateAcademicManagerResp, error)
+	GetAcademicManager(ctx context.Context, req *entity.GetAcademicManagerReq) (*entity.GetAcademicManagerResp, error)
+	UpdateAcademicManager(ctx context.Context, req *entity.UpdateAcademicManagerReq) error
+	DeleteAcademicManager(ctx context.Context, req *entity.DeleteAcademicManagerReq) error
 
 	GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error)
 	GetLecturer(ctx context.Context, req *entity.GetLecturerReq) (*entity.GetLecturerResp, error)

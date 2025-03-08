@@ -25,17 +25,23 @@ func NewMasterHandler() *masterHandler {
 }
 
 func (h *masterHandler) Register(router fiber.Router) {
+	router.Get("/student-managers", m.AuthBearer, h.getStudentManagers)
+	router.Get("/student-managers/:id", m.AuthBearer, h.getStudentManager)
+	router.Post("/student-managers", m.AuthBearer, h.createStudentManager)
+	router.Put("/student-managers/:id", m.AuthBearer, h.updateStudentManager)
+	router.Delete("/student-managers/:id", m.AuthBearer, h.deleteStudentManager)
+
 	router.Get("/marketers", m.AuthBearer, h.getMarketers)
 	router.Get("/marketers/:id", m.AuthBearer, h.getMarketer)
 	router.Post("/marketers", m.AuthBearer, h.createMarketer)
 	router.Put("/marketers/:id", m.AuthBearer, h.updateMarketer)
 	router.Delete("/marketers/:id", m.AuthBearer, h.deleteMarketer)
 
-	router.Get("/student-managers", m.AuthBearer, h.getStudentManagers)
-	router.Get("/student-managers/:id", m.AuthBearer, h.getStudentManager)
-	router.Post("/student-managers", m.AuthBearer, h.createStudentManager)
-	router.Put("/student-managers/:id", m.AuthBearer, h.updateStudentManager)
-	router.Delete("/student-managers/:id", m.AuthBearer, h.deleteStudentManager)
+	router.Get("/academic-managers", m.AuthBearer, h.getAcademicManagers)
+	router.Get("/academic-managers/:id", m.AuthBearer, h.getAcademicManager)
+	router.Post("/academic-managers", m.AuthBearer, h.createAcademicManager)
+	router.Put("/academic-managers/:id", m.AuthBearer, h.updateAcademicManager)
+	router.Delete("/academic-managers/:id", m.AuthBearer, h.deleteAcademicManager)
 
 	router.Get("/lecturers", m.AuthBearer, h.getLecturers)
 	router.Get("/lecturers/:id", m.AuthBearer, h.getLecturer)
