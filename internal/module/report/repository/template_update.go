@@ -90,7 +90,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes,
-		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		req.Id,
