@@ -91,6 +91,44 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		}
 	}
 
+	// update lecturer id in program_registration_templates if request has lecturer id
+	type registration struct {
+		TemplateId string  `db:"template_id"`
+		LecturerId *string `db:"lecturer_id"`
+	}
+	var reg registration
+	query = `
+		SELECT
+			template_id, lecturer_id
+		FROM
+			program_registrations
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+
+	err = tx.GetContext(ctx, &r, tx.Rebind(query), req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to get registration data")
+		return nil, err
+	}
+
+	if req.LecturerId != nil {
+		query = `
+			UPDATE program_registration_templates SET
+				lecturer_id = ?
+			WHERE
+				id = ?
+				AND deleted_at IS NULL
+		`
+
+		_, err = tx.ExecContext(ctx, tx.Rebind(query), req.LecturerId, reg.TemplateId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to update lecturer id")
+			return nil, err
+		}
+	}
+
 	resp := new(entity.UpdateRegistrationResp)
 	resp.Id = req.Id
 
