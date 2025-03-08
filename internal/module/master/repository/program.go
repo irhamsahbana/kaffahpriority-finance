@@ -50,6 +50,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 	}
 
 	query += `
+		ORDER BY name ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
