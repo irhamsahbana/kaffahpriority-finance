@@ -108,6 +108,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			?,
 			?,
 			?,
+			?,
 			(SELECT marketer_commission_fee FROM program),
 			?,
 			(SELECT hr_fee FROM program),
