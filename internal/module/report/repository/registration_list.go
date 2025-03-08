@@ -104,6 +104,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Q, req.Q)
 	}
 
+	if req.IsLecturerFeeUsed != "" {
+		if req.IsLecturerFeeUsed == "true" {
+			query += ` AND pr.mentor_detail_fee_used IS NOT NULL`
+		} else {
+			query += ` AND pr.mentor_detail_fee_used IS NULL`
+		}
+	}
+
 	if req.LecturerId != "" {
 		query += ` AND pr.lecturer_id = ?`
 		args = append(args, req.LecturerId)

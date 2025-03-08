@@ -18,6 +18,9 @@ type GetRegistrationsReq struct {
 	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
 	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
 
+	// mentor_detail_fee_used
+	IsLecturerFeeUsed string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
+
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
 
