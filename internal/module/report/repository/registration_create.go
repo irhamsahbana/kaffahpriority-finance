@@ -44,6 +44,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		administration_fee,
 		foreign_learning_fee,
 		night_learning_fee,
+		is_itp,
 		marketer_commission_fee,
 		overpayment_fee,
 		hr_fee,
@@ -71,6 +72,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			END,
 			prt.foreign_learning_fee,
 			prt.night_learning_fee,
+			prt.is_itp,
 			prt.marketer_commission_fee,
 			prt.overpayment_fee,
 			prt.hr_fee,
@@ -118,7 +120,6 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		// check if program_id, lecturer_id, and student_id already exist in this month
 
 		queryCheck := `
-
 			SELECT EXISTS (
 				WITH template AS (
 					SELECT
@@ -137,7 +138,13 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 					program_registrations pr
 				WHERE
 					pr.program_id = (SELECT program_id FROM template)
-					AND pr.lecturer_id = (SELECT lecturer_id FROM template)
+					-- AND pr.lecturer_id = (SELECT lecturer_id FROM template)
+					AND (
+						CASE
+							WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM template) IS NULL
+							ELSE pr.lecturer_id = (SELECT lecturer_id FROM template)
+						END
+					)
 					AND pr.student_id = (SELECT student_id FROM template)
 					AND EXTRACT(MONTH FROM pr.started_at) = EXTRACT(MONTH FROM NOW())
 					AND EXTRACT(YEAR FROM pr.started_at) = EXTRACT(YEAR FROM NOW())

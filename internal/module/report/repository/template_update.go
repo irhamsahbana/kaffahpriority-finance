@@ -74,6 +74,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			administration_fee = ?,
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
+			is_itp = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,

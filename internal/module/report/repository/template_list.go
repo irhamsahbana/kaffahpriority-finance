@@ -36,6 +36,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.administration_fee,
 			prt.foreign_learning_fee,
 			prt.night_learning_fee,
+			prt.is_itp,
 			prt.marketer_commission_fee,
 			prt.overpayment_fee,
 			prt.hr_fee,

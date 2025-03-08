@@ -21,6 +21,7 @@ type UpdateTemplateGeneralReq struct {
 	AdministrationFee     float64  `json:"administration_fee" validate:"min=0"`
 	FLFee                 *float64 `json:"foreign_learning_fee" validate:"omitempty,min=0"`
 	NLFee                 *float64 `json:"night_learning_fee" validate:"omitempty,min=0"`
+	IsITP                 bool     `json:"is_itp"`
 	MarketerCommissionFee float64  `json:"marketer_commission_fee" validate:"min=0"`
 	OverpaymentFee        *float64 `json:"overpayment_fee" validate:"omitempty,min=0"`
 	HRFee                 float64  `json:"hr_fee" validate:"min=0"`
