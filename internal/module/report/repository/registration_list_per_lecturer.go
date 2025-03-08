@@ -63,6 +63,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		args = append(args, req.StudentId)
 	}
 
+	if req.AcademicManagerId != "" {
+		query += ` AND p.academic_manager_id = ?`
+		args = append(args, req.AcademicManagerId)
+	}
+
 	query += `
 		GROUP BY
 			pr.program_id,
@@ -141,6 +146,8 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.night_learning_fee
 		FROM
 			program_registrations pr
+		LEFT JOIN
+			lecturers l ON pr.lecturer_id = l.id
 		JOIN
 			months m
 			ON EXTRACT(MONTH FROM (pr.started_at AT TIME ZONE ?)) = m.month_num
@@ -150,6 +157,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		`
 
 	args = append(args, req.Tz, req.Tz, req.Year)
+
+	if req.AcademicManagerId != "" {
+		query += ` AND l.academic_manager_id = ?`
+		args = append(args, req.AcademicManagerId)
+	}
 
 	if req.LecturerId != "" {
 		query += ` AND pr.lecturer_id = ?`
