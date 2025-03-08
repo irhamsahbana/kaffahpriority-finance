@@ -41,6 +41,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		program_name,
 		program_fee,
 		program_meetings,
+		program_acquisition_rights,
 		administration_fee,
 		foreign_learning_fee,
 		night_learning_fee,
@@ -66,6 +67,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			p.name,
 			prt.program_fee,
 			0,
+			(SELECT acquisition_rights FROM program WHERE id = (SELECT program_id FROM program_registration_templates WHERE id = ?)),
 			CASE
 				WHEN ? = TRUE THEN prt.administration_fee
 				ELSE NULL
@@ -166,7 +168,9 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		}
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, item.TemplateId, req.UserId, item.IsFirstRegistration, item.TemplateId,
+			prId, item.TemplateId, req.UserId,
+			item.TemplateId,
+			item.IsFirstRegistration, item.TemplateId,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert data")
@@ -226,6 +230,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		program_name,
 		program_fee,
 		program_meetings,
+		program_acquisition_rights,
 		administration_fee,
 		foreign_learning_fee,
 		night_learning_fee,
@@ -249,6 +254,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.program_name,
 			pr.program_fee,
 			pr.program_meetings,
+			pr.program_acquisition_rights,
 			pr.administration_fee,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,

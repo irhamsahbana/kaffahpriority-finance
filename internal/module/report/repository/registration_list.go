@@ -25,6 +25,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		SELECT
 			COUNT(*) OVER() AS total_data,
 			pr.id,
+			pr.template_id,
 			pr.program_id,
 			pr.marketer_id,
 			pr.lecturer_id,

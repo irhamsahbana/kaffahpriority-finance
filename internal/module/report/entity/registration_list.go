@@ -62,6 +62,7 @@ type GetRegistrationsResp struct {
 
 type RegisItem struct {
 	Id                    string       `json:"id" db:"id"`
+	TemplateId            string       `json:"template_id" db:"template_id"`
 	ProgramId             string       `json:"program_id" db:"program_id"`
 	MarketerId            string       `json:"marketer_id" db:"marketer_id"`
 	LecturerId            *string      `json:"lecturer_id" db:"lecturer_id"`
