@@ -67,7 +67,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			p.name,
 			prt.program_fee,
 			0,
-			(SELECT acquisition_rights FROM program WHERE id = (SELECT program_id FROM program_registration_templates WHERE id = ?)),
+			(SELECT acquisition_rights FROM programs WHERE id = (SELECT program_id FROM program_registration_templates WHERE id = ?)),
 			CASE
 				WHEN ? = TRUE THEN prt.administration_fee
 				ELSE NULL
