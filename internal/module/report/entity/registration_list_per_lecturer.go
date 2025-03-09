@@ -47,6 +47,7 @@ type RegistrationListPerLecturer struct {
 	Year          int                                   `json:"year"`
 	IsFL          bool                                  `json:"is_fl" db:"is_fl"`
 	IsNL          bool                                  `json:"is_nl" db:"is_nl"`
+	IsITP         bool                                  `json:"is_itp" db:"is_itp"`
 	Registrations []RegistrationListPerLecturerPerMonth `json:"registrations"`
 }
 
@@ -64,4 +65,5 @@ type RegistrationListPerLecturerPerMonth struct {
 	StudentId  string           `json:"student_id" db:"student_id"`
 	FL         *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NL         *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
+	IsITP      bool             `json:"is_itp" db:"is_itp"`
 }

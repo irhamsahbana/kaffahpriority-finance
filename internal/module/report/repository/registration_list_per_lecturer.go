@@ -143,7 +143,8 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.lecturer_id,
 			pr.student_id,
 			pr.foreign_learning_fee,
-			pr.night_learning_fee
+			pr.night_learning_fee,
+			pr.is_itp,
 		FROM
 			program_registrations pr
 		LEFT JOIN
@@ -255,13 +256,17 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 				// Jika bulan sudah ada dalam data, tambahkan ke Registrations
 				resp.Items[i].Registrations = append(resp.Items[i].Registrations, monthMap[m.Num])
 
-				// tambahkan keterangan FL dan NL
+				// tambahkan keterangan FL, NL dan ITP pada bulan terakhir
 				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].FL != nil {
 					resp.Items[i].IsFL = true
 				}
 				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].NL != nil {
 					resp.Items[i].IsNL = true
 				}
+				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].IsITP {
+					resp.Items[i].IsITP = true
+				}
+
 			}
 		}
 
@@ -269,6 +274,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		sort.Slice(resp.Items[i].Registrations, func(a, b int) bool {
 			return resp.Items[i].Registrations[a].MonthNum < resp.Items[i].Registrations[b].MonthNum
 		})
+
 	}
 
 	return resp, nil
