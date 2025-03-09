@@ -107,7 +107,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			AND deleted_at IS NULL
 	`
 
-	err = tx.GetContext(ctx, &r, tx.Rebind(query), req.Id)
+	err = tx.GetContext(ctx, &reg, tx.Rebind(query), req.Id)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to get registration data")
 		return nil, err
