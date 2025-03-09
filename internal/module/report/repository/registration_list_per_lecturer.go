@@ -5,6 +5,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -216,6 +217,13 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		{9, "September"}, {10, "Oktober"}, {11, "November"}, {12, "Desember"},
 	}
 
+	// Buat Map untuk menyimpan registrasi paling akhir di tiap grup
+	// Key: index dari resp.Items
+	// Value: registrasi paling akhir
+	lastRegistrations := make(map[int]*string)
+	lastRegistrationWithKeyId := make(map[string]int)
+	registrationIds := make([]string, 0)
+
 	for i := range resp.Items {
 		// Buat map untuk menyimpan data per bulan
 		monthMap := make(map[int]entity.RegistrationListPerLecturerPerMonth)
@@ -267,6 +275,12 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 					resp.Items[i].IsITP = true
 				}
 
+				// Simpan data registrasi terakhir
+				lastRegistrations[i] = resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].RegistrationId
+				registrationIds = append(registrationIds, *lastRegistrations[i])
+
+				// Simpan index registrasi terakhir
+				lastRegistrationWithKeyId[*lastRegistrations[i]] = i
 			}
 		}
 
@@ -274,7 +288,47 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		sort.Slice(resp.Items[i].Registrations, func(a, b int) bool {
 			return resp.Items[i].Registrations[a].MonthNum < resp.Items[i].Registrations[b].MonthNum
 		})
+	}
 
+	// query for additional students
+	query = `
+		SELECT
+			pr.id,
+			STRING_AGG(pras.name, ', ') AS additional_students
+		FROM
+			program_registrations pr
+		JOIN
+			pr_additional_students pras ON pr.id = pras.pr_id
+		WHERE
+			pr.id IN (?)
+		GROUP BY
+			pr.id
+	`
+
+	type additionalStudents struct {
+		RegistrationId     string `db:"id"`
+		AdditionalStudents string `db:"additional_students"`
+	}
+
+	var additionalStudentsData = make([]additionalStudents, 0)
+
+	query, args, err = sqlx.In(query, registrationIds)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		return nil, err
+	}
+
+	err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		return nil, err
+	}
+
+	// Tambahkan data additional students ke resp.Items field student_name
+	for _, item := range additionalStudentsData {
+		if idx, exists := lastRegistrationWithKeyId[item.RegistrationId]; exists {
+			resp.Items[idx].StudentName += ", " + item.AdditionalStudents
+		}
 	}
 
 	return resp, nil
