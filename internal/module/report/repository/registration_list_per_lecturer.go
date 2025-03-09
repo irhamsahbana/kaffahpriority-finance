@@ -144,7 +144,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.student_id,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
-			pr.is_itp,
+			pr.is_itp
 		FROM
 			program_registrations pr
 		LEFT JOIN
