@@ -25,6 +25,7 @@ type GetRegistrationResp struct {
 	AdministrationFee     *float64      `json:"administration_fee" db:"administration_fee"`
 	FLFee                 *float64      `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NLFee                 *float64      `json:"night_learning_fee" db:"night_learning_fee"`
+	IsITP                 bool          `json:"is_itp" db:"is_itp"`
 	MarketerCommissionFee float64       `json:"marketer_commission_fee" db:"marketer_commission_fee"`
 	OverpaymentFee        *float64      `json:"overpayment_fee" db:"overpayment_fee"`
 	HRFee                 float64       `json:"hr_fee" db:"hr_fee"`

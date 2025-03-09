@@ -30,6 +30,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.program_fee,
 			pr.administration_fee,
 			pr.foreign_learning_fee,
+			pr.is_itp,
 			pr.night_learning_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
