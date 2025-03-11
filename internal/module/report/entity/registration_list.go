@@ -94,6 +94,7 @@ type RegisItem struct {
 	HRFeeForMentor             *float64     `json:"hr_fee_for_mentor" db:"hr_fee_for_mentor"`
 	HRFeeForHR                 *float64     `json:"hr_fee_for_hr" db:"hr_fee_for_hr"`
 	HRFeeForMentorRemaining    *float64     `json:"hr_fee_for_mentor_remaining" db:"hr_fee_for_mentor_remaining"`
+	HRFeeForMentorStatus       *string      `json:"hr_fee_for_mentor_status" db:"hr_fee_for_mentor_status"`
 	IsMentorDetailFeeUsed      bool         `json:"is_mentor_detail_fee_used" db:"is_mentor_detail_fee_used"`
 	MarketerGiftsFee           float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice        *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
