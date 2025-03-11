@@ -42,6 +42,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.hr_fee,
 			pr.mentor_detail_fee AS hr_fee_for_mentor,
 			pr.hr_detail_fee AS hr_fee_for_hr,
+			pr.mentor_detail_fee - pr.mentor_detail_fee_used AS hr_fee_for_mentor_remaining,
 			CASE
 				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
 				ELSE FALSE
@@ -126,6 +127,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			query += ` AND pr.lecturer_id IS NOT NULL`
 		} else {
 			query += ` AND pr.lecturer_id IS NULL`
+		}
+	}
+
+	if req.MentorFeeAllocationStatus != "all" {
+		if req.MentorFeeAllocationStatus == "full" {
+			query += ` AND (COALESCE(pr.mentor_detail_fee, 0) - COALESCE(pr.mentor_detail_fee_used, 0)) = 0`
+		} else if req.MentorFeeAllocationStatus == "partial" {
+			query += ` AND (COALESCE(pr.mentor_detail_fee, 0) - COALESCE(pr.mentor_detail_fee_used, 0)) > 0`
 		}
 	}
 

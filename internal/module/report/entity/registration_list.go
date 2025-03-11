@@ -21,6 +21,7 @@ type GetRegistrationsReq struct {
 	// mentor_detail_fee_used
 	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
 	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
+	MentorFeeAllocationStatus  string `query:"mentor_fee_allocation_status" validate:"omitempty,oneof=all full partial none"`
 
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
@@ -43,6 +44,9 @@ func (r *GetRegistrationsReq) SetDefault() {
 		r.SortType = "desc"
 	}
 
+	if r.MentorFeeAllocationStatus == "" {
+		r.MentorFeeAllocationStatus = "all"
+	}
 }
 
 func (r *GetRegistrationsReq) Validate() error {
@@ -89,6 +93,7 @@ type RegisItem struct {
 	HRFee                      float64      `json:"hr_fee" db:"hr_fee"`
 	HRFeeForMentor             *float64     `json:"hr_fee_for_mentor" db:"hr_fee_for_mentor"`
 	HRFeeForHR                 *float64     `json:"hr_fee_for_hr" db:"hr_fee_for_hr"`
+	HRFeeForMentorRemaining    *float64     `json:"hr_fee_for_mentor_remaining" db:"hr_fee_for_mentor_remaining"`
 	IsMentorDetailFeeUsed      bool         `json:"is_mentor_detail_fee_used" db:"is_mentor_detail_fee_used"`
 	MarketerGiftsFee           float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice        *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
