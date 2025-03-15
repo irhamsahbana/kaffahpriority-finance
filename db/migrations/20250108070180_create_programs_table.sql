@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS programs (
     detail TEXT,
     price DECIMAL(19, 4) NOT NULL DEFAULT 0,
     price_per_meeting DECIMAL(19, 4) NOT NULL DEFAULT 0,
+    full_fee DECIMAL(19, 4) NOT NULL DEFAULT 0, -- ujroh full
     acquisition_rights INT NOT NULL DEFAULT 0,
     days int[] NOT NULL DEFAULT '{}',
     commission_fee DECIMAL(19, 4) NOT NULL DEFAULT 0,

@@ -196,7 +196,7 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 	}
 
 	idsInSheet := make([]string, len(rows)-1)
-	lastRow := len(rows) - 1
+	// lastRow := len(rows) - 1
 	re := regexp.MustCompile(`\D`)
 	// insert into db
 	for i, row := range rows {
@@ -209,17 +209,23 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 		}
 
 		var (
-			id               = row[0]
-			name             = row[1]
-			detailStr        = row[2]
-			detail           *string
-			priceStr         = row[3]
-			price            float64
-			daysStr          = row[4]
-			commissionFee    float64
-			commissionFeeStr = row[5]
-			lecturerFee      float64
-			lecturerFeeStr   = row[6]
+			id                   = row[0]
+			name                 = row[1]
+			detailStr            = row[2]
+			detail               *string
+			priceStr             = row[3]
+			price                float64
+			daysStr              = row[4]
+			commissionFee        float64
+			commissionFeeStr     = row[5]
+			lecturerFee          float64
+			lecturerFeeStr       = row[6]
+			feePerMeeting        float64
+			feePerMeetingStr     = row[7]
+			fullFee              float64
+			fullFeeStr           = row[8]
+			acquisitionRights    float64
+			acquisitionRightsStr = row[9]
 		)
 
 		if id == "" {
@@ -274,6 +280,39 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 			lecturerFee = lecturerFeeFloat
 		}
 
+		if feePerMeetingStr == "" {
+			feePerMeeting = 0
+		} else {
+			feePerMeetingFloat, err := strconv.ParseFloat(re.ReplaceAllString(feePerMeetingStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse fee per meeting")
+				return err
+			}
+			feePerMeeting = feePerMeetingFloat
+		}
+
+		if fullFeeStr == "" {
+			fullFee = 0
+		} else {
+			fullFeeFloat, err := strconv.ParseFloat(re.ReplaceAllString(fullFeeStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse full fee")
+				return err
+			}
+			fullFee = fullFeeFloat
+		}
+
+		if acquisitionRightsStr == "" {
+			acquisitionRights = 0
+		} else {
+			acquisitionRightsFloat, err := strconv.ParseFloat(re.ReplaceAllString(acquisitionRightsStr, ""), 64)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse acquisition rights")
+				return err
+			}
+			acquisitionRights = acquisitionRightsFloat
+		}
+
 		// convert to []int
 		days := make([]int, 0)
 		if daysStr != "" { // example: "1|2|3"
@@ -289,59 +328,23 @@ func (s *excelSeed) SeedPrograms(tx *sqlx.Tx) error {
 		}
 
 		query := `
-			INSERT INTO programs (id, name, detail, price, days, commission_fee, lecturer_fee)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO programs (id, name, detail, price, days, commission_fee, lecturer_fee, price_per_meeting, full_fee, acquisition_rights)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (id) DO UPDATE SET
 				name = EXCLUDED.name,
 				detail = EXCLUDED.detail,
 				price = EXCLUDED.price,
 				days = EXCLUDED.days,
 				commission_fee = EXCLUDED.commission_fee,
-				lecturer_fee = EXCLUDED.lecturer_fee
+				lecturer_fee = EXCLUDED.lecturer_fee,
+				price_per_meeting = EXCLUDED.price_per_meeting,
+				full_fee = EXCLUDED.full_fee,
+				acquisition_rights = EXCLUDED.acquisition_rights
 			`
-		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price, pq.Array(days), commissionFee, lecturerFee)
+		_, err := tx.Exec(s.db.Rebind(query), id, name, detail, price, pq.Array(days), commissionFee, lecturerFee, feePerMeeting, fullFee, acquisitionRights)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to insert program")
 			return err
-		}
-	}
-
-	// get all programs from db that are not in the sheet
-	type program struct {
-		Id     string   `db:"id"`
-		Name   string   `db:"name"`
-		Detail *string  `db:"detail"`
-		Price  *float64 `db:"price"`
-	}
-
-	var programsNotInSheet []program
-
-	query, args, err := sqlx.In("SELECT id, name, detail, price FROM programs WHERE id NOT IN (?)", idsInSheet)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create query for programs not in sheet")
-		return err
-	}
-
-	err = tx.Select(&programsNotInSheet, s.db.Rebind(query), args...)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get programs not in sheet")
-		return err
-	}
-
-	// append programs not in sheet to the sheet
-	for i, program := range programsNotInSheet {
-		rowNumber := strconv.Itoa(lastRow + i + 2)
-		cellA := "A" + rowNumber
-		cellB := "B" + rowNumber
-		cellC := "C" + rowNumber
-		cellD := "D" + rowNumber
-		s.file.SetCellValue("programs", cellA, program.Id)
-		s.file.SetCellValue("programs", cellB, program.Name)
-		if program.Detail != nil {
-			s.file.SetCellValue("programs", cellC, *program.Detail)
-		}
-		if program.Price != nil {
-			s.file.SetCellValue("programs", cellD, *program.Price)
 		}
 	}
 

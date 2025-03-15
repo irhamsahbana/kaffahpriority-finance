@@ -30,6 +30,25 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	}()
 
 	query := `
+		WITH template AS (
+			SELECT
+				prt.program_id
+			FROM
+				program_registration_templates prt
+			WHERE
+				prt.id = ?
+				AND prt.deleted_at IS NULL
+		)
+		WITH program AS (
+			SELECT
+				p.acquisition_rights,
+				p.full_fee
+				FROM
+					programs p
+				WHERE
+					p.id = (SELECT program_id FROM template)
+					AND p.deleted_at IS NULL
+		)
 		INSERT INTO program_registrations (
 		id,
 		template_id,
@@ -40,6 +59,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		student_id,
 		program_name,
 		program_fee,
+		program_fee_per_meeting,
+		full_fee,
 		program_meetings,
 		program_acquisition_rights,
 		administration_fee,
@@ -66,8 +87,10 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			prt.student_id,
 			p.name,
 			prt.program_fee,
+			prt.program_fee_per_meeting,
+			(SELECT full_fee FROM program),
 			0,
-			(SELECT acquisition_rights FROM programs WHERE id = (SELECT program_id FROM program_registration_templates WHERE id = ?)),
+			(SELECT acquisition_rights FROM program),
 			CASE
 				WHEN ? = TRUE THEN prt.administration_fee
 				ELSE NULL
@@ -168,8 +191,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		}
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, item.TemplateId, req.UserId,
 			item.TemplateId,
+			prId, item.TemplateId, req.UserId,
 			item.IsFirstRegistration, item.TemplateId,
 		)
 		if err != nil {
