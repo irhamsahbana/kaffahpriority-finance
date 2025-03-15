@@ -32,11 +32,15 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	query := `
 		WITH template AS (
 			SELECT
+				prt.id,
 				prt.program_id,
 				prt.lecturer_id,
 				prt.marketer_id,
 				prt.student_id,
 				prt.is_itp,
+				p.name AS program_name,
+				p.acquisition_rights,
+				p.full_fee,
 				prt.program_fee,
 				prt.program_fee_per_meeting,
 				prt.administration_fee,
@@ -52,20 +56,12 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 				prt.notes
 			FROM
 				program_registration_templates prt
+			JOIN
+				programs p
+				ON prt.program_id = p.id
 			WHERE
 				prt.id = ?
 				AND prt.deleted_at IS NULL
-		),
-		WITH program AS (
-			SELECT
-				p.name,
-				p.acquisition_rights,
-				p.full_fee
-				FROM
-					programs p
-				WHERE
-					p.id = (SELECT program_id FROM template)
-					AND p.deleted_at IS NULL
 		)
 		INSERT INTO program_registrations (
 		id,
@@ -94,22 +90,23 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		days,
 		notes,
 		started_at
-		) VALUES (
+		)
+		SELECT
 			?,
-			?,
+			(SELECT id FROM template),
 			?,
 			(SELECT program_id FROM template),
 			(SELECT lecturer_id FROM template),
 			(SELECT marketer_id FROM template),
 			(SELECT student_id FROM template),
-			(SELECT name FROM program),
+			(SELECT program_name FROM template),
 			(SELECT program_fee FROM template),
 			(SELECT program_fee_per_meeting FROM template),
-			(SELECT full_fee FROM program),
+			(SELECT full_fee FROM template),
 			0,
 			CASE
-				WHEN (SELECT is_itp FROM template) = TRUE THEN (SELECT acquisition_rights FROM program) * 2
-				ELSE (SELECT acquisition_rights FROM program)
+				WHEN (SELECT is_itp FROM template) = TRUE THEN (SELECT acquisition_rights FROM template) * 2
+				ELSE (SELECT acquisition_rights FROM template)
 			END,
 			CASE
 				WHEN ? = TRUE THEN (SELECT administration_fee FROM template)
@@ -127,52 +124,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			(SELECT days FROM template),
 			(SELECT notes FROM template),
 			NOW()
-		)
-	`
-	/**
-		SELECT
-			?,
-			?,
-			?,
-			prt.program_id,
-			prt.lecturer_id,
-			prt.marketer_id,
-			prt.student_id,
-			p.name,
-			prt.program_fee,
-			prt.program_fee_per_meeting,
-			(SELECT full_fee FROM program),
-			0,
-			CASE
-				WHEN (SELECT is_itp FROM template) = TRUE THEN (SELECT acquisition_rights FROM program) * 2
-				ELSE (SELECT acquisition_rights FROM program)
-			END,
-			CASE
-				WHEN ? = TRUE THEN prt.administration_fee
-				ELSE NULL
-			END,
-			prt.foreign_learning_fee,
-			prt.night_learning_fee,
-			prt.is_itp,
-			prt.marketer_commission_fee,
-			prt.overpayment_fee,
-			prt.hr_fee,
-			prt.marketer_gifts_fee,
-			prt.closing_fee_for_office,
-			prt.closing_fee_for_reward,
-			prt.days,
-			prt.notes,
-			NOW()
-		FROM
-			program_registration_templates prt
-		JOIN
-			programs p
-			ON prt.program_id = p.id
-		WHERE
-			prt.id = ?
-			AND prt.deleted_at IS NULL
-	`
-	**/
+		`
 
 	queryStudents := `
 		SELECT
@@ -249,8 +201,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
 			item.TemplateId,
-			prId, item.TemplateId, req.UserId,
-			item.IsFirstRegistration, item.TemplateId,
+			prId, req.UserId,
+			item.IsFirstRegistration,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert data")
