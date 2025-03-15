@@ -32,7 +32,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	query := `
 		WITH template AS (
 			SELECT
-				prt.program_id
+				prt.program_id,
+				prt.is_itp
 			FROM
 				program_registration_templates prt
 			WHERE
@@ -90,7 +91,10 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			prt.program_fee_per_meeting,
 			(SELECT full_fee FROM program),
 			0,
-			(SELECT acquisition_rights FROM program),
+			CASE
+				WHEN (SELECT is_itp FROM template) = TRUE THEN (SELECT acquisition_rights FROM program) * 2
+				ELSE (SELECT acquisition_rights FROM program)
+			END,
 			CASE
 				WHEN ? = TRUE THEN prt.administration_fee
 				ELSE NULL
