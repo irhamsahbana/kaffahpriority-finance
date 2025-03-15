@@ -22,6 +22,7 @@ type Program struct {
 	Detail            *string `json:"detail" db:"detail"`
 	Price             float64 `json:"price" db:"price"`
 	PricePerMeeting   float64 `json:"price_per_meeting" db:"price_per_meeting"`
+	FullFee           float64 `json:"full_fee" db:"full_fee"`
 	AcquisitionRights int64   `json:"acquisition_rights" db:"acquisition_rights"`
 	CommissionFee     float64 `json:"commission_fee" db:"commission_fee"`
 	LecturerFee       float64 `json:"lecturer_fee" db:"lecturer_fee"`
@@ -51,6 +52,7 @@ type CreateProgramReq struct {
 	Detail            *string `json:"detail" validate:"omitempty,min=3"`
 	Price             float64 `json:"price" validate:"required,gte=0"`
 	PricePerMeeting   float64 `json:"price_per_meeting" validate:"required,gte=0"`
+	FullFee           float64 `json:"full_fee" validate:"required,gte=0"`
 	AcquisitionRights int64   `json:"acquisition_rights" validate:"required,gte=1"`
 	CommissionFee     float64 `json:"commission_fee" validate:"required,gte=0"`
 	LecturerFee       float64 `json:"lecturer_fee" validate:"required,gte=0"`
@@ -69,6 +71,7 @@ type UpdateProgramReq struct {
 	Detail            *string `json:"detail" validate:"omitempty,min=3"`
 	Price             float64 `json:"price" validate:"required,gt=0"`
 	PricePerMeeting   float64 `json:"price_per_meeting" validate:"required,gt=0"`
+	FullFee           float64 `json:"full_fee" validate:"required,gt=0"`
 	AcquisitionRights int64   `json:"acquisition_rights" validate:"required,gte=1"`
 	CommissionFee     float64 `json:"commission_fee" validate:"required,gte=0"`
 	LecturerFee       float64 `json:"lecturer_fee" validate:"required,gte=0"`

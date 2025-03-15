@@ -33,6 +33,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 			detail,
 			price,
 			price_per_meeting,
+			full_fee,
 			acquisition_rights,
 			days,
 			lecturer_fee,
@@ -82,6 +83,7 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 			price,
 			price_per_meeting,
 			acquisition_rights,
+			full_fee,
 			days,
 			lecturer_fee,
 			commission_fee,
@@ -139,10 +141,11 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 			price,
 			price_per_meeting,
 			acquisition_rights,
+			full_fee,
 			days,
 			lecturer_fee,
 			commission_fee
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query),
@@ -152,6 +155,7 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 		req.Price,
 		req.PricePerMeeting,
 		req.AcquisitionRights,
+		req.FullFee,
 		pq.Array(req.Days),
 		req.LecturerFee,
 		req.CommissionFee,
@@ -198,6 +202,7 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 			detail = ?,
 			price = ?,
 			price_per_meeting = ?,
+			full_fee = ?,
 			acquisition_rights = ?,
 			days = ?,
 			lecturer_fee = ?,
@@ -211,6 +216,7 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 		req.Detail,
 		req.Price,
 		req.PricePerMeeting,
+		req.FullFee,
 		req.AcquisitionRights,
 		pq.Array(req.Days),
 		req.LecturerFee,
