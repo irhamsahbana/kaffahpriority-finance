@@ -33,7 +33,23 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		WITH template AS (
 			SELECT
 				prt.program_id,
-				prt.is_itp
+				prt.lecturer_id,
+				prt.marketer_id,
+				prt.student_id,
+				prt.is_itp,
+				prt.program_fee,
+				prt.program_fee_per_meeting,
+				prt.administration_fee,
+				prt.foreign_learning_fee,
+				prt.night_learning_fee,
+				prt.marketer_commission_fee,
+				prt.overpayment_fee,
+				prt.hr_fee,
+				prt.marketer_gifts_fee,
+				prt.closing_fee_for_office,
+				prt.closing_fee_for_reward,
+				prt.days,
+				prt.notes
 			FROM
 				program_registration_templates prt
 			WHERE
@@ -42,6 +58,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		),
 		WITH program AS (
 			SELECT
+				p.name,
 				p.acquisition_rights,
 				p.full_fee
 				FROM
@@ -77,7 +94,42 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		days,
 		notes,
 		started_at
+		) VALUES (
+			?,
+			?,
+			?,
+			(SELECT program_id FROM template),
+			(SELECT lecturer_id FROM template),
+			(SELECT marketer_id FROM template),
+			(SELECT student_id FROM template),
+			(SELECT name FROM program),
+			(SELECT program_fee FROM template),
+			(SELECT program_fee_per_meeting FROM template),
+			(SELECT full_fee FROM program),
+			0,
+			CASE
+				WHEN (SELECT is_itp FROM template) = TRUE THEN (SELECT acquisition_rights FROM program) * 2
+				ELSE (SELECT acquisition_rights FROM program)
+			END,
+			CASE
+				WHEN ? = TRUE THEN (SELECT administration_fee FROM template)
+				ELSE NULL
+			END,
+			(SELECT foreign_learning_fee FROM template),
+			(SELECT night_learning_fee FROM template),
+			(SELECT is_itp FROM template),
+			(SELECT marketer_commission_fee FROM template),
+			(SELECT overpayment_fee FROM template),
+			(SELECT hr_fee FROM template),
+			(SELECT marketer_gifts_fee FROM template),
+			(SELECT closing_fee_for_office FROM template),
+			(SELECT closing_fee_for_reward FROM template),
+			(SELECT days FROM template),
+			(SELECT notes FROM template),
+			NOW()
 		)
+	`
+	/**
 		SELECT
 			?,
 			?,
@@ -120,6 +172,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			prt.id = ?
 			AND prt.deleted_at IS NULL
 	`
+	**/
 
 	queryStudents := `
 		SELECT
