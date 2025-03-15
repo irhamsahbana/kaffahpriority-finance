@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     program_meetings_completed INT NOT NULL DEFAULT 0,
     program_acquisition_rights INT NOT NULL DEFAULT 0,
     full_fee DECIMAL(19, 4) NOT NULL,
+    is_full_fee BOOLEAN DEFAULT FALSE,
     administration_fee DECIMAL(19, 4),
     foreign_learning_fee DECIMAL(19, 4),
     night_learning_fee DECIMAL(19, 4),

@@ -45,6 +45,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Put("/registrations/:id/lecturer-distributions", m.AuthBearer, h.lecturerDistributions)
 
 	router.Get("/registration-per-lecturers", m.AuthBearer, h.getRegistrationListPerLecturer)
+	router.Get("/lecturers-wages", m.AuthBearer, h.getLecturerWages)
 
 	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
 }
@@ -486,6 +487,36 @@ func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetRegistrationsPerLecturer(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetLecturersWagesReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getLecturerWages - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerWages - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetLecturersWages(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
