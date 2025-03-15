@@ -37,6 +37,20 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			END AS acquisition_rights,
 			pr.program_meetings,
 			pr.program_fee_per_meeting,
+			(
+				CASE
+					WHEN pr.is_full_fee = TRUE THEN pr.full_fee
+					ELSE pr.program_fee_per_meeting * pr.program_meetings
+				END
+			) AS initial_fee,
+			(
+				(
+				CASE
+					WHEN pr.is_full_fee = TRUE THEN pr.full_fee
+					ELSE pr.program_fee_per_meeting * pr.program_meetings
+				END
+				) + COALESCE(pr.night_learning_fee, 0) + COALESCE(pr.foreign_learning_fee, 0)
+			) AS real_fee,
 			pr.is_full_fee,
 			pr.full_fee,
 			pr.mentor_detail_fee_used,

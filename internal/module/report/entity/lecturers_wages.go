@@ -48,8 +48,10 @@ type LecturersWageItem struct {
 	IsITP                bool             `json:"is_itp" db:"is_itp"`
 	ProgramMeetings      int              `json:"program_meetings" db:"program_meetings"`
 	ProgramFeePerMeeting decimal.Decimal  `json:"program_fee_per_meeting" db:"program_fee_per_meeting"`
-	IsFullFee            bool             `json:"is_full_fee" db:"is_full_fee"`                       // ujrah full
+	IsFullFee            bool             `json:"is_full_fee" db:"is_full_fee"`                       //
 	FullFee              decimal.Decimal  `json:"full_fee" db:"full_fee"`                             // ujrah full
+	InitialFee           decimal.Decimal  `json:"initial_fee" db:"initial_fee"`                       // ujrah awal
+	RealFee              decimal.Decimal  `json:"real_fee" db:"real_fee"`                             // ujrah real
 	MentorDetailFeeUsed  *decimal.Decimal `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"` // wage for mentor / keep gaji
 	Notes                *string          `json:"notes" db:"notes"`
 }
