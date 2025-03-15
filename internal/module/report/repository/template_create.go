@@ -91,8 +91,8 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			student_id,
 			days,
 			notes,
-
 			program_fee,
+
 			program_fee_per_meeting,
 			administration_fee,
 			foreign_learning_fee,
@@ -105,8 +105,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			closing_fee_for_office,
 			closing_fee_for_reward
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?,
-			(SELECT program_fee FROM program),
+			?, ?, ?, ?, ?, ?, ?, ?, ?,
 			(SELECT program_fee_per_meeting FROM program),
 			?,
 			?,
@@ -122,7 +121,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId,
 		Id, req.UserId, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		pq.Array(req.Days), req.Notes,
+		pq.Array(req.Days), req.Notes, req.ProgramFee,
 
 		req.AdministrationFee,
 		req.FLFee,
