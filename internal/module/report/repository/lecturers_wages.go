@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"context"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -98,11 +99,65 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		return nil, err
 	}
 
+	registrationIds := make([]string, 0)
+
 	for _, d := range data {
+		registrationIds = append(registrationIds, d.RegistrationId)
 		resp.Meta.TotalData = d.TotalData
 		resp.Items = append(resp.Items, d.LecturersWageItem)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	if len(registrationIds) == 0 {
+		return resp, nil
+	}
+
+	// query for additional students
+	query = `
+		SELECT
+			pr.id,
+			STRING_AGG(pras.name, ', ') AS additional_students
+		FROM
+			program_registrations pr
+		JOIN
+			pr_additional_students pras ON pr.id = pras.pr_id
+		WHERE
+			pr.id IN (?)
+		GROUP BY
+			pr.id
+	`
+
+	type additionalStudents struct {
+		RegistrationId     string `db:"id"`
+		AdditionalStudents string `db:"additional_students"`
+	}
+
+	var additionalStudentsData []additionalStudents
+
+	query, args, err := sqlx.In(query, registrationIds)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturersWages - failed to build query for additional students")
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+	err = r.db.SelectContext(ctx, &additionalStudentsData, query, args...)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturersWages - failed to fetch additional students")
+		return nil, err
+	}
+
+	// Add additional students data to resp.Items field student_name
+	for _, item := range additionalStudentsData {
+		for i, d := range resp.Items {
+			if d.RegistrationId == item.RegistrationId {
+				resp.Items[i].StudentName += ", " + item.AdditionalStudents
+
+				break
+			}
+		}
+	}
+
 	return resp, nil
 }
