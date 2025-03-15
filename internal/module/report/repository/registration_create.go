@@ -39,7 +39,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			WHERE
 				prt.id = ?
 				AND prt.deleted_at IS NULL
-		)
+		),
 		WITH program AS (
 			SELECT
 				p.acquisition_rights,
