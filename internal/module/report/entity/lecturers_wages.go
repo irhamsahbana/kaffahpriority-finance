@@ -11,9 +11,10 @@ type GetLecturersWagesReq struct {
 	UserId string `validate:"ulid"`
 	types.MetaQuery
 
-	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
-	Month      string `query:"month" validate:"omitempty,datetime=2006-01"`
-	Timezone   string `query:"timezone" validate:"required,timezone"`
+	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
+	Timezone          string `query:"timezone" validate:"required,timezone"`
 }
 
 func (r *GetLecturersWagesReq) SetDefault() {
@@ -40,6 +41,8 @@ type LecturersWageItem struct {
 	LecturerName         string           `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
 	ProgramName          string           `json:"program_name" db:"program_name"`
+	MarketerName         string           `json:"marketer_name" db:"marketer_name"`
+	AccquisitionRights   int              `json:"acquisition_rights" db:"acquisition_rights"`
 	FL                   *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NL                   *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP                bool             `json:"is_itp" db:"is_itp"`
@@ -48,4 +51,5 @@ type LecturersWageItem struct {
 	IsFullFee            bool             `json:"is_full_fee" db:"is_full_fee"`                       // ujrah full
 	FullFee              decimal.Decimal  `json:"full_fee" db:"full_fee"`                             // ujrah full
 	MentorDetailFeeUsed  *decimal.Decimal `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"` // wage for mentor / keep gaji
+	Notes                *string          `json:"notes" db:"notes"`
 }

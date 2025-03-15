@@ -27,14 +27,20 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.program_name,
 			s.name AS student_name,
 			l.name AS lecturer_name,
+			m.name AS marketer_name,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			CASE
+				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+				ELSE pr.program_acquisition_rights
+			END AS acquisition_rights,
 			pr.program_meetings,
 			pr.program_fee_per_meeting,
 			pr.is_full_fee,
 			pr.full_fee,
-			pr.mentor_detail_fee_used
+			pr.mentor_detail_fee_used,
+			pr.notes_for_lecturer_wage AS notes
 		FROM
 			program_registrations pr
 		JOIN
@@ -42,13 +48,22 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		JOIN
 			lecturers l ON pr.lecturer_id = l.id
 		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		JOIN
 			students s ON pr.student_id = s.id
+		JOIN
+			marketers m ON pr.marketer_id = m.id
 		WHERE
 			pr.deleted_at IS NULL
 			AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
 	args = append(args, req.Timezone, req.Month)
+
+	if req.AcademicManagerId != "" {
+		query += ` AND am.id = ?`
+		args = append(args, req.AcademicManagerId)
+	}
 
 	if req.LecturerId != "" {
 		query += ` AND pr.lecturer_id = ?`
