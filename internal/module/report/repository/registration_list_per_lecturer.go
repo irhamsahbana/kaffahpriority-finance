@@ -65,7 +65,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	}
 
 	if req.AcademicManagerId != "" {
-		query += ` AND p.academic_manager_id = ?`
+		query += ` AND l.academic_manager_id = ?`
 		args = append(args, req.AcademicManagerId)
 	}
 
