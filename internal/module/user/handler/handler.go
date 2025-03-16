@@ -32,7 +32,7 @@ func NewUserHandler() *userHandler {
 func (h *userHandler) Register(router fiber.Router) {
 	router.Post("/login", h.login)
 	router.Get("/entities", middleware.AuthBearer, h.getUsers)
-	router.Get("/entities/:id", middleware.AuthBearer, h.updateUser)
+	router.Put("/entities/:id", middleware.AuthBearer, h.updateUser)
 	router.Delete("/entities/:id", middleware.AuthBearer, h.deleteUser)
 }
 
