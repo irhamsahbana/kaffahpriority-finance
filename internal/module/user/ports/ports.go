@@ -9,10 +9,14 @@ type UserRepository interface {
 	Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error)
 
 	GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error)
+	UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error)
+	DeleteUser(ctx context.Context, req *entity.DeleteUserReq) error
 }
 
 type UserService interface {
 	Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error)
 
 	GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error)
+	UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error)
+	DeleteUser(ctx context.Context, req *entity.DeleteUserReq) error
 }

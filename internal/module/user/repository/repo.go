@@ -131,3 +131,48 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 
 	return resp, nil
 }
+
+func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
+	var resp entity.UpdateUserResp
+	resp.Id = req.Id
+
+	query := `
+		UPDATE
+			users
+		SET
+			role_id = ?,
+			name = ?,
+			email = ?
+		WHERE
+			id = ?
+	`
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.RoleId, req.Name, req.Email, req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateUser - failed to update user")
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) error {
+	query := `
+		UPDATE
+			users
+		SET
+			deleted_at = NOW()
+		WHERE
+			id = ?
+		AND
+			deleted_at IS NULL
+	`
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::DeleteUser - failed to delete user")
+		return err
+	}
+
+	return nil
+}

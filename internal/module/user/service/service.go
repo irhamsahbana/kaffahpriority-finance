@@ -25,3 +25,11 @@ func (s *userService) Login(ctx context.Context, req *entity.LoginReq) (*entity.
 func (s *userService) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error) {
 	return s.repo.GetUsers(ctx, req)
 }
+
+func (s *userService) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
+	return s.repo.UpdateUser(ctx, req)
+}
+
+func (s *userService) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) error {
+	return s.repo.DeleteUser(ctx, req)
+}
