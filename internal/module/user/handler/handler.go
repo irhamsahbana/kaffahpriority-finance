@@ -2,10 +2,12 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	"codebase-app/internal/middleware"
 	"codebase-app/internal/module/user/entity"
 	"codebase-app/internal/module/user/ports"
 	"codebase-app/internal/module/user/repository"
 	"codebase-app/internal/module/user/service"
+	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,6 +31,7 @@ func NewUserHandler() *userHandler {
 
 func (h *userHandler) Register(router fiber.Router) {
 	router.Post("/login", h.login)
+	router.Get("/entities", middleware.AuthBearer, h.getUsers)
 }
 
 func (h *userHandler) login(c *fiber.Ctx) error {
@@ -51,6 +54,31 @@ func (h *userHandler) login(c *fiber.Ctx) error {
 	if err != nil {
 		log.Error().Err(err).Any("req", req.Log()).Msg("handler::login - Service error")
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *userHandler) getUsers(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetUsersReq)
+		v   = adapter.Adapters.Validator
+		l   = middleware.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getUsers - Invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetUsers(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))

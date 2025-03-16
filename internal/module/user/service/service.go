@@ -21,3 +21,7 @@ func NewUserService(repo ports.UserRepository) *userService {
 func (s *userService) Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error) {
 	return s.repo.Login(ctx, req)
 }
+
+func (s *userService) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error) {
+	return s.repo.GetUsers(ctx, req)
+}
