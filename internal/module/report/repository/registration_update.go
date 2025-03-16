@@ -48,6 +48,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			closing_fee_for_reward = ?,
 			days = ?,
 			notes = ?,
+			is_itp = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -59,6 +60,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
+		req.IsITP,
 		req.Id,
 	)
 	if err != nil {
