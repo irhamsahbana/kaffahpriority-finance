@@ -167,3 +167,28 @@ func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) er
 
 	return nil
 }
+
+func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error) {
+	var (
+		resp entity.GetPermissionsResp
+	)
+	resp.Items = make([]entity.Permission, 0)
+
+	query := `
+		SELECT
+			id,
+			name,
+			description
+		FROM permissions
+		WHERE deleted_at IS NULL
+		ORDER BY id ASC
+	`
+
+	err := r.db.SelectContext(ctx, &resp.Items, query)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetPermissions - failed to get permissions")
+		return nil, err
+	}
+
+	return &resp, nil
+}

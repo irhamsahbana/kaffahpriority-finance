@@ -12,6 +12,8 @@ type RBACRepository interface {
 	CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error)
 	UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error)
 	DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error
+
+	GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error)
 }
 
 type RBACService interface {
@@ -21,4 +23,6 @@ type RBACService interface {
 	CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error)
 	UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error)
 	DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error
+
+	GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error)
 }
