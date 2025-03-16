@@ -41,3 +41,7 @@ func (s *rbacService) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq)
 func (s *rbacService) GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error) {
 	return s.repo.GetPermissions(ctx, req)
 }
+
+func (s *rbacService) UpdateRolePermissions(ctx context.Context, req *entity.UpdateRolePermissionsReq) (*entity.UpdateRolePermissionsResp, error) {
+	return s.repo.UpdateRolePermissions(ctx, req)
+}

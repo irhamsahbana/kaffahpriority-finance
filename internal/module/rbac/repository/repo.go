@@ -34,7 +34,7 @@ func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission strin
 			JOIN permissions p ON rp.permission_id = p.id
 			WHERE
 				u.id = ?
-				AND p.name = ?
+				AND (p.name = ? OR p.name = 'all_access')
 		)
 	`
 
@@ -187,6 +187,90 @@ func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermission
 	err := r.db.SelectContext(ctx, &resp.Items, query)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetPermissions - failed to get permissions")
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.UpdateRolePermissionsReq) (*entity.UpdateRolePermissionsResp, error) {
+	var resp entity.UpdateRolePermissionsResp
+	resp.Id = req.RoleId
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to begin transaction")
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	if len(req.Permissions) == 0 {
+		// check if this role is the last role that has all_access permission
+		roleThatHasAllAccess := 0
+		query := `
+			SELECT COUNT(*)
+			FROM role_permissions rp
+			JOIN permissions p ON rp.permission_id = p.id
+			WHERE p.name = 'all_access'
+		`
+
+		err = tx.GetContext(ctx, &roleThatHasAllAccess, tx.Rebind(query))
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to get role that has all_access permission")
+			return nil, err
+		}
+
+		query = `
+			SELECT r.id
+			FROM users u
+			JOIN roles r ON u.role_id = r.id
+			WHERE u.id = ?
+		`
+
+		var roleId string
+		err = tx.GetContext(ctx, &roleId, tx.Rebind(query), req.UserId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to get role id")
+			return nil, err
+		}
+
+		if roleId == req.RoleId && roleThatHasAllAccess == 1 {
+			return nil, errmsg.NewCustomErrors(400).SetMessage("Role ini adalah role terakhir yang memiliki all_access permission!")
+		}
+
+		if roleThatHasAllAccess == 1 {
+			return nil, errmsg.NewCustomErrors(400).SetMessage("Role ini adalah role terakhir yang memiliki all_access permission!")
+		}
+	}
+
+	query := `
+		DELETE FROM role_permissions
+		WHERE role_id = ?
+	`
+
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.RoleId)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to delete role permissions")
+		return nil, err
+	}
+
+	query = `
+		INSERT INTO role_permissions (role_id, permission_id)
+		VALUES (?, ?)
+	`
+	query = tx.Rebind(query)
+
+	for _, v := range req.Permissions {
+		_, err = tx.ExecContext(ctx, query, req.RoleId, v)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to insert role permissions")
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to commit transaction")
 		return nil, err
 	}
 
