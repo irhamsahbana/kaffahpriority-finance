@@ -69,6 +69,7 @@ require (
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/LukaGiorgadze/gonull v1.2.0
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.27.0
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect

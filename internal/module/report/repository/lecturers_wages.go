@@ -3,6 +3,8 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -40,6 +42,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.program_fee_per_meeting,
 			(
 				CASE
+					WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
 					WHEN pr.is_full_fee = TRUE THEN pr.full_fee
 					ELSE pr.program_fee_per_meeting * pr.program_meetings
 				END
@@ -47,6 +50,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			(
 				(
 				CASE
+					WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
 					WHEN pr.is_full_fee = TRUE THEN pr.full_fee
 					ELSE pr.program_fee_per_meeting * pr.program_meetings
 				END
@@ -160,4 +164,68 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	}
 
 	return resp, nil
+}
+
+func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
+	queryParts := []string{}
+	args := []any{}
+
+	if req.ProgramMeetings.Present && req.ProgramMeetings.Valid {
+		queryParts = append(queryParts, "program_meetings = ?")
+		args = append(args, req.ProgramMeetings.Val)
+	}
+
+	if req.InitialFee.Present {
+		if req.InitialFee.Valid {
+			queryParts = append(queryParts, "initial_fee = ?")
+			args = append(args, req.InitialFee.Val)
+		} else {
+			queryParts = append(queryParts, "initial_fee = NULL")
+		}
+	}
+
+	if req.FL.Present {
+		if req.FL.Valid {
+			queryParts = append(queryParts, "foreign_learning_fee = ?")
+			args = append(args, req.FL.Val)
+		} else {
+			queryParts = append(queryParts, "foreign_learning_fee = NULL")
+		}
+	}
+
+	if req.NL.Present {
+		if req.NL.Valid {
+			queryParts = append(queryParts, "night_learning_fee = ?")
+			args = append(args, req.NL.Val)
+		} else {
+			queryParts = append(queryParts, "night_learning_fee = NULL")
+		}
+	}
+
+	if req.IsFullFee.Present && req.IsFullFee.Valid {
+		queryParts = append(queryParts, "is_full_fee = ?")
+		args = append(args, req.IsFullFee.Val)
+	}
+
+	// Jika tidak ada field yang berubah, langsung return
+	if len(queryParts) == 0 {
+		return nil
+	}
+
+	query := fmt.Sprintf(`
+			UPDATE program_registrations
+			SET %s
+			WHERE id = ?
+		`,
+		strings.Join(queryParts, ", "),
+	)
+	args = append(args, req.RegistrationId)
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to update lecturers wages")
+		return err
+	}
+
+	return nil
 }

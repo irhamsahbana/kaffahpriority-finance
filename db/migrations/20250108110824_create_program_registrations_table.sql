@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS program_registrations (
     mentor_detail_fee_used DECIMAL(19, 4),
     notes_for_fund_distributions VARCHAR(255),
     used_at TIMESTAMP WITH TIME ZONE,
+    -- cmo section
+    initial_fee DECIMAL(19, 4),
     -- general section
     notes VARCHAR(255),
     notes_for_academic_finace VARCHAR(255),

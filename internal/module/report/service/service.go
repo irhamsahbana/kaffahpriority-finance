@@ -70,6 +70,10 @@ func (s *reportService) GetLecturersWages(ctx context.Context, req *entity.GetLe
 	return s.repo.GetLecturersWages(ctx, req)
 }
 
+func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
+	return s.repo.UpdateLecturersWage(ctx, req)
+}
+
 func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
 	return s.repo.DistributeHRFee(ctx, req)
 }
