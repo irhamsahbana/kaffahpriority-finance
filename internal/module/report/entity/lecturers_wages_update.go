@@ -38,6 +38,10 @@ func (r *UpdateLecturersWageReq) Validate() error {
 		err.Add("night_learning_fee", "night_learning_fee must be greater than or equal to 0")
 	}
 
+	if r.IsFullFee.Present && !r.IsFullFee.Valid {
+		err.Add("is_full_fee", "is_full_fee must be a boolean")
+	}
+
 	if err.HasErrors() {
 		return err
 	}
