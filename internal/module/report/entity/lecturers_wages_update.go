@@ -17,6 +17,7 @@ type UpdateLecturersWageReq struct {
 	FL              gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
 	NL              gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
 	IsFullFee       gonull.Nullable[bool]            `json:"is_full_fee"`
+	Notes           gonull.Nullable[string]          `json:"notes"`
 }
 
 func (r *UpdateLecturersWageReq) Validate() error {
@@ -40,6 +41,10 @@ func (r *UpdateLecturersWageReq) Validate() error {
 
 	if r.IsFullFee.Present && !r.IsFullFee.Valid {
 		err.Add("is_full_fee", "is_full_fee must be a boolean")
+	}
+
+	if r.Notes.Present && len(r.Notes.Val) > 255 {
+		err.Add("notes", "notes must be less than or equal to 255 characters")
 	}
 
 	if err.HasErrors() {

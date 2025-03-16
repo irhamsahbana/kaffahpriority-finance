@@ -209,6 +209,15 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 		args = append(args, req.IsFullFee.Val)
 	}
 
+	if req.Notes.Present {
+		if req.Notes.Valid {
+			queryParts = append(queryParts, "notes_for_lecturer_wage = ?")
+			args = append(args, req.Notes.Val)
+		} else {
+			queryParts = append(queryParts, "notes_for_lecturer_wage = NULL")
+		}
+	}
+
 	// Jika tidak ada field yang berubah, langsung return
 	if len(queryParts) == 0 {
 		return nil
