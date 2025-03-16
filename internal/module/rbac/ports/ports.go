@@ -1,7 +1,16 @@
 package ports
 
-type XxxRepository interface {
+import (
+	"codebase-app/internal/module/rbac/entity"
+	"context"
+)
+
+type RBACRepository interface {
+	IsHasPermission(ctx context.Context, userId, permission string) error
+	GetRoleAndPermissions(ctx context.Context, req *entity.GetRoleAndPermissionsReq) (*entity.GetRoleAndPermissionsResp, error)
 }
 
-type XxxService interface {
+type RBACService interface {
+	IsHasPermission(ctx context.Context, userId, permission string) error
+	GetRoleAndPermissions(ctx context.Context, req *entity.GetRoleAndPermissionsReq) (*entity.GetRoleAndPermissionsResp, error)
 }

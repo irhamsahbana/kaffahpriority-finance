@@ -9,6 +9,7 @@ import (
 
 	m "codebase-app/internal/middleware"
 	masterHandler "codebase-app/internal/module/master/handler"
+	rbacHandler "codebase-app/internal/module/rbac/handler"
 	reportHandler "codebase-app/internal/module/report/handler"
 	userHandler "codebase-app/internal/module/user/handler"
 
@@ -25,6 +26,7 @@ func SetupRoutes(app *fiber.App) {
 	userHandler.NewUserHandler().Register(app.Group("/users"))
 	reportHandler.NewReportHandler().Register(app.Group("/reports"))
 	masterHandler.NewMasterHandler().Register(app.Group("/masters"))
+	rbacHandler.NewRBACHandler().Register(app.Group("/role-permissions"))
 
 	// db := adapter.Adapters.Postgres
 
