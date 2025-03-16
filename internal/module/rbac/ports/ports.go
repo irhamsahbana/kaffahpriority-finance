@@ -8,9 +8,17 @@ import (
 type RBACRepository interface {
 	IsHasPermission(ctx context.Context, userId, permission string) error
 	GetRoleAndPermissions(ctx context.Context, req *entity.GetRoleAndPermissionsReq) (*entity.GetRoleAndPermissionsResp, error)
+
+	CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error)
+	UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error)
+	DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error
 }
 
 type RBACService interface {
 	IsHasPermission(ctx context.Context, userId, permission string) error
 	GetRoleAndPermissions(ctx context.Context, req *entity.GetRoleAndPermissionsReq) (*entity.GetRoleAndPermissionsResp, error)
+
+	CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error)
+	UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error)
+	DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error
 }
