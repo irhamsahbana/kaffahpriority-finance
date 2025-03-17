@@ -132,6 +132,36 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 	return resp, nil
 }
 
+func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error) {
+	var resp entity.GetUserResp
+
+	query := `
+		SELECT
+			u.id,
+			u.role_id,
+			u.name,
+			u.email
+		FROM
+			users u
+		WHERE
+			u.id = ?
+		AND
+			u.deleted_at IS NULL
+	`
+
+	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msg("repo::GetUser - user not found")
+			return nil, errmsg.NewCustomErrors(404).SetMessage("Data tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msg("repo::GetUser - failed to fetch user")
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
 	var resp entity.UpdateUserResp
 	resp.Id = req.Id

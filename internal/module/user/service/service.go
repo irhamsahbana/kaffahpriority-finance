@@ -26,6 +26,10 @@ func (s *userService) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*e
 	return s.repo.GetUsers(ctx, req)
 }
 
+func (s *userService) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error) {
+	return s.repo.GetUser(ctx, req)
+}
+
 func (s *userService) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
 	return s.repo.UpdateUser(ctx, req)
 }
