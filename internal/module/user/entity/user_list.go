@@ -17,5 +17,6 @@ type UserItem struct {
 	Id     string `json:"id" db:"id"`
 	RoleId string `json:"role_id" db:"role_id"`
 	Name   string `json:"name" db:"name"`
+	Email  string `json:"email" db:"email"`
 	Role   string `json:"role" db:"role"`
 }

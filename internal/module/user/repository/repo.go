@@ -109,7 +109,8 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 			u.id,
 			r.id as role_id,
 			u.name,
-			r.name as role
+			r.name as role,
+			u.email
 		FROM
 			users u
 		JOIN
