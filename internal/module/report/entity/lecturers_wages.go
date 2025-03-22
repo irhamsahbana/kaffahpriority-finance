@@ -58,12 +58,31 @@ type LecturersWageItem struct {
 
 // aggregate version
 
+type GetLecturersWagesAggregateReq struct {
+	UserId string `validate:"ulid"`
+	types.MetaQuery
+
+	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
+	Timezone          string `query:"timezone" validate:"required,timezone"`
+}
+
+func (r *GetLecturersWagesAggregateReq) SetDefault() {
+	r.MetaQuery.SetDefault()
+
+	if r.Timezone == "" {
+		r.Timezone = "Asia/Makassar"
+	}
+}
+
 type LecturersWageAggregateResp struct {
 	Items []LecturersWageAggregateItem `json:"items"`
 	Meta  types.Meta                   `json:"meta"`
 }
 
 type LecturersWageAggregateItem struct {
+	Month                  string          `json:"month" db:"month"`
 	LecturerId             string          `json:"lecturer_id" db:"lecturer_id"`
 	AcademicManagerId      string          `json:"academic_manager_id" db:"academic_manager_id"`
 	LecturerName           string          `json:"lecturer_name" db:"lecturer_name"`

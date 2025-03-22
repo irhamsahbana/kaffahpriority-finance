@@ -168,7 +168,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	return resp, nil
 }
 
-func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.LecturersWageAggregateResp, error) {
+func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error) {
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.LecturersWageAggregateItem
@@ -188,6 +188,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			l.name AS lecturer_name,
 			am.id AS academic_manager_id,
 			am.name AS academic_manager_name,
+			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
 			COALESCE(
 				SUM(
 					(
@@ -220,10 +221,13 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			academic_managers am ON l.academic_manager_id = am.id
 		WHERE
 			pr.deleted_at IS NULL
-			AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
+	args = append(args, req.Timezone)
 
-	args = append(args, req.Timezone, req.Month)
+	if req.Month != "" {
+		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		args = append(args, req.Timezone, req.Month)
+	}
 
 	if req.AcademicManagerId != "" {
 		query += ` AND am.id = ?`
@@ -240,9 +244,11 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			l.id,
 			l.name,
 			am.id,
-			am.name
+			am.name,
+			month
 		ORDER BY
-			l.id ASC
+			l.id ASC,
+			month ASC
 		LIMIT ? OFFSET ?
 	`
 

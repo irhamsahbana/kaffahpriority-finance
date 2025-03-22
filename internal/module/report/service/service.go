@@ -70,7 +70,7 @@ func (s *reportService) GetLecturersWages(ctx context.Context, req *entity.GetLe
 	return s.repo.GetLecturersWages(ctx, req)
 }
 
-func (s *reportService) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.LecturersWageAggregateResp, error) {
+func (s *reportService) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error) {
 	return s.repo.GetLecturersWagesAggregate(ctx, req)
 }
 

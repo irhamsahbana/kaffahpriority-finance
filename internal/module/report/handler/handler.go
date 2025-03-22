@@ -529,7 +529,7 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturersWagesReq)
+		req = new(entity.GetLecturersWagesAggregateReq)
 		v   = adapter.Adapters.Validator
 		l   = m.GetLocals(c)
 	)
