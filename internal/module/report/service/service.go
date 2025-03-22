@@ -85,3 +85,7 @@ func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistr
 func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
 	return s.repo.UseHRfeeForLecturer(ctx, req)
 }
+
+func (s *reportService) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	return s.repo.GetAcquisitionRightsAggregate(ctx, req)
+}

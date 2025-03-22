@@ -341,3 +341,78 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 
 	return nil
 }
+
+func (r *reportRepo) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (
+	*entity.GetAcquisitionRightsAggregateResp, error) {
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.AcquisitionRightsAggregate
+	}
+	var (
+		resp = new(entity.GetAcquisitionRightsAggregateResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+
+	resp.Items = make([]entity.AcquisitionRightsAggregate, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			am.id AS academic_manager_id,
+			am.name AS academic_manager_name,
+			SUM(
+				CASE
+					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+					ELSE pr.program_acquisition_rights
+				END
+			) AS total_acquisition_rights
+		FROM
+			program_registrations pr
+		JOIN
+			lecturers l ON pr.lecturer_id = l.id
+		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE
+			pr.deleted_at IS NULL
+	`
+	args = append(args, req.Timezone)
+
+	if req.Month != "" {
+		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		args = append(args, req.Timezone, req.Month)
+	}
+
+	if req.AcademicManagerId != "" {
+		query += ` AND am.id = ?`
+		args = append(args, req.AcademicManagerId)
+	}
+
+	query += `
+		GROUP BY
+			month,
+			am.id,
+			am.name
+		ORDER BY
+			am.id ASC,
+			month ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetAcquisitionRightsAggregate - failed to query acquisition rights")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.AcquisitionRightsAggregate)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
