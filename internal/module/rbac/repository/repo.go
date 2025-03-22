@@ -117,14 +117,52 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error) {
 	var resp entity.CreateRoleResp
 	resp.Id = ulid.Make().String()
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to begin transaction")
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	query := `
 		INSERT INTO roles (id, name)
 		VALUES (?, ?)
 	`
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), resp.Id, req.Name)
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), resp.Id, req.Name)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to create role")
+		return nil, err
+	}
+
+	if len(req.Permissions) == 0 {
+		err = tx.Commit()
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to commit transaction")
+			return nil, err
+		}
+
+		return &resp, nil
+	}
+
+	query = `
+		INSERT INTO role_permissions (role_id, permission_id)
+		VALUES (?, ?)
+	`
+	query = tx.Rebind(query)
+
+	for _, v := range req.Permissions {
+		_, err = tx.ExecContext(ctx, query, resp.Id, v)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to insert role permissions")
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to commit transaction")
 		return nil, err
 	}
 
@@ -134,6 +172,14 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error) {
 	var resp entity.UpdateRoleResp
 	resp.Id = req.Id
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to begin transaction")
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	query := `
 		UPDATE roles
 		SET
@@ -142,9 +188,50 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 		WHERE id = ?
 	`
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Id)
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Id)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to update role")
+		return nil, err
+	}
+
+	query = `
+		DELETE FROM role_permissions
+		WHERE role_id = ?
+	`
+
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to delete role permissions")
+		return nil, err
+	}
+
+	if len(req.Permissions) == 0 {
+		err = tx.Commit()
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to commit transaction")
+			return nil, err
+		}
+
+		return &resp, nil
+	}
+
+	query = `
+		INSERT INTO role_permissions (role_id, permission_id)
+		VALUES (?, ?)
+	`
+	query = tx.Rebind(query)
+
+	for _, v := range req.Permissions {
+		_, err = tx.ExecContext(ctx, query, req.Id, v)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to insert role permissions")
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to commit transaction")
 		return nil, err
 	}
 

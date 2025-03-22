@@ -3,7 +3,8 @@ package entity
 type CreateRoleReq struct {
 	UserId string `json:"user_id" validate:"required,ulid"`
 
-	Name string `json:"name" validate:"required,min=3,max=255"`
+	Name        string   `json:"name" validate:"required,min=3,max=255"`
+	Permissions []string `json:"permissions" validate:"required,dive,ulid"`
 }
 
 type CreateRoleResp struct {
@@ -13,8 +14,9 @@ type CreateRoleResp struct {
 type UpdateRoleReq struct {
 	UserId string `json:"user_id" validate:"required,ulid"`
 
-	Id   string `json:"id" validate:"required,ulid"`
-	Name string `json:"name" validate:"required,min=3,max=255"`
+	Id          string   `json:"id" validate:"required,ulid"`
+	Name        string   `json:"name" validate:"required,min=3,max=255"`
+	Permissions []string `json:"permissions" validate:"required,dive,ulid"`
 }
 
 type UpdateRoleResp struct {
