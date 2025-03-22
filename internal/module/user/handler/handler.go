@@ -31,6 +31,7 @@ func NewUserHandler() *userHandler {
 
 func (h *userHandler) Register(router fiber.Router) {
 	router.Post("/login", h.login)
+	router.Post("/entities", middleware.AuthBearer, h.createUser)
 	router.Get("/entities", middleware.AuthBearer, h.getUsers)
 	router.Get("/entities/:id", middleware.AuthBearer, h.getUser)
 	router.Put("/entities/:id", middleware.AuthBearer, h.updateUser)
@@ -165,4 +166,33 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(nil)
+}
+
+func (h *userHandler) createUser(c *fiber.Ctx) error {
+	var (
+		req = new(entity.CreateUserReq)
+		v   = adapter.Adapters.Validator
+		l   = middleware.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::createUser - Invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::createUser - Invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.CreateUser(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
 }

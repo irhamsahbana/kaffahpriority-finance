@@ -8,9 +8,12 @@ import (
 	"codebase-app/pkg/jwthandler"
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -163,21 +166,45 @@ func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity
 }
 
 func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
-	var resp entity.UpdateUserResp
+	var (
+		resp       entity.UpdateUserResp
+		queryParts = []string{}
+		args       = []any{}
+	)
 	resp.Id = req.Id
+
+	queryParts = append(queryParts, `
+		role_id = ?,
+		name = ?,
+		email = ?
+	`)
+	args = append(args, req.RoleId, req.Name, req.Email)
+
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msg("repo::UpdateUser - failed to hash password")
+			return nil, err
+		}
+
+		queryParts = append(queryParts, "password = ?")
+		args = append(args, hashedPassword)
+	}
 
 	query := `
 		UPDATE
 			users
 		SET
-			role_id = ?,
-			name = ?,
-			email = ?
+			%s
 		WHERE
 			id = ?
 	`
+	args = append(args, req.Id)
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.RoleId, req.Name, req.Email, req.Id)
+	queryPartsStr := strings.Join(queryParts, ", ")
+	query = fmt.Sprintf(query, queryPartsStr)
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateUser - failed to update user")
 		return nil, err
@@ -205,4 +232,37 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 	}
 
 	return nil
+}
+
+func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserResp, error) {
+	var resp entity.CreateUserResp
+	resp.Id = ulid.Make().String()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateUser - failed to hash password")
+		return nil, err
+	}
+
+	query := `
+		INSERT INTO
+			users
+		(
+			id,
+			role_id,
+			name,
+			email,
+			password
+		) VALUES (
+			?, ?, ?, ?, ?
+		)
+	`
+
+	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), resp.Id, req.RoleId, req.Name, req.Email, hashedPassword)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::CreateUser - failed to create user")
+		return nil, err
+	}
+
+	return &resp, nil
 }
