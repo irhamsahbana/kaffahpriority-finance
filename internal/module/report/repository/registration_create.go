@@ -247,6 +247,39 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		}
 	}()
 
+	queryCheck := `
+			SELECT EXISTS (
+				WITH regis AS (
+					SELECT
+						r.program_id,
+						r.lecturer_id,
+						r.student_id
+					FROM
+						program_registrations r
+					WHERE
+						r.id = ?
+						AND r.deleted_at IS NULL
+				)
+				SELECT
+					1
+				FROM
+					program_registrations pr
+				WHERE
+					pr.program_id = (SELECT program_id FROM regis)
+					AND (
+						CASE
+							WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM regis) IS NULL
+							ELSE pr.lecturer_id = (SELECT lecturer_id FROM regis)
+						END
+					)
+					AND pr.student_id = (SELECT student_id FROM regis)
+					AND EXTRACT(MONTH FROM pr.started_at) = EXTRACT(MONTH FROM NOW())
+					AND EXTRACT(YEAR FROM pr.started_at) = EXTRACT(YEAR FROM NOW())
+					AND pr.deleted_at IS NULL
+			)
+		`
+	queryCheck = r.db.Rebind(queryCheck)
+
 	query := `
 		INSERT INTO program_registrations (
 		id,
@@ -327,6 +360,20 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		var prId = ulid.Make().String()
 		var students = make([]entity.AddStudent, 0)
 
+		// check if registration_id already exist in this month
+		var exist bool
+		err = tx.GetContext(ctx, &exist, queryCheck, item.RegisId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to check data")
+		}
+
+		if exist {
+			log.Warn().Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - data already exist")
+			err = errmsg.NewCustomErrors(403).SetMessage(`Data yang sama (program, pengajar, dan murid) sudah ada di bulan ini`)
+			return err
+		}
+
+		// create new registration based on existing registration
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
 			prId, req.UserId, item.RegisId,
 		)
