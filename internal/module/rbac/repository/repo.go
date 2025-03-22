@@ -363,3 +363,65 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 	return &resp, nil
 }
+
+func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailReq) (*entity.GetRoleDetailResp, error) {
+	var (
+		resp entity.GetRoleDetailResp
+	)
+	resp.Permissions = make([]entity.Permission, 0)
+
+	type RolePermission struct {
+		RoleId       string  `db:"role_id"`
+		Role         string  `db:"role"`
+		PermissionId *string `db:"permission_id"`
+		Permission   *string `db:"permission"`
+		Description  *string `db:"description"`
+	}
+
+	query := `
+		SELECT
+			r.id AS role_id,
+			r.name AS role,
+			p.id AS permission_id,
+			p.name AS permission,
+			p.description
+		FROM roles r
+		LEFT JOIN role_permissions rp ON r.id = rp.role_id
+		LEFT JOIN permissions p ON rp.permission_id = p.id
+		WHERE r.id = ?
+		AND r.deleted_at IS NULL
+		ORDER BY r.id ASC
+	`
+
+	data := make([]RolePermission, 0)
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.RoleId)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetRoleDetail - failed to get role detail")
+		return nil, err
+	}
+
+	rolePermissionMap := make(map[string]*entity.RolePermissionItem)
+	for _, v := range data {
+		if _, ok := rolePermissionMap[v.RoleId]; !ok {
+			rolePermissionMap[v.RoleId] = &entity.RolePermissionItem{
+				RoleId:      v.RoleId,
+				Role:        v.Role,
+				Permissions: make([]entity.Permission, 0),
+			}
+		}
+
+		if v.Permission != nil {
+			rolePermissionMap[v.RoleId].Permissions = append(rolePermissionMap[v.RoleId].Permissions, entity.Permission{
+				Id:          *v.PermissionId,
+				Name:        *v.Permission,
+				Description: *v.Description,
+			})
+		}
+	}
+
+	for _, v := range rolePermissionMap {
+		resp.RolePermissionItem = *v
+	}
+
+	return &resp, nil
+}

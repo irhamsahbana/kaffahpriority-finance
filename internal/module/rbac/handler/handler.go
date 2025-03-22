@@ -34,6 +34,7 @@ func (h *rbacHandler) Register(router fiber.Router) {
 
 	router.Post("/roles", m.AuthBearer, h.CreateRole)
 	router.Put("/roles/:id", m.AuthBearer, h.UpdateRole)
+	router.Get("/roles/:id", m.AuthBearer, h.GetRoleDetail)
 	router.Put("roles/:id/permissions", m.AuthBearer, h.UpdateRolePermissions)
 	router.Delete("/roles/:id", m.AuthBearer, h.DeleteRole)
 
@@ -115,6 +116,31 @@ func (h *rbacHandler) UpdateRole(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.UpdateRole(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *rbacHandler) GetRoleDetail(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetRoleDetailReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+	req.RoleId = c.Params("id")
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::GetRoleDetail - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetRoleDetail(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

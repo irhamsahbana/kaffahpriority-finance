@@ -26,6 +26,10 @@ func (s *rbacService) GetRoleAndPermissions(ctx context.Context, req *entity.Get
 	return s.repo.GetRoleAndPermissions(ctx, req)
 }
 
+func (s *rbacService) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailReq) (*entity.GetRoleDetailResp, error) {
+	return s.repo.GetRoleDetail(ctx, req)
+}
+
 func (s *rbacService) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error) {
 	return s.repo.CreateRole(ctx, req)
 }
