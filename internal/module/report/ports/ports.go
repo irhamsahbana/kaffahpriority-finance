@@ -25,6 +25,7 @@ type ReportRepository interface {
 
 	GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error)
 	GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error)
+	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.LecturersWageAggregateResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 }
 
@@ -48,5 +49,6 @@ type ReportService interface {
 
 	GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error)
 	GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error)
+	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.LecturersWageAggregateResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 }

@@ -55,3 +55,19 @@ type LecturersWageItem struct {
 	MentorDetailFeeUsed  *decimal.Decimal `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"` // wage for mentor / keep gaji
 	Notes                *string          `json:"notes" db:"notes"`
 }
+
+// aggregate version
+
+type LecturersWageAggregateResp struct {
+	Items []LecturersWageAggregateItem `json:"items"`
+	Meta  types.Meta                   `json:"meta"`
+}
+
+type LecturersWageAggregateItem struct {
+	LecturerId             string          `json:"lecturer_id" db:"lecturer_id"`
+	AcademicManagerId      string          `json:"academic_manager_id" db:"academic_manager_id"`
+	LecturerName           string          `json:"lecturer_name" db:"lecturer_name"`
+	AcademicManagerName    string          `json:"academic_manager_name" db:"academic_manager_name"`
+	TotalRealFee           decimal.Decimal `json:"total_real_fee" db:"total_real_fee"`
+	TotalAcquisitionRights int             `json:"total_acquisition_rights" db:"total_acquisition_rights"`
+}

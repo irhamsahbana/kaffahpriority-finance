@@ -47,6 +47,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/registration-per-lecturers", m.AuthBearer, h.getRegistrationListPerLecturer)
 	router.Patch("/lecturers-wages/:id", m.AuthBearer, h.updateLecturerWages)
 	router.Get("/lecturers-wages", m.AuthBearer, h.getLecturerWages)
+	router.Get("/lecturers-wages-aggregate", m.AuthBearer, h.getLecturerWagesAggregate)
 
 	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
 }
@@ -518,6 +519,36 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetLecturersWages(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetLecturersWagesReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getLecturerWagesAggregate - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerWagesAggregate - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetLecturersWagesAggregate(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

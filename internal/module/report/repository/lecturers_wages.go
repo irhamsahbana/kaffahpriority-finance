@@ -168,6 +168,101 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	return resp, nil
 }
 
+func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.LecturersWageAggregateResp, error) {
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.LecturersWageAggregateItem
+	}
+	var (
+		resp = new(entity.LecturersWageAggregateResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+
+	resp.Items = make([]entity.LecturersWageAggregateItem, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			l.id AS lecturer_id,
+			l.name AS lecturer_name,
+			am.id AS academic_manager_id,
+			am.name AS academic_manager_name,
+			COALESCE(
+				SUM(
+					(
+						COALESCE(pr.night_learning_fee, 0) +
+						COALESCE(pr.foreign_learning_fee, 0) +
+						COALESCE(pr.initial_fee,
+							CASE
+								WHEN pr.is_full_fee THEN pr.full_fee
+								ELSE pr.program_fee_per_meeting * pr.program_meetings
+							END
+						)
+					)
+				),
+				0
+			) AS total_real_fee,
+			COALESCE(
+				SUM(
+					CASE
+						WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+						ELSE pr.program_acquisition_rights
+					END
+				),
+				0
+			) AS total_acquisition_rights
+		FROM
+			program_registrations pr
+		JOIN
+			lecturers l ON pr.lecturer_id = l.id
+		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE
+			pr.deleted_at IS NULL
+			AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?
+	`
+
+	args = append(args, req.Timezone, req.Month)
+
+	if req.AcademicManagerId != "" {
+		query += ` AND am.id = ?`
+		args = append(args, req.AcademicManagerId)
+	}
+
+	if req.LecturerId != "" {
+		query += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerId)
+	}
+
+	query += `
+		GROUP BY
+			l.id,
+			l.name,
+			am.id,
+			am.name
+		ORDER BY
+			l.id ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturersAggregateWages - failed to query lecturers wages")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.LecturersWageAggregateItem)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
 func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
 	queryParts := []string{}
 	args := []any{}
