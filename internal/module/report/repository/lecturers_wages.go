@@ -344,6 +344,95 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 
 func (r *reportRepo) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (
 	*entity.GetAcquisitionRightsAggregateResp, error) {
+	if req.For == "academic_manager" {
+		return r.GetAcquisitionRightsAggregateAcademicManager(ctx, req)
+	} else if req.For == "student_manager" {
+		return r.GetAcquisitionRightsAggregateStudentManager(ctx, req)
+	}
+
+	return nil, fmt.Errorf("invalid for field")
+}
+
+func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
+	ctx context.Context,
+	req *entity.GetAcquisitionRightsAggregateReq,
+) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.AcquisitionRightsAggregate
+	}
+	var (
+		resp = new(entity.GetAcquisitionRightsAggregateResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+	resp.Items = make([]entity.AcquisitionRightsAggregate, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			sm.id AS student_manager_id,
+			sm.name AS student_manager_name,
+			SUM(
+				CASE
+					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+					ELSE pr.program_acquisition_rights
+				END
+			) AS total_acquisition_rights
+		FROM
+			program_registrations pr
+		JOIN
+			marketers m ON pr.marketer_id = m.id
+		JOIN
+			student_managers sm ON m.student_manager_id = sm.id
+		WHERE
+			pr.deleted_at IS NULL
+	`
+	args = append(args, req.Timezone)
+
+	if req.Month != "" {
+		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		args = append(args, req.Timezone, req.Month)
+	}
+
+	if req.StudentManagerId != "" {
+		query += ` AND sm.id = ?`
+		args = append(args, req.StudentManagerId)
+	}
+
+	query += `
+		GROUP BY
+			month,
+			sm.id,
+			sm.name
+		ORDER BY
+			sm.id ASC,
+			month ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetAcquisitionRightsAggregateStudentManager - failed to query acquisition rights")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.AcquisitionRightsAggregate)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
+	ctx context.Context,
+	req *entity.GetAcquisitionRightsAggregateReq,
+) (*entity.GetAcquisitionRightsAggregateResp, error) {
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.AcquisitionRightsAggregate
