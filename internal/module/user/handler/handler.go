@@ -31,6 +31,7 @@ func NewUserHandler() *userHandler {
 
 func (h *userHandler) Register(router fiber.Router) {
 	router.Post("/login", h.login)
+	router.Get("/me", middleware.AuthBearer, h.me)
 	router.Post("/entities", middleware.AuthBearer, h.createUser)
 	router.Get("/entities", middleware.AuthBearer, h.getUsers)
 	router.Get("/entities/:id", middleware.AuthBearer, h.getUser)
@@ -58,6 +59,29 @@ func (h *userHandler) login(c *fiber.Ctx) error {
 	if err != nil {
 		log.Error().Err(err).Any("req", req.Log()).Msg("handler::login - Service error")
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *userHandler) me(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetMeReq)
+		v   = adapter.Adapters.Validator
+		l   = middleware.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::me - Invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetMe(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))

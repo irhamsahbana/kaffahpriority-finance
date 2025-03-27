@@ -7,6 +7,7 @@ import (
 
 type UserRepository interface {
 	Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error)
+	GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.GetMeResp, error)
 
 	GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error)
 	GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error)
@@ -17,6 +18,7 @@ type UserRepository interface {
 
 type UserService interface {
 	Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error)
+	GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.GetMeResp, error)
 
 	GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error)
 	GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error)

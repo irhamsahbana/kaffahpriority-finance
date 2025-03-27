@@ -22,6 +22,10 @@ func (s *userService) Login(ctx context.Context, req *entity.LoginReq) (*entity.
 	return s.repo.Login(ctx, req)
 }
 
+func (s *userService) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.GetMeResp, error) {
+	return s.repo.GetMe(ctx, req)
+}
+
 func (s *userService) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error) {
 	return s.repo.GetUsers(ctx, req)
 }
