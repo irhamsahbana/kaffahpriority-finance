@@ -189,7 +189,7 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	return c.Status(fiber.StatusNoContent).JSON(nil)
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
 
 func (h *userHandler) createUser(c *fiber.Ctx) error {

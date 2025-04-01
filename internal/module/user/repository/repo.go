@@ -115,6 +115,8 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 			users u
 		JOIN
 			roles r ON r.id = u.role_id
+		WHERE
+			u.deleted_at IS NULL
 		LIMIT ? OFFSET ?
 	`
 
