@@ -290,6 +290,12 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		})
 	}
 
+	// Jika tidak ada data registrasi, kembalikan langsung kembalikan
+	// response tanpa melakukan query tambahan
+	if len(registrationIds) == 0 {
+		return resp, nil
+	}
+
 	// query for additional students
 	query = `
 		SELECT
