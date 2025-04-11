@@ -105,3 +105,67 @@ type RegisItem struct {
 	CreatedAt                  string       `json:"created_at" db:"created_at"`
 	UpdatedAt                  string       `json:"updated_at" db:"updated_at"`
 }
+
+type GetExportedRegistrationsReq struct {
+	UserId string `validate:"required,ulid"`
+
+	Q          string `query:"q" validate:"omitempty,min=3"` // search by student name
+	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
+	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`
+	Timezone   string `query:"timezone" validate:"required,timezone"`
+
+	MarketerId string `query:"marketer_id" validate:"omitempty,ulid"`
+	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
+
+	// mentor_detail_fee_used
+	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
+	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
+	MentorFeeAllocationStatus  string `query:"mentor_fee_allocation_status" validate:"omitempty,oneof=all full partial none"`
+
+	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
+	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+}
+
+func (r *GetExportedRegistrationsReq) SetDefault() {
+
+	if r.Timezone == "" {
+		r.Timezone = "Asia/Makassar"
+	}
+
+	if r.SortBy == "" {
+		r.SortBy = "paid_at"
+	}
+
+	if r.SortType == "" {
+		r.SortType = "desc"
+	}
+
+	if r.MentorFeeAllocationStatus == "" {
+		r.MentorFeeAllocationStatus = "all"
+	}
+}
+
+func (r *GetExportedRegistrationsReq) Validate() error {
+	err := errmsg.NewCustomErrors(400)
+	if (r.PaidAtFrom != "" || r.PaidAtTo != "") && (r.PaidAtFrom == "" || r.PaidAtTo == "") { // if one of them is empty
+		err.Add("paid_at_from", "batas bawah tanggal pembayaran harus diisi")
+		err.Add("paid_at_to", "batas atas tanggal pembayaran harus diisi")
+	}
+
+	if err.HasErrors() {
+		return err
+	}
+
+	return nil
+}
+
+type GetExportedRegistrationsResp struct {
+	Items   []RegisItem       `json:"items"`
+	Summary *GetSummariesResp `json:"summary"`
+
+	// internal use only
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
+}
