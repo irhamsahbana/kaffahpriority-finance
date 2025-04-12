@@ -102,10 +102,6 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 		return nil, err
 	}
 
-	if len(resp.Items) == 0 {
-		return nil, nil
-	}
-
 	f := excelize.NewFile()
 	sheetName := "Sheet1"
 
@@ -241,6 +237,29 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 	lastHariTanggal := ""
 	lastRow := 5
 
+	if len(resp.Items) == 0 {
+		tmstmp := time.Now().Unix()
+		filename := fmt.Sprintf("laporan-keuangan-cfo-1-%v.xlsx", tmstmp)
+		filepath := "./" + filename
+
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+1), "MENTOR")
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+2), "KELEBIHAN")
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+3), "ASET MARKETING")
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+4), "HADIAH MARKETING")
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+5), "REWARD")
+		f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+6), "LABA")
+
+		// save the file
+		if err := f.SaveAs(filepath); err != nil {
+			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+			return nil, err
+		}
+
+		resp.FilePath = filepath
+		resp.FileName = filename
+		return resp, nil
+	}
+
 	for i, item := range resp.Items {
 		row := i + 6 // start from row 6
 		lastRow = row
@@ -356,4 +375,13 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 	resp.FilePath = filepath
 	resp.FileName = filename
 	return resp, nil
+}
+
+func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
+	ctx context.Context,
+	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
+	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error,
+) {
+
+	return nil, nil
 }
