@@ -169,3 +169,20 @@ type GetExportedRegistrationsResp struct {
 	FilePath string `json:"file_path"`
 	FileName string `json:"file_name"`
 }
+
+type GetExportedRegistrationsForCFO2MonthlyReq struct {
+	UserId string `validate:"required,ulid"`
+
+	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
+	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`
+	Timezone   string `query:"timezone" validate:"required,timezone"`
+}
+
+type GetExportedRegistrationsForCFO2MonthlyResp struct {
+	Items    []RegisItem `json:"items"`
+	TotalITP int64       `json:"total_itp"`
+
+	// internal use only
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
+}

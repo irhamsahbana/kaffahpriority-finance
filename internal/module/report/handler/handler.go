@@ -41,6 +41,8 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/registration-summaries", m.AuthBearer, h.getSummaries)
 	router.Get("/registrations", m.AuthBearer, h.getRegistrations)
 	router.Get("/exported-registrations", m.AuthBearer, h.getExportedRegistrations)
+	router.Get("/exported-registrations-for-cfo2-monthly", m.AuthBearer, h.getExportedRegistrationsForCFO2Monthly)
+
 	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
 	router.Get("/registrations/:id", m.AuthBearer, h.getRegistration)
 	router.Put("/registrations/:id/hr-fee-distributions", m.AuthBearer, h.hrDistributions)
@@ -53,133 +55,6 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/acquisition-rights-aggregate", m.AuthBearer, h.getAcquisitionRightsAggregate)
 
 	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
-}
-
-func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetTemplatesReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	req.UserId = l.GetUserId()
-
-	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getTemplates - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.SetDefault()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getTemplates - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetTemplates(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
-}
-
-func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetTemplateReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetTemplate(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
-}
-
-func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
-	var (
-		req = new(entity.CreateTemplateReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createTemplate - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.CreateTemplate(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
-}
-
-func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
-	var (
-		req = new(entity.UpdateTemplateGeneralReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateTemplate - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateTemplate - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.UpdateTemplate(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
 }
 
 func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
@@ -219,136 +94,6 @@ func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
 }
 
-func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
-	var (
-		req = new(entity.CreateRegistrationsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.BodyParser(&req.Registrations); err != nil {
-		log.Warn().Err(err).Msg("handler::createRegistrations - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createRegistrations - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	err := h.service.CreateRegistrations(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(response.Success(nil, ""))
-}
-
-func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
-	var (
-		req = new(entity.CopyRegistrationsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.BodyParser(&req.Registrations); err != nil {
-		log.Warn().Err(err).Msg("handler::copyRegistrations - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::copyRegistrations - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	err := h.service.CopyRegistrations(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(response.Success(nil, ""))
-}
-
-func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
-	var (
-		req = new(entity.UpdateRegistrationReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateRegistration - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistration - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistration - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.UpdateRegistration(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
-}
-
-func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
-	var (
-		req = new(entity.GetRegistrationsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
-	)
-
-	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getRegistrations - invalid request")
-		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-	}
-
-	req.UserId = l.GetUserId()
-	req.SetDefault()
-
-	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistrations - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistrations - invalid request")
-		code, errs := errmsg.Errors(err, req)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	resp, err := h.service.GetRegistrations(c.Context(), req)
-	if err != nil {
-		code, errs := errmsg.Errors[error](err)
-		return c.Status(code).JSON(response.Error(errs))
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
-}
-
 func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	var (
 		req = new(entity.GetExportedRegistrationsReq)
@@ -376,15 +121,59 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
+	defer func() {
+		// delete file manually
+		if err := os.Remove(resp.FilePath); err != nil {
+			log.Warn().Err(err).Msg("handler::getExportedRegistrations - delete file error")
+		}
+	}()
+
 	// download file
 	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
 		log.Warn().Err(err).Msg("handler::getExportedRegistrations - download file error")
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
+	return nil
+}
+
+func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetExportedRegistrationsForCFO2MonthlyReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	// req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForCFO2Monthly - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetExportedRegistrationsForCFO2Monthly(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
 	// delete file manually
-	if err := os.Remove(resp.FilePath); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrations - delete file error")
+	defer func() {
+		if err := os.Remove(resp.FilePath); err != nil {
+			log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - delete file error")
+		}
+	}()
+
+	// download file
+	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
+		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - download file error")
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
