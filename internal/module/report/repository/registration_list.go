@@ -32,6 +32,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.student_id,
 			s.identifier AS student_identifier,
 			pr.program_name,
+			am.id AS academic_manager_id,
+			sm.id AS student_manager_id,
 			pr.program_fee,
 			pr.administration_fee,
 			pr.foreign_learning_fee,
@@ -83,15 +85,23 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			) AS profit,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
-			s.name AS student_name
+			s.name AS student_name,
+			am.name AS academic_manager_name,
+			sm.name AS student_manager_name
 		FROM
 			program_registrations pr
 		LEFT JOIN
 			lecturers l
 			ON pr.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am
+			ON l.academic_manager_id = am.id
 		JOIN
 			marketers m
 			ON pr.marketer_id = m.id
+		JOIN
+			student_managers sm
+			ON m.student_manager_id = sm.id
 		JOIN
 			students s
 			ON pr.student_id = s.id
@@ -580,9 +590,15 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 		LEFT JOIN
 			lecturers l
 			ON pr.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am
+			ON l.academic_manager_id = am.id
 		JOIN
 			marketers m
 			ON pr.marketer_id = m.id
+		JOIN
+			student_managers sm
+			ON m.student_manager_id = sm.id
 		JOIN
 			students s
 			ON pr.student_id = s.id

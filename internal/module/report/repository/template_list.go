@@ -49,11 +49,13 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.deleted_at,
 
 			m.student_manager_id,
+			l.academic_manager_id,
 			p.name AS program_name,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,
 			sm.name AS student_manager_name,
+			am.name AS academic_manager_name,
 			COALESCE(prt.program_fee, 0) +
 			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
@@ -64,6 +66,9 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		LEFT JOIN
 			lecturers l
 			ON prt.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am
+			ON l.academic_manager_id = am.id
 		JOIN
 			marketers m
 			ON prt.marketer_id = m.id

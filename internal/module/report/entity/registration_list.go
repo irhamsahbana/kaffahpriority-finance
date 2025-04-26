@@ -73,13 +73,17 @@ type RegisItem struct {
 	TemplateId                 string       `json:"template_id" db:"template_id"`
 	ProgramId                  string       `json:"program_id" db:"program_id"`
 	MarketerId                 string       `json:"marketer_id" db:"marketer_id"`
+	StudentManagerId           string       `json:"student_manager_id" db:"student_manager_id"`
 	LecturerId                 *string      `json:"lecturer_id" db:"lecturer_id"`
+	AcademicManagerId          *string      `json:"academic_manager_id" db:"academic_manager_id"`
 	StudentId                  string       `json:"student_id" db:"student_id"`
 	StudentIdentifier          string       `json:"student_identifier" db:"student_identifier"`
 	IsMandatoryFieldsCompleted bool         `json:"is_mandatory_fields_completed" db:"is_mandatory_fields_completed"`
 	ProgramName                string       `json:"program_name" db:"program_name"`
 	LecturerName               *string      `json:"lecturer_name" db:"lecturer_name"`
+	AcademicManagerName        *string      `json:"academic_manager_name" db:"academic_manager_name"`
 	MarketerName               string       `json:"marketer_name" db:"marketer_name"`
+	StudentManagerName         string       `json:"student_manager_name" db:"student_manager_name"`
 	StudentName                string       `json:"student_name" db:"student_name"`
 	MonthlyFee                 float64      `json:"monthly_fee" db:"monthly_fee"`
 	Students                   []AddStudent `json:"additional_students"`
