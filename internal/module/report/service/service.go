@@ -54,6 +54,10 @@ func (s *reportService) GetRegistration(ctx context.Context, req *entity.GetRegi
 	return s.repo.GetRegistration(ctx, req)
 }
 
+func (s *reportService) DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error {
+	return s.repo.DeleteRegistration(ctx, req)
+}
+
 func (s *reportService) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
 	return s.repo.GetSummaries(ctx, req)
 }

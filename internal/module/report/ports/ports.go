@@ -15,6 +15,7 @@ type ReportRepository interface {
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
+	DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
 
 	GetExportedRegistrations(ctx context.Context, req *entity.GetExportedRegistrationsReq) (*entity.GetExportedRegistrationsResp, error)
@@ -44,6 +45,7 @@ type ReportService interface {
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
+	DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
 
 	GetExportedRegistrations(ctx context.Context, req *entity.GetExportedRegistrationsReq) (*entity.GetExportedRegistrationsResp, error)

@@ -45,6 +45,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 
 	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
 	router.Get("/registrations/:id", m.AuthBearer, h.getRegistration)
+	router.Delete("/registrations/:id", m.AuthBearer, h.deleteRegistration)
 	router.Put("/registrations/:id/hr-fee-distributions", m.AuthBearer, h.hrDistributions)
 	router.Put("/registrations/:id/lecturer-distributions", m.AuthBearer, h.lecturerDistributions)
 
@@ -203,6 +204,31 @@ func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetRegistrationReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+	req.Id = c.Params("id")
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::deleteRegistration - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.DeleteRegistration(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
 
 func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
