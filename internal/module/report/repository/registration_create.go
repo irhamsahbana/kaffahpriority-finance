@@ -107,10 +107,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			(SELECT full_fee FROM template),
 			0,
 			(SELECT acquisition_rights FROM template),
-			CASE
-				WHEN ? = TRUE THEN (SELECT administration_fee FROM template)
-				ELSE NULL
-			END,
+			(SELECT administration_fee FROM template),
 			(SELECT foreign_learning_fee FROM template),
 			(SELECT night_learning_fee FROM template),
 			(SELECT is_itp FROM template),
