@@ -10,6 +10,7 @@ type ReportRepository interface {
 	GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error)
 	CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error)
 	UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error)
+	DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error
 
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
@@ -40,6 +41,7 @@ type ReportService interface {
 	GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error)
 	CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error)
 	UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error)
+	DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error
 
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error

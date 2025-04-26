@@ -35,6 +35,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/templates", m.AuthBearer, h.getTemplates)
 	router.Put("/templates/:id", m.AuthBearer, h.updateTemplate)
 	router.Get("/templates/:id", m.AuthBearer, h.getTemplate)
+	router.Delete("/templates/:id", m.AuthBearer, h.deleteTemplate)
 
 	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
 	router.Post("/copy-registrations", m.AuthBearer, h.copyRegistrations)

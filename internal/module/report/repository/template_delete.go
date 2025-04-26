@@ -7,9 +7,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *reportRepo) DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error {
+func (r *reportRepo) DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error {
 	query := `
-		UPDATE program_registrations
+		UPDATE program_registration_templates
 		SET deleted_at = NOW()
 		WHERE id = $1
 		AND deleted_at IS NULL
@@ -17,7 +17,7 @@ func (r *reportRepo) DeleteRegistration(ctx context.Context, req *entity.GetRegi
 
 	_, err := r.db.ExecContext(ctx, query, req.Id)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteRegistration - error deleting registration")
+		log.Error().Err(err).Any("req", req).Msg("repository::DeleteTemplate - error deleting template")
 		return err
 	}
 

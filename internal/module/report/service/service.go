@@ -34,6 +34,10 @@ func (s *reportService) GetTemplate(ctx context.Context, req *entity.GetTemplate
 	return s.repo.GetTemplate(ctx, req)
 }
 
+func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error {
+	return s.repo.DeleteTemplate(ctx, req)
+}
+
 func (s *reportService) CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error {
 	return s.repo.CreateRegistrations(ctx, req)
 }
