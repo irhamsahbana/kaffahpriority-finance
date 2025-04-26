@@ -74,7 +74,6 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			SELECT
 				p.price AS program_fee,
 				p.price_per_meeting AS program_fee_per_meeting,
-				p.lecturer_fee AS hr_fee,
 				p.commission_fee AS marketer_commission_fee
 			FROM
 				programs p
@@ -113,7 +112,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			?,
 			(SELECT marketer_commission_fee FROM program),
 			?,
-			(SELECT hr_fee FROM program),
+			?,
 			?, ?, ?
 		)
 	`
@@ -128,6 +127,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.NLFee,
 		req.IsITP,
 		req.OverpaymentFee,
+		req.HRFee,
 		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice,
 		req.ClosingFeeForReward,
