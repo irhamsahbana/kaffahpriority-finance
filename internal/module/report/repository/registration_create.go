@@ -297,7 +297,6 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		program_fee,
 		program_meetings,
 		program_acquisition_rights,
-		administration_fee,
 		foreign_learning_fee,
 		night_learning_fee,
 		marketer_commission_fee,
@@ -305,9 +304,6 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		hr_fee,
 		mentor_detail_fee,
 		hr_detail_fee,
-		marketer_gifts_fee,
-		closing_fee_for_office,
-		closing_fee_for_reward,
 		days,
 		notes
 		)
@@ -323,7 +319,6 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.program_fee,
 			pr.program_meetings,
 			pr.program_acquisition_rights,
-			pr.administration_fee,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.marketer_commission_fee,
@@ -331,9 +326,6 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.hr_fee,
 			pr.mentor_detail_fee,
 			pr.hr_detail_fee,
-			pr.marketer_gifts_fee,
-			pr.closing_fee_for_office,
-			pr.closing_fee_for_reward,
 			pr.days,
 			pr.notes
 		FROM
