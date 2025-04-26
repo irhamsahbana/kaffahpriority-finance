@@ -2,12 +2,15 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
+	"codebase-app/pkg/errmsg"
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error) {
@@ -273,6 +276,13 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 	queryParts := []string{}
 	args := []any{}
 
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to begin transaction")
+		return err
+	}
+	defer tx.Rollback()
+
 	if req.ProgramMeetings.Present && req.ProgramMeetings.Valid {
 		queryParts = append(queryParts, "program_meetings = ?")
 		args = append(args, req.ProgramMeetings.Val)
@@ -333,9 +343,62 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 	)
 	args = append(args, req.RegistrationId)
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
+	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to update lecturers wages")
+		return err
+	}
+
+	// jika ada perubahan, update juga used_amount menggunakan ujroh real
+	// 1. cari kalkulasi real fee
+
+	query = `
+		SELECT
+			COALESCE(pr.night_learning_fee, 0) +
+			COALESCE(pr.foreign_learning_fee, 0) +
+			COALESCE(pr.initial_fee,
+				CASE
+					WHEN pr.is_full_fee THEN pr.full_fee
+					ELSE pr.program_fee_per_meeting * pr.program_meetings
+				END
+			) AS real_fee
+		FROM
+			program_registrations pr
+		WHERE
+			pr.id = ?
+			AND pr.deleted_at IS NULL
+	`
+	var realFee decimal.Decimal
+	err = tx.GetContext(ctx, &realFee, tx.Rebind(query), req.RegistrationId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - real fee not found")
+			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to get real fee")
+		return err
+	}
+
+	// 2. update used_amount menggunakan real fee
+	query = `
+		UPDATE program_registrations
+		SET
+			mentor_detail_fee_used = ?,
+			notes_for_fund_distributions = NULL
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), realFee, req.RegistrationId)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to update ujroh real")
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturersWages - failed to commit transaction")
 		return err
 	}
 
