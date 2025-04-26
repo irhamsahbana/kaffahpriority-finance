@@ -85,6 +85,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		overpayment_fee,
 		hr_fee,
 		mentor_detail_fee,
+		mentor_detail_fee_used,
 		hr_detail_fee,
 		marketer_gifts_fee,
 		closing_fee_for_office,
@@ -114,6 +115,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			(SELECT marketer_commission_fee FROM template),
 			(SELECT overpayment_fee FROM template),
 			(SELECT hr_fee FROM template),
+			(SELECT hr_fee - 40000 FROM template),
 			(SELECT hr_fee - 40000 FROM template),
 			40000,
 			(SELECT marketer_gifts_fee FROM template),
@@ -300,6 +302,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		overpayment_fee,
 		hr_fee,
 		mentor_detail_fee,
+		mentor_detail_fee_used,
 		hr_detail_fee,
 		days,
 		notes
@@ -322,6 +325,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.overpayment_fee,
 			pr.hr_fee,
 			pr.mentor_detail_fee,
+			pr.mentor_detail_fee_used,
 			pr.hr_detail_fee,
 			pr.days,
 			pr.notes
