@@ -50,6 +50,10 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 	return s.repo.UpdateRegistration(ctx, req)
 }
 
+func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *entity.UpdateRegistrationLecturerReq) (*entity.UpdateRegistrationLecturerResp, error) {
+	return s.repo.UpdateRegistrationLecturer(ctx, req)
+}
+
 func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
 	return s.repo.GetRegistrations(ctx, req)
 }

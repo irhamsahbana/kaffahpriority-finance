@@ -49,6 +49,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Delete("/registrations/:id", m.AuthBearer, h.deleteRegistration)
 	router.Put("/registrations/:id/hr-fee-distributions", m.AuthBearer, h.hrDistributions)
 	router.Put("/registrations/:id/lecturer-distributions", m.AuthBearer, h.lecturerDistributions)
+	router.Put("/registrations/:id/lecturers", m.AuthBearer, h.updateRegistrationLecturer)
 
 	router.Get("/registration-per-lecturers", m.AuthBearer, h.getRegistrationListPerLecturer)
 	router.Patch("/lecturers-wages/:id", m.AuthBearer, h.updateLecturerWages)
