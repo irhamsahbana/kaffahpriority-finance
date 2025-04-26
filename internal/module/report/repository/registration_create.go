@@ -202,7 +202,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
 			item.TemplateId,
 			prId, req.UserId,
-			item.IsFirstRegistration,
+			// item.IsFirstRegistration,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert data")
