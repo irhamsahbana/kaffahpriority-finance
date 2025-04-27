@@ -176,25 +176,9 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 			return nil, err
 		}
 
-		paidAt = paidAt.In(location)
-
 		// hari tanggal menggunakan bahasa indonesia
-		hariTanggal := paidAt.Format("Monday, 02/01/2006")
-		if strings.Contains(hariTanggal, "Monday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Monday", "Senin")
-		} else if strings.Contains(hariTanggal, "Tuesday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Tuesday", "Selasa")
-		} else if strings.Contains(hariTanggal, "Wednesday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Wednesday", "Rabu")
-		} else if strings.Contains(hariTanggal, "Thursday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Thursday", "Kamis")
-		} else if strings.Contains(hariTanggal, "Friday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Friday", "Jumat")
-		} else if strings.Contains(hariTanggal, "Saturday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Saturday", "Sabtu")
-		} else if strings.Contains(hariTanggal, "Sunday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Sunday", "Minggu")
-		}
+		paidAt = paidAt.In(location)
+		hariTanggal := hariTanggalString(paidAt)
 
 		if lastHariTanggal != "" && lastHariTanggal == hariTanggal {
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), "")
@@ -349,6 +333,18 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		return nil, err
 	}
 
+	unusedStyle, err := f.NewStyle(&excelize.Style{
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#D3D3D3"},
+			Pattern: 1,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating unused style")
+		return nil, err
+	}
+
 	timeStart, _ := time.Parse("2006-01-02", req.PaidAtFrom)
 	timeEnd, _ := time.Parse("2006-01-02", req.PaidAtTo)
 	location, _ := time.LoadLocation(req.Timezone)
@@ -419,25 +415,10 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error parsing date")
 			return nil, err
 		}
-		paidAt = paidAt.In(location)
 
 		// hari tanggal menggunakan bahasa indonesia
-		hariTanggal := paidAt.Format("Monday, 02/01/2006")
-		if strings.Contains(hariTanggal, "Monday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Monday", "Senin")
-		} else if strings.Contains(hariTanggal, "Tuesday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Tuesday", "Selasa")
-		} else if strings.Contains(hariTanggal, "Wednesday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Wednesday", "Rabu")
-		} else if strings.Contains(hariTanggal, "Thursday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Thursday", "Kamis")
-		} else if strings.Contains(hariTanggal, "Friday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Friday", "Jumat")
-		} else if strings.Contains(hariTanggal, "Saturday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Saturday", "Sabtu")
-		} else if strings.Contains(hariTanggal, "Sunday") {
-			hariTanggal = strings.ReplaceAll(hariTanggal, "Sunday", "Minggu")
-		}
+		paidAt = paidAt.In(location)
+		hariTanggal := hariTanggalString(paidAt)
 
 		if lastHariTanggal != "" && lastHariTanggal == hariTanggal {
 			f.SetCellValue(sheetName, fmt.Sprintf("A%v", row), "")
@@ -446,7 +427,6 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 			lastHariTanggal = hariTanggal
 		}
 
-		// S
 		studentParticipant := 1
 		totalStudentParticipant++
 		for range item.Students {
@@ -485,6 +465,10 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 			f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), *item.HRFeeForMentor) // DEBET (PEMASUKAN)
 			totalMentorFee = totalMentorFee.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
 			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
+		}
+
+		if item.IsUnused {
+			f.SetCellStyle(sheetName, fmt.Sprintf("A%v", row), fmt.Sprintf("I%v", row), unusedStyle)
 		}
 	}
 
@@ -526,4 +510,25 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	resp.FileName = filename
 
 	return resp, nil
+}
+
+func hariTanggalString(htd time.Time) string {
+	hariTanggal := htd.Format("Monday, 02/01/2006")
+	if strings.Contains(hariTanggal, "Monday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Monday", "Senin")
+	} else if strings.Contains(hariTanggal, "Tuesday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Tuesday", "Selasa")
+	} else if strings.Contains(hariTanggal, "Wednesday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Wednesday", "Rabu")
+	} else if strings.Contains(hariTanggal, "Thursday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Thursday", "Kamis")
+	} else if strings.Contains(hariTanggal, "Friday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Friday", "Jumat")
+	} else if strings.Contains(hariTanggal, "Saturday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Saturday", "Sabtu")
+	} else if strings.Contains(hariTanggal, "Sunday") {
+		hariTanggal = strings.ReplaceAll(hariTanggal, "Sunday", "Minggu")
+	}
+
+	return hariTanggal
 }
