@@ -805,10 +805,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 		WHERE
 			pr.deleted_at IS NULL
 			AND pr.mentor_detail_fee_used IS NULL
+			AND pr.paid_at AT TIME ZONE ? NOT BETWEEN
+				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
 		ORDER BY pr.paid_at ASC
 	`
 
-	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query))
+	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2MonthlyUnused - failed to fetch data")
 		return nil, err
