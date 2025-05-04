@@ -56,7 +56,12 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 		args = append(args, req.Q, req.Q)
 	}
 
-	query += ` LIMIT ? OFFSET ?`
+	query += `
+		ORDER BY
+			id DESC,
+			registered_at DESC
+		LIMIT ? OFFSET ?
+	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data,
