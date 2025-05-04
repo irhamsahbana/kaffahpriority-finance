@@ -32,7 +32,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	query := `
 		SELECT
-			COUNT(*) OVER() AS total_data,
+			-- COUNT(*) OVER() AS total_data,
 			pr.program_id,
 			pr.lecturer_id,
 			pr.student_id,
@@ -81,9 +81,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.lecturer_id ASC,
 			pr.student_id ASC,
 			p.name ASC
-		LIMIT ? OFFSET ?
+		-- LIMIT ? OFFSET ?
 	`
-	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+	// args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
