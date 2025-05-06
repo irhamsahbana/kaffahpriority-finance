@@ -3,6 +3,7 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -889,4 +890,148 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 	}
 
 	return resp, err
+}
+
+func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
+	ctx context.Context,
+	req *entity.GetExportedRegistrationsForCFO2YearlyReq,
+) (*entity.GetExportedRegistrationsForCFO2YearlyResp, error) {
+	type dao struct {
+		entity.RegisItem
+		PaidAtMonth int     `db:"paid_at_month"`
+		Notes       *string `db:"notes"`
+	}
+	var (
+		resp = new(entity.GetExportedRegistrationsForCFO2YearlyResp)
+		data = make([]dao, 0)
+	)
+	resp.Items = make([]entity.RegistrationYearlyRow, 0)
+
+	query := `
+		SELECT
+			pr.id,
+			pr.program_id,
+			pr.lecturer_id,
+			pr.student_id,
+			pr.marketer_id,
+			am.id AS academic_manager_id,
+
+			p.name AS program_name,
+			l.name AS lecturer_name,
+			s.name AS student_name,
+			m.name AS marketer_name,
+			am.name AS academic_manager_name,
+
+			pr.mentor_detail_fee AS hr_fee_for_mentor,
+			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM-DD HH24:MI:SS') AS paid_at,
+			EXTRACT(MONTH FROM pr.paid_at AT TIME ZONE ?) AS paid_at_month,
+			notes_for_fund_distributions AS notes
+		FROM
+			program_registrations pr
+		LEFT JOIN
+			lecturers l
+			ON pr.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am
+			ON l.academic_manager_id = am.id
+		JOIN
+			students s
+			ON pr.student_id = s.id
+		JOIN
+			programs p
+			ON pr.program_id = p.id
+		JOIN
+			marketers m
+			ON pr.marketer_id = m.id
+		WHERE
+			pr.deleted_at IS NULL
+			AND pr.lecturer_id IS NOT NULL
+			AND pr.paid_at AT TIME ZONE ? BETWEEN
+				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+		ORDER BY
+			am.id ASC,
+			l.id ASC,
+			pr.id ASC
+	`
+
+	paidAtFrom := fmt.Sprintf("%s-01-01", req.PaidAtYear)
+	paidAtTo := fmt.Sprintf("%s-12-31", req.PaidAtYear)
+
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query),
+		req.Timezone,
+		req.Timezone,
+		req.Timezone,
+		paidAtFrom,
+		paidAtTo,
+	)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2Yearly - failed to fetch data")
+		return nil, err
+	}
+
+	groupExist := make(map[string]struct{})
+
+	ress := make([]entity.RegistrationYearlyRow, 0)
+
+	for _, item := range data {
+
+		key := fmt.Sprintf("%s-%s-%s-%s-%s", *item.AcademicManagerId, *item.LecturerId, item.MarketerId, item.StudentId, item.ProgramId)
+
+		if _, ok := groupExist[key]; !ok {
+			groupExist[key] = struct{}{}
+			ress = append(ress, entity.RegistrationYearlyRow{
+				AcademicManagerId:   *item.AcademicManagerId,
+				AcademicManagerName: *item.AcademicManagerName,
+				LecturerId:          *item.LecturerId,
+				LecturerName:        *item.LecturerName,
+				StudentId:           item.StudentId,
+				StudentName:         item.StudentName,
+				MarketerId:          item.MarketerId,
+				MarketerName:        item.MarketerName,
+				Months:              []entity.RegistrationYearlyMonth{},
+			})
+
+			ress[len(ress)-1].Months = append(ress[len(ress)-1].Months, entity.RegistrationYearlyMonth{
+				RegistrationId: item.Id,
+				HRFeeForMentor: item.HRFeeForMentor,
+				PaidAt:         item.PaidAt,
+				PaidAtMonth:    item.PaidAtMonth,
+			})
+
+			ress[len(ress)-1].ProgramId = item.ProgramId
+			ress[len(ress)-1].ProgramName = item.ProgramName
+			ress[len(ress)-1].LecturerId = *item.LecturerId
+			ress[len(ress)-1].LecturerName = *item.LecturerName
+			ress[len(ress)-1].AcademicManagerId = *item.AcademicManagerId
+			ress[len(ress)-1].AcademicManagerName = *item.AcademicManagerName
+			ress[len(ress)-1].StudentId = item.StudentId
+			ress[len(ress)-1].StudentName = item.StudentName
+			ress[len(ress)-1].MarketerId = item.MarketerId
+			ress[len(ress)-1].MarketerName = item.MarketerName
+
+		} else {
+			for i, res := range ress {
+				if res.AcademicManagerId == *item.AcademicManagerId &&
+					res.LecturerId == *item.LecturerId &&
+					res.MarketerId == item.MarketerId &&
+					res.ProgramId == item.ProgramId &&
+					res.StudentId == item.StudentId {
+					// month in number
+
+					ress[i].Months = append(ress[i].Months, entity.RegistrationYearlyMonth{
+						RegistrationId: item.Id,
+						HRFeeForMentor: item.HRFeeForMentor,
+						PaidAt:         item.PaidAt,
+						PaidAtMonth:    item.PaidAtMonth,
+						Notes:          item.Notes,
+					})
+				}
+			}
+		}
+	}
+
+	resp.Items = ress
+
+	return resp, nil
 }

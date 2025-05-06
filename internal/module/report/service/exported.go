@@ -512,6 +512,151 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	return resp, nil
 }
 
+func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
+	ctx context.Context,
+	req *entity.GetExportedRegistrationsForCFO2YearlyReq) (
+	*entity.GetExportedRegistrationsForCFO2YearlyResp, error,
+) {
+	resp, err := s.repo.GetExportedRegistrationsForCFO2Yearly(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	f := excelize.NewFile()
+	sheetName := "Sheet1"
+
+	borderStyle := []excelize.Border{
+		{
+			Type:  "left",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "top",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "bottom",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "right",
+			Color: "#000000",
+			Style: 1,
+		},
+	}
+
+	HeaderStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:  true,
+			Size:  12,
+			Color: "#000000",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+		Border: borderStyle,
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#FFFF00"},
+			Pattern: 1,
+		},
+		NumFmt: 3,
+	})
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForCFO2Yearly - error creating style")
+		return nil, err
+	}
+
+	bodyStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Size: 12,
+		},
+		Alignment: &excelize.Alignment{
+			Vertical: "center",
+		},
+		Border: borderStyle,
+	})
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForCFO2Yearly - error creating body style")
+		return nil, err
+	}
+
+	// Headering START
+	f.SetCellValue(sheetName, "A1", "LAPORAN KEUANGAN AKADEMIK "+req.PaidAtYear)
+	f.MergeCell(sheetName, "A1", "R1")
+
+	f.SetCellValue(sheetName, "A2", "NO")
+	f.SetCellValue(sheetName, "B2", "MENTOR")
+	f.SetCellValue(sheetName, "C2", "NO")
+	f.SetCellValue(sheetName, "D2", "NAMA SANTRI")
+	f.SetCellValue(sheetName, "E2", "PROGRAM")
+	f.SetCellValue(sheetName, "F2", "MANAGER AKADEMIK")
+
+	// looping through months in the year, with example: JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC
+	months := []string{"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
+	for i, month := range months {
+		f.SetCellValue(sheetName, fmt.Sprintf("%s2", string(rune('G'+i))), month)
+	}
+
+	f.SetCellStyle(sheetName, "A1", "R2", HeaderStyle)
+	f.SetColWidth(sheetName, "B", "B", 20)
+	f.SetColWidth(sheetName, "D", "D", 20)
+	f.SetColWidth(sheetName, "E", "E", 20)
+	f.SetColWidth(sheetName, "F", "F", 20)
+
+	// Headering END
+
+	// section for data
+	lastRow := 2
+
+	for _, item := range resp.Items {
+		lastRow++
+		f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow), item.LecturerName)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), item.StudentName)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), item.ProgramName)
+		f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow), item.AcademicManagerName)
+
+		for _, month := range item.Months {
+			monthNumber := month.PaidAtMonth
+
+			if month.HRFeeForMentor != nil {
+				f.SetCellValue(sheetName, fmt.Sprintf("%s%v", string(rune('G'+monthNumber-1)), lastRow), *month.HRFeeForMentor)
+			}
+
+			if month.Notes != nil {
+				f.SetCellValue(sheetName, fmt.Sprintf("%s%v", string(rune('G'+monthNumber-1)), lastRow), *month.Notes)
+			}
+		}
+	}
+
+	// set the style for the body
+	for i := 3; i <= lastRow; i++ {
+		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", i), fmt.Sprintf("R%v", i), bodyStyle)
+	}
+
+	// timestampe in unix
+	tmstmp := time.Now().Unix()
+
+	filename := fmt.Sprintf("laporan-keuangan-cfo-2-tahunan-%v.xlsx", tmstmp)
+	filepath := "./" + filename
+
+	// save the file
+	if err := f.SaveAs(filepath); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+		return nil, err
+	}
+
+	resp.FilePath = filepath
+	resp.FileName = filename
+
+	return resp, nil
+
+}
+
 func hariTanggalString(htd time.Time) string {
 	hariTanggal := htd.Format("Monday, 02/01/2006")
 	if strings.Contains(hariTanggal, "Monday") {

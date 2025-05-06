@@ -193,3 +193,40 @@ type GetExportedRegistrationsForCFO2MonthlyResp struct {
 	FilePath string `json:"file_path"`
 	FileName string `json:"file_name"`
 }
+
+type GetExportedRegistrationsForCFO2YearlyReq struct {
+	UserId string `validate:"required,ulid"`
+
+	PaidAtYear string `query:"paid_at_year" validate:"required,datetime=2006"`
+	Timezone   string `query:"timezone" validate:"required,timezone"`
+}
+
+type GetExportedRegistrationsForCFO2YearlyResp struct {
+	Items []RegistrationYearlyRow `json:"items"`
+
+	// internal use only
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
+}
+
+type RegistrationYearlyRow struct {
+	AcademicManagerId   string                    `db:"academic_manager_id" json:"academic_manager_id"`
+	AcademicManagerName string                    `db:"academic_manager_name" json:"academic_manager_name"`
+	LecturerId          string                    `db:"lecturer_id" json:"lecturer_id"`
+	LecturerName        string                    `db:"lecturer_name" json:"lecturer_name"`
+	StudentId           string                    `db:"student_id" json:"student_id"`
+	StudentName         string                    `db:"student_name" json:"student_name"`
+	ProgramId           string                    `db:"program_id" json:"program_id"`
+	ProgramName         string                    `db:"program_name" json:"program_name"`
+	MarketerId          string                    `db:"marketer_id" json:"marketer_id"`
+	MarketerName        string                    `db:"marketer_name" json:"marketer_name"`
+	Months              []RegistrationYearlyMonth `json:"months"`
+}
+
+type RegistrationYearlyMonth struct {
+	RegistrationId string   `db:"registration_id" json:"registration_id"`
+	HRFeeForMentor *float64 `db:"hr_fee_for_mentor" json:"hr_fee_for_mentor"`
+	PaidAt         string   `db:"paid_at" json:"paid_at"`
+	PaidAtMonth    int      `db:"paid_at_month" json:"paid_at_month"`
+	Notes          *string  `db:"notes" json:"notes"`
+}
