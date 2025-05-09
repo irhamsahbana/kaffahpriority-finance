@@ -107,7 +107,7 @@ type RegisItem struct {
 	Profit                     float64      `json:"profit" db:"profit"`
 	Notes                      *string      `json:"notes" db:"notes"`
 	Batch                      *string      `json:"batch" db:"batch"`
-	IsPaidAt                   bool         `json:"is_paid_at" db:"is_paid_at"`
+	IsPaid                     bool         `json:"is_paid" db:"is_paid"`
 	PaidAt                     string       `json:"paid_at" db:"paid_at"`
 	CreatedAt                  string       `json:"created_at" db:"created_at"`
 	UpdatedAt                  string       `json:"updated_at" db:"updated_at"`
