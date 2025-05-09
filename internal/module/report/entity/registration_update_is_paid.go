@@ -4,7 +4,7 @@ type UpdateRegistrationIsPaidReq struct {
 	UserId string `json:"user_id" validate:"ulid"`
 
 	Id     string `params:"id" validate:"ulid"`
-	IsPaid bool   `json:"is_paid" validate:"required"`
+	IsPaid bool   `json:"is_paid"`
 }
 
 type UpdateRegistrationIsPaidResp struct {
