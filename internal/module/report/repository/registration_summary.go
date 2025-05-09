@@ -39,6 +39,7 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 			program_registrations pr
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
 			AND pr.paid_at AT TIME ZONE ? BETWEEN
 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')

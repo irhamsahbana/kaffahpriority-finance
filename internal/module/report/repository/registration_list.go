@@ -25,6 +25,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 	query := `
 		SELECT
 			COUNT(*) OVER() AS total_data,
+			pr.batch,
+			pr.is_paid,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -174,6 +176,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.ProgramId)
 	}
 
+	if req.IsPaid != "" {
+		if req.IsPaid == "true" {
+			query += ` AND pr.is_paid = TRUE`
+		} else {
+			query += ` AND pr.is_paid = FALSE`
+		}
+	}
+
 	sortByMap := map[string]string{
 		"created_at":   "pr.created_at",
 		"paid_at":      "pr.paid_at",
@@ -266,6 +276,8 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	query := `
 		SELECT
+			pr.batch,
+			pr.is_paid,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -342,6 +354,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			ON pr.program_id = p.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
 	`
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
@@ -526,6 +539,8 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 
 	query := `
 		SELECT
+			pr.batch,
+			pr.is_paid,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -608,6 +623,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 			ON pr.program_id = p.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
 	`
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
@@ -723,6 +739,8 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	query := `
 		SELECT
+			pr.batch,
+			pr.is_paid,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -805,6 +823,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			ON pr.program_id = p.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
 			AND pr.mentor_detail_fee_used IS NULL
 			AND pr.paid_at AT TIME ZONE ? NOT BETWEEN
 				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
@@ -945,6 +964,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 			ON pr.marketer_id = m.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
 			AND pr.lecturer_id IS NOT NULL
 			AND pr.paid_at AT TIME ZONE ? BETWEEN
 				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND

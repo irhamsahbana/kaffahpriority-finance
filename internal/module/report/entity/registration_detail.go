@@ -36,6 +36,8 @@ type GetRegistrationResp struct {
 	ClosingFeeForReward   *float64      `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
 	Profit                float64       `json:"profit" db:"profit"`
 	Notes                 *string       `json:"notes" db:"notes"`
+	Batch                 *string       `json:"batch" db:"batch"`
+	IsPaid                bool          `json:"is_paid" db:"is_paid"`
 	Students              []AddStudent  `json:"additional_students"`
 	Days                  pq.Int64Array `json:"days" db:"days"`
 	CreatedAt             string        `json:"created_at" db:"created_at"`

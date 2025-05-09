@@ -12,6 +12,7 @@ type GetRegistrationsReq struct {
 	PaidAtFrom string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
+	IsPaid     string `query:"is_paid" validate:"omitempty,oneof=true false"`
 
 	MarketerId string `query:"marketer_id" validate:"omitempty,ulid"`
 	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
@@ -105,6 +106,8 @@ type RegisItem struct {
 	ClosingFeeForReward        *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
 	Profit                     float64      `json:"profit" db:"profit"`
 	Notes                      *string      `json:"notes" db:"notes"`
+	Batch                      *string      `json:"batch" db:"batch"`
+	IsPaidAt                   bool         `json:"is_paid_at" db:"is_paid_at"`
 	PaidAt                     string       `json:"paid_at" db:"paid_at"`
 	CreatedAt                  string       `json:"created_at" db:"created_at"`
 	UpdatedAt                  string       `json:"updated_at" db:"updated_at"`
