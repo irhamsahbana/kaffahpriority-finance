@@ -195,7 +195,35 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 
 		if exist {
 			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - data already exist")
-			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateId + ` sudah ada di bulan ini`)
+			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateId + ` sudah dibuat di bulan ini`)
+			return err
+		}
+
+		// check if the template's fields (lecturer_id, marketer_id) are null
+		// if so, return error with message "Template perlu dilengkapi (pengajar, marketer)"
+		queryCheckTemplate := `
+			SELECT EXISTS (
+				SELECT
+					1
+				FROM
+					program_registration_templates prt
+				WHERE
+					prt.id = ?
+					AND prt.deleted_at IS NULL
+					AND prt.lecturer_id IS NOT NULL
+					AND prt.marketer_id IS NOT NULL
+			)
+		`
+		queryCheckTemplate = r.db.Rebind(queryCheckTemplate)
+		var isTemplateValid bool
+		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to check template")
+			return err
+		}
+		if !isTemplateValid {
+			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - template is not valid")
+			err = errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
 			return err
 		}
 

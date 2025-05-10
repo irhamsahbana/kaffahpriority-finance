@@ -69,10 +69,10 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		LEFT JOIN
 			academic_managers am
 			ON l.academic_manager_id = am.id
-		JOIN
+		LEFT JOIN
 			marketers m
 			ON prt.marketer_id = m.id
-		JOIN
+		LEFT JOIN
 			student_managers sm
 			ON m.student_manager_id = sm.id
 		JOIN

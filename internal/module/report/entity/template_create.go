@@ -9,7 +9,7 @@ type CreateTemplateReq struct {
 	UserId string ` json:"user_id" validate:"ulid"`
 
 	ProgramId          string       `json:"program_id" validate:"ulid"`
-	MarketerId         string       `json:"marketer_id" validate:"ulid"`
+	MarketerId         *string      `json:"marketer_id" validate:"omitempty,ulid"`
 	LecturerId         *string      `json:"lecturer_id" validate:"omitempty,ulid"`
 	StudentId          string       `json:"student_id" validate:"ulid"`
 	AdditionalStudents []AddStudent `json:"additional_students" validate:"required,dive"`
