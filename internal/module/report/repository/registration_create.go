@@ -237,12 +237,14 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			return err
 		}
 
+		// fetch additional students from prt_additional_students
 		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateId)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to fetch additional students")
 			return err
 		}
 
+		// insert additional students into pr_additional_students
 		for _, student := range students {
 			_, err = tx.ExecContext(ctx, queryInsertStudents,
 				ulid.Make().String(), prId, student.StudentId, student.Name,

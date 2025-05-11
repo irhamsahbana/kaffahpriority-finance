@@ -59,6 +59,8 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/lecturers-wages-aggregate", m.AuthBearer, h.getLecturerWagesAggregate)
 	router.Get("/acquisition-rights-aggregate", m.AuthBearer, h.getAcquisitionRightsAggregate)
 
+	router.Post("/generate-registration-reports", m.AuthBearer, h.generateRegistrationReports)
+
 	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
 }
 
@@ -519,6 +521,30 @@ func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 	}
 
 	err := h.service.UpdateLecturersWage(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GenerateRegistrationsReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::generateRegistrationReports - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.GenerateRegistrationReports(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

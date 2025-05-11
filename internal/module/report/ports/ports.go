@@ -37,6 +37,8 @@ type ReportRepository interface {
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
+
+	GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error
 }
 
 type ReportService interface {
@@ -71,4 +73,6 @@ type ReportService interface {
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
+
+	GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error
 }

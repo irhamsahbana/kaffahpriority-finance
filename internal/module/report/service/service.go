@@ -105,3 +105,7 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 func (s *reportService) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error) {
 	return s.repo.GetAcquisitionRightsAggregate(ctx, req)
 }
+
+func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
+	return s.repo.GenerateRegistrationReports(ctx, req)
+}
