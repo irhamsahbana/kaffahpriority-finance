@@ -37,6 +37,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			lecturer_id = ?,
 			marketer_id = ?,
 			student_id = ?,
+			program_name = (SELECT name FROM programs WHERE id = ?),
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -58,7 +59,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
@@ -125,7 +126,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			lecturer_id = ?,
 			marketer_id = ?,
 			student_id = ?,
-			program_name = (SELECT name FROM programs WHERE id = ?),
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -147,7 +147,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
@@ -161,7 +161,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	query = `
 		DELETE FROM prt_additional_students WHERE prt_id = ?
 	`
-
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), reg.TemplateId)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to delete additional students from template")
