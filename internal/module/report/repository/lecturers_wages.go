@@ -388,6 +388,7 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 		WHERE
 			id = ?
 			AND deleted_at IS NULL
+			AND is_paid = TRUE
 	`
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), realFee, req.RegistrationId)
