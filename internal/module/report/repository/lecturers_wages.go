@@ -63,7 +63,11 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			) AS real_fee,
 			pr.is_full_fee,
 			pr.full_fee,
-			pr.mentor_detail_fee_used,
+			-- pr.mentor_detail_fee_used,
+			CASE
+				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
+				ELSE 0
+			END AS mentor_detail_fee_used,
 			pr.notes_for_lecturer_wage AS notes
 		FROM
 			program_registrations pr
