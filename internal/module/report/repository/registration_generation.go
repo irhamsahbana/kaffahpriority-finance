@@ -39,8 +39,6 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		return err
 	}
 
-	log.Debug().Any("template_ids", templateIds).Msg("repo::GenerateRegistrationReport - selected templates")
-
 	batchId := ulid.Make().String()
 	queryInsertRegistration := r.db.Rebind(queryInsertRegistration)
 	queryStudents := r.db.Rebind(queryStudents)
@@ -49,7 +47,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	for _, templateId := range templateIds {
 		// Ambil data dari template untuk pengecekan
 		var lecturerId, studentId, programId string
-		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = ?`,
+		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
 			templateId).Scan(&lecturerId, &studentId, &programId)
 		if err != nil {
 			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to get template data")
