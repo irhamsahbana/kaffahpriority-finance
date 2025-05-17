@@ -38,17 +38,19 @@ type GetRegistrationListPerLecturerResp struct {
 }
 
 type RegistrationListPerLecturer struct {
-	LecturerId    *string                               `json:"lecturer_id" db:"lecturer_id"`
-	StudentId     string                                `json:"student_id" db:"student_id"`
-	ProgramId     string                                `json:"program_id" db:"program_id"`
-	LecturerName  *string                               `json:"lecturer_name" db:"lecturer_name"`
-	StudentName   string                                `json:"student_name" db:"student_name"`
-	ProgramName   string                                `json:"program_name" db:"program_name"`
-	Year          int                                   `json:"year"`
-	IsFL          bool                                  `json:"is_fl" db:"is_fl"`
-	IsNL          bool                                  `json:"is_nl" db:"is_nl"`
-	IsITP         bool                                  `json:"is_itp" db:"is_itp"`
-	Registrations []RegistrationListPerLecturerPerMonth `json:"registrations"`
+	AcademicManagerId   *string                               `json:"academic_manager_id" db:"academic_manager_id"`
+	LecturerId          *string                               `json:"lecturer_id" db:"lecturer_id"`
+	StudentId           string                                `json:"student_id" db:"student_id"`
+	ProgramId           string                                `json:"program_id" db:"program_id"`
+	AcademicManagerName *string                               `json:"academic_manager_name" db:"academic_manager_name"`
+	LecturerName        *string                               `json:"lecturer_name" db:"lecturer_name"`
+	StudentName         string                                `json:"student_name" db:"student_name"`
+	ProgramName         string                                `json:"program_name" db:"program_name"`
+	Year                int                                   `json:"year"`
+	IsFL                bool                                  `json:"is_fl" db:"is_fl"`
+	IsNL                bool                                  `json:"is_nl" db:"is_nl"`
+	IsITP               bool                                  `json:"is_itp" db:"is_itp"`
+	Registrations       []RegistrationListPerLecturerPerMonth `json:"registrations"`
 }
 
 type RegistrationListPerLecturerPerMonth struct {
