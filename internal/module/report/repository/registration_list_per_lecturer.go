@@ -32,27 +32,6 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	query := `
 		SELECT
-			-- COUNT(*) OVER() AS total_data,
-			pr.program_id,
-			pr.lecturer_id,
-			pr.student_id,
-			l.name AS lecturer_name,
-			s.name AS student_name,
-			p.name AS program_name,
-			l.academic_manager_id
-		FROM
-			program_registrations pr
-		JOIN
-			programs p ON pr.program_id = p.id
-		JOIN
-			students s ON pr.student_id = s.id
-		LEFT JOIN
-			lecturers l ON pr.lecturer_id = l.id
-		WHERE 1 = 1
-	`
-
-	query = `
-		SELECT
 			prt.program_id,
 			prt.lecturer_id,
 			prt.student_id,
@@ -71,7 +50,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			lecturers l ON prt.lecturer_id = l.id
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
-		WHERE 1 = 1
+		WHERE prt.deleted_at IS NULL
 	`
 
 	if req.Q != "" {
