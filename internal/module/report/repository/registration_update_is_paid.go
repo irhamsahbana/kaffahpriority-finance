@@ -14,7 +14,9 @@ func (r *reportRepo) UpdateRegistrationIsPaid(ctx context.Context, req *entity.U
 
 	query := `
 		UPDATE program_registrations
-		SET is_paid = $1
+		SET
+			is_paid = $1,
+			paid_at = CASE WHEN $1 THEN NOW() ELSE paid_at END
 		WHERE id = $2
 		AND deleted_at IS NULL
 		RETURNING id
