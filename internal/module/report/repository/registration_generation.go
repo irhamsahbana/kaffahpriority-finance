@@ -56,7 +56,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// check if registration already exists
 		var programName, lecturerName, studentName string
-		err = tx.QueryRowxContext(ctx, queryCheckRegistrationExists,
+		err = tx.QueryRowxContext(ctx, r.db.Rebind(queryCheckRegistrationExists),
 			lecturerId, studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
 		).Scan(&programName, &lecturerName, &studentName)
 
