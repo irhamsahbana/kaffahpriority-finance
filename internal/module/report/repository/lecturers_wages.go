@@ -99,6 +99,11 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		args = append(args, req.LecturerId)
 	}
 
+	if req.Q != "" {
+		query += ` AND (pr.program_name ILIKE '%' || ? || '%' OR s.name ILIKE '%' || ? || '%' OR l.name ILIKE '%' || ? || '%')`
+		args = append(args, req.Q, req.Q, req.Q)
+	}
+
 	query += `
 		ORDER BY
 			pr.lecturer_id ASC,

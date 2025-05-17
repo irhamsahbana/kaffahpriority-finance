@@ -11,6 +11,8 @@ type GetLecturersWagesReq struct {
 	UserId string `validate:"ulid"`
 	types.MetaQuery
 
+	Q string `query:"q" validate:"omitempty,min=3"`
+
 	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
 	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
 	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
