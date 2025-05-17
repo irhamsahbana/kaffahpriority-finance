@@ -30,6 +30,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	)
 	resp.Items = make([]entity.RegistrationListPerLecturer, 0)
 
+	// Pertama, tambahkan academic_manager_id dan created_at ke SELECT dan GROUP BY
 	query := `
 		SELECT
 			-- COUNT(*) OVER() AS total_data,
@@ -38,7 +39,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.student_id,
 			l.name AS lecturer_name,
 			s.name AS student_name,
-			p.name AS program_name
+			p.name AS program_name,
+			l.academic_manager_id,
+			pr.created_at
 		FROM
 			program_registrations pr
 		JOIN
@@ -76,11 +79,13 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.student_id,
 			l.name,
 			s.name,
-			p.name
+			p.name,
+			l.academic_manager_id,
+			pr.created_at
 		ORDER BY
+			l.academic_manager_id ASC,
 			pr.lecturer_id ASC,
-			pr.student_id ASC,
-			p.name ASC
+			pr.created_at ASC
 		-- LIMIT ? OFFSET ?
 	`
 	// args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
@@ -198,8 +203,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	query += `
 		ORDER BY
+			l.academic_manager_id ASC,
 			pr.lecturer_id ASC,
-			pr.student_id ASC,
+			pr.created_at ASC,
 			m.month_num ASC
 	`
 
