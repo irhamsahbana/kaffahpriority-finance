@@ -38,6 +38,7 @@ type GetLecturersWagesResp struct {
 
 type LecturersWageItem struct {
 	RegistrationId       string           `json:"registration_id" db:"registration_id"`
+	AcademicManagerName  string           `json:"academic_manager_name" db:"academic_manager_name"`
 	LecturerName         string           `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
 	ProgramName          string           `json:"program_name" db:"program_name"`

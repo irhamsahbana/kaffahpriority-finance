@@ -32,6 +32,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.id AS registration_id,
 			pr.program_name,
 			s.name AS student_name,
+			am.name AS academic_manager_name,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			pr.foreign_learning_fee,
