@@ -50,18 +50,42 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			lecturers l ON pr.lecturer_id = l.id
 		WHERE 1 = 1
 	`
+
+	query = `
+		SELECT
+			prt.program_id,
+			prt.lecturer_id,
+			prt.student_id,
+			l.name AS lecturer_name,
+			s.name AS student_name,
+			p.name AS program_name,
+			l.academic_manager_id,
+			am.name AS academic_manager_name
+		FROM
+			program_registration_templates prt
+		JOIN
+			programs p ON prt.program_id = p.id
+		JOIN
+			students s ON prt.student_id = s.id
+		LEFT JOIN
+			lecturers l ON prt.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE 1 = 1
+	`
+
 	if req.Q != "" {
 		query += ` AND (l.name ILIKE ? OR s.name ILIKE ?)`
 		args = append(args, "%"+req.Q+"%", "%"+req.Q+"%")
 	}
 
 	if req.LecturerId != "" {
-		query += ` AND pr.lecturer_id = ?`
+		query += ` AND prt.lecturer_id = ?`
 		args = append(args, req.LecturerId)
 	}
 
 	if req.StudentId != "" {
-		query += ` AND pr.student_id = ?`
+		query += ` AND prt.student_id = ?`
 		args = append(args, req.StudentId)
 	}
 
@@ -71,6 +95,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	}
 
 	query += `
+	/*
 		GROUP BY
 			pr.program_id,
 			pr.lecturer_id,
@@ -79,9 +104,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			s.name,
 			p.name,
 			l.academic_manager_id
+	*/
 		ORDER BY
 			l.academic_manager_id ASC,
-			pr.lecturer_id ASC
+			prt.lecturer_id ASC,
+			prt.id ASC
 		-- LIMIT ? OFFSET ?
 	`
 	// args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
