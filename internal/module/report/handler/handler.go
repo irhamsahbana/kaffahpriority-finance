@@ -536,6 +536,12 @@ func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::generateRegistrationReports - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.SetDefault()
 	req.UserId = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
