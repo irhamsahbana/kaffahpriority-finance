@@ -914,8 +914,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 	ctx context.Context,
-	req *entity.GetExportedRegistrationsForCFO2YearlyReq,
-) (*entity.GetExportedRegistrationsForCFO2YearlyResp, error) {
+	req *entity.GetExportedRegistrationsForCFO2YearlyReq) (*entity.GetExportedRegistrationsForCFO2YearlyResp, error) {
 	type dao struct {
 		entity.RegisItem
 		PaidAtMonth int     `db:"paid_at_month"`
@@ -1053,6 +1052,14 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 	}
 
 	resp.Items = ress
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
+	ctx context.Context,
+	req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error) {
+	resp := &entity.GetExportedRegistrationsForWageRecapMonthlyResp{}
 
 	return resp, nil
 }

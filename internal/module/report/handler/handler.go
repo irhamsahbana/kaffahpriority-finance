@@ -44,6 +44,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/exported-registrations", m.AuthBearer, h.getExportedRegistrations)
 	router.Get("/exported-registrations-for-cfo2-monthly", m.AuthBearer, h.getExportedRegistrationsForCFO2Monthly)
 	router.Get("/exported-registrations-for-cfo2-yearly", m.AuthBearer, h.getExportedRegistrationsForCFO2Yearly)
+	router.Get("/exported-registrations-for-wage-recap-monthly", m.AuthBearer, h.getExportedRegistrationsForWageRecapMonthly)
 
 	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
 	router.Get("/registrations/:id", m.AuthBearer, h.getRegistration)
@@ -225,6 +226,47 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) erro
 	}
 
 	return nil
+}
+
+func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetExportedRegistrationsForWageRecapMonthlyReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForX - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetExportedRegistrationsForWageRecapMonthly(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	defer func() {
+		if err := os.Remove(resp.FilePath); err != nil {
+			log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - delete file error")
+		}
+	}()
+
+	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
+		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - download file error")
+		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
+	}
+
+	return nil
+
 }
 
 func (h *reportHandler) getRegistration(c *fiber.Ctx) error {

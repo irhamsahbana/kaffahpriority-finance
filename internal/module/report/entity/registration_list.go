@@ -233,3 +233,16 @@ type RegistrationYearlyMonth struct {
 	PaidAtMonth    int      `db:"paid_at_month" json:"paid_at_month"`
 	Notes          *string  `db:"notes" json:"notes"`
 }
+
+type GetExportedRegistrationsForWageRecapMonthlyReq struct {
+	UserId string `validate:"required,ulid"`
+
+	Month string `query:"month" validate:"required,datetime=2006-01"`
+}
+
+type GetExportedRegistrationsForWageRecapMonthlyResp struct {
+
+	// internal use only
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
+}

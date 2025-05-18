@@ -270,9 +270,7 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 
 func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	ctx context.Context,
-	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
-	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error,
-) {
+	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
 	resp, err := s.repo.GetExportedRegistrationsForCFO2Monthly(ctx, req)
 	if err != nil {
 		return nil, err
@@ -514,9 +512,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 
 func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 	ctx context.Context,
-	req *entity.GetExportedRegistrationsForCFO2YearlyReq) (
-	*entity.GetExportedRegistrationsForCFO2YearlyResp, error,
-) {
+	req *entity.GetExportedRegistrationsForCFO2YearlyReq) (*entity.GetExportedRegistrationsForCFO2YearlyResp, error) {
 	resp, err := s.repo.GetExportedRegistrationsForCFO2Yearly(ctx, req)
 	if err != nil {
 		return nil, err
@@ -607,7 +603,6 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 	f.SetColWidth(sheetName, "D", "D", 20)
 	f.SetColWidth(sheetName, "E", "E", 20)
 	f.SetColWidth(sheetName, "F", "F", 20)
-
 	// Headering END
 
 	// section for data
@@ -655,6 +650,110 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 
 	return resp, nil
 
+}
+
+func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
+	ctx context.Context,
+	req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error) {
+	resp, err := s.repo.GetExportedRegistrationsForWageRecapMonthly(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	f := excelize.NewFile()
+	sheetName := "Sheet1"
+
+	borderStyle := []excelize.Border{
+		{
+			Type:  "left",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "top",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "bottom",
+			Color: "#000000",
+			Style: 1,
+		},
+		{
+			Type:  "right",
+			Color: "#000000",
+			Style: 1,
+		},
+	}
+
+	HeaderStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:  true,
+			Size:  12,
+			Color: "#000000",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+		Border: borderStyle,
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#3BFFF5"},
+			Pattern: 1,
+		},
+		NumFmt: 3,
+	})
+
+	// Headering START
+	f.SetCellValue(sheetName, "A1", "NO")
+	f.SetCellValue(sheetName, "B1", "NAMA")
+	f.SetCellValue(sheetName, "C1", "NO")
+	f.SetCellValue(sheetName, "D1", "NAMA")
+	f.SetCellValue(sheetName, "E1", "PROGRAM")
+	f.SetCellValue(sheetName, "F1", "JUMLAH")
+	f.SetCellValue(sheetName, "G1", "HITUNGAN")
+	f.SetCellValue(sheetName, "H1", "UJROH FULL")
+	f.SetCellValue(sheetName, "I1", "UJROH AWAL")
+	f.SetCellValue(sheetName, "J1", "FL")
+	f.SetCellValue(sheetName, "K1", "NL")
+	f.SetCellValue(sheetName, "L1", "UJROH REAL")
+	f.SetCellValue(sheetName, "M1", "TOTAL")
+	f.SetCellValue(sheetName, "N1", "KETERANGAN")
+	f.SetCellValue(sheetName, "O1", "KEEP GAJI")
+	f.SetCellValue(sheetName, "P1", "ANGKA")
+	f.SetCellValue(sheetName, "Q1", "PENASEHAT AKADEMIK")
+	f.SetCellValue(sheetName, "R1", "MS 1")
+	f.SetCellValue(sheetName, "S1", "MS 2")
+	f.SetCellValue(sheetName, "T1", "MS 3")
+	f.SetCellValue(sheetName, "U1", "MS 4")
+
+	f.SetCellStyle(sheetName, "A1", "U1", HeaderStyle)
+	f.SetColWidth(sheetName, "B", "B", 20)
+	f.SetColWidth(sheetName, "D", "D", 20)
+	f.SetColWidth(sheetName, "E", "E", 20)
+	f.SetColWidth(sheetName, "G", "I", 20)
+	f.SetColWidth(sheetName, "L", "L", 20)
+	f.SetColWidth(sheetName, "N", "O", 20)
+	f.SetColWidth(sheetName, "Q", "Q", 20)
+
+	// Headering END
+
+	// timestampe in unix
+	tmstmp := time.Now().Unix()
+
+	filename := fmt.Sprintf("laporan-keuangan-rekap-gaji-bulanan-%s-%v.xlsx", req.Month, tmstmp)
+	filepath := "./" + filename
+
+	if err := f.SaveAs(filepath); err != nil {
+		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForX - error saving file")
+		return nil, err
+	}
+
+	resp.FilePath = filepath
+	resp.FileName = filename
+
+	return resp, nil
 }
 
 func hariTanggalString(htd time.Time) string {
