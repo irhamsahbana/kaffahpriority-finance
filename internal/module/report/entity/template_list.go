@@ -12,9 +12,6 @@ type GetTemplatesReq struct {
 
 	types.MetaQuery
 
-	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
-	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at student_name"`
-
 	MarketerId       string `query:"marketer_id" validate:"omitempty,ulid"`
 	StudentManagerId string `query:"student_manager_id" validate:"omitempty,ulid"`
 	LecturerId       string `query:"lecturer_id" validate:"omitempty,ulid"`
@@ -24,14 +21,6 @@ type GetTemplatesReq struct {
 
 func (r *GetTemplatesReq) SetDefault() {
 	r.MetaQuery.SetDefault()
-
-	if r.SortType == "" {
-		r.SortType = "desc"
-	}
-
-	if r.SortBy == "" {
-		r.SortBy = "updated_at"
-	}
 }
 
 type GetTemplatesResp struct {
