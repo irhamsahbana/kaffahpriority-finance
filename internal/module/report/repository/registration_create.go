@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/pkg/errmsg"
 	"context"
+	"fmt"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
@@ -92,7 +93,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		closing_fee_for_reward,
 		days,
 		notes,
-		started_at
+		allocated_at
 		)
 		SELECT
 			?,
@@ -180,8 +181,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 						END
 					)
 					AND pr.student_id = (SELECT student_id FROM template)
-					AND EXTRACT(MONTH FROM pr.started_at) = EXTRACT(MONTH FROM NOW())
-					AND EXTRACT(YEAR FROM pr.started_at) = EXTRACT(YEAR FROM NOW())
+					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM NOW())
+					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM NOW())
 					AND pr.deleted_at IS NULL
 			)
 		`
@@ -306,8 +307,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 						END
 					)
 					AND pr.student_id = (SELECT student_id FROM regis)
-					AND EXTRACT(MONTH FROM pr.started_at) = EXTRACT(MONTH FROM NOW())
-					AND EXTRACT(YEAR FROM pr.started_at) = EXTRACT(YEAR FROM NOW())
+					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestampz
+					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestampz
 					AND pr.deleted_at IS NULL
 			)
 		`
@@ -335,7 +336,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		mentor_detail_fee_used,
 		hr_detail_fee,
 		days,
-		notes
+		notes,
+		allocated_at
 		)
 		SELECT
 			?,
@@ -358,7 +360,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.mentor_detail_fee_used,
 			pr.hr_detail_fee,
 			pr.days,
-			pr.notes
+			pr.notes,
+			(?::text) || ' 00:00:00' AT TIME ZONE ?
 		FROM
 			program_registrations pr
 		WHERE
@@ -393,20 +396,25 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 
 		// check if registration_id already exist in this month
 		var exist bool
-		err = tx.GetContext(ctx, &exist, queryCheck, item.RegisId)
+		err = tx.GetContext(ctx, &exist, queryCheck, item.RegisId,
+			item.AllocatedAt, item.Timezone,
+			item.AllocatedAt, item.Timezone,
+		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to check data")
 		}
 
 		if exist {
 			log.Warn().Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - data already exist")
-			err = errmsg.NewCustomErrors(403).SetMessage(`Data yang sama (program, pengajar, dan murid) sudah ada di bulan ini`)
+			err = errmsg.NewCustomErrors(403).SetMessage(fmt.Sprintf(`Data yang sama (program, pengajar dan murid) sudah dialokasikan pada %s (timezone %s)`, item.AllocatedAt, item.Timezone))
 			return err
 		}
 
 		// create new registration based on existing registration
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, req.UserId, item.RegisId,
+			prId, req.UserId,
+			item.AllocatedAt, item.Timezone,
+			item.RegisId,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to insert data")

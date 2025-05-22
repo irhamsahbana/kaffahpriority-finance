@@ -186,7 +186,7 @@ INSERT INTO program_registrations (
 	closing_fee_for_reward,
 	days,
 	notes,
-	started_at
+	allocated_at
 )
 SELECT
 	?,

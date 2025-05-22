@@ -159,11 +159,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			lecturers l ON pr.lecturer_id = l.id
 		JOIN
 			months m
-			ON EXTRACT(MONTH FROM (pr.started_at AT TIME ZONE ?)) = m.month_num
+			ON EXTRACT(MONTH FROM (pr.allocated_at AT TIME ZONE ?)) = m.month_num
 		WHERE
 			pr.deleted_at IS NULL
 			AND pr.is_paid = TRUE
-			AND EXTRACT(YEAR FROM (pr.started_at AT TIME ZONE ?)) = ?
+			AND EXTRACT(YEAR FROM (pr.allocated_at AT TIME ZONE ?)) = ?
 		`
 
 	args = append(args, req.Tz, req.Tz, req.Year)

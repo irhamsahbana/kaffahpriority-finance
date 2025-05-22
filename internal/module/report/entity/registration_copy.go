@@ -6,5 +6,7 @@ type CopyRegistrationsReq struct {
 }
 
 type CopyRegisItem struct {
-	RegisId string `json:"registration_id" validate:"required,ulid"`
+	RegisId     string `json:"registration_id" validate:"required,ulid"`
+	AllocatedAt string `json:"allocated_at" validate:"required,datetime=2006-01-02"`
+	Timezone    string `json:"timezone" validate:"required,timezone"`
 }
