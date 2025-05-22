@@ -307,8 +307,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 						END
 					)
 					AND pr.student_id = (SELECT student_id FROM regis)
-					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM ?::timestamptz AT TIME ZONE ?)
-					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM ?::timestamptz AT TIME ZONE ?)
+					AND EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(MONTH FROM ?::timestamptz AT TIME ZONE ?)
+					AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM ?::timestamptz AT TIME ZONE ?)
 					AND pr.deleted_at IS NULL
 			)
 		`
@@ -367,7 +367,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.days,
 			pr.notes,
 			pr.is_paid,
-			?::timestamptz AT TIME ZONE ?
+			((?::text || ' 00:00:00')::timestamp AT TIME ZONE ?)::timestamptz
 		FROM
 			program_registrations pr
 		WHERE
@@ -403,8 +403,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		// check if registration_id already exist in this month
 		var exist bool
 		err = tx.GetContext(ctx, &exist, queryCheck, item.RegisId,
-			item.AllocatedAt, item.Timezone,
-			item.AllocatedAt, item.Timezone,
+			item.Timezone, item.AllocatedAt, item.Timezone,
+			item.Timezone, item.AllocatedAt, item.Timezone,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to check data")
