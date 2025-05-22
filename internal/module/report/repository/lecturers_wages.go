@@ -84,7 +84,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			marketers m ON pr.marketer_id = m.id
 		WHERE
 			pr.deleted_at IS NULL
-			AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?
+			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
 	args = append(args, req.Timezone, req.Month)
@@ -201,7 +201,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			l.name AS lecturer_name,
 			am.id AS academic_manager_id,
 			am.name AS academic_manager_name,
-			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') AS month,
 			COALESCE(
 				SUM(
 					(
@@ -238,7 +238,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 	args = append(args, req.Timezone)
 
 	if req.Month != "" {
-		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?`
 		args = append(args, req.Timezone, req.Month)
 	}
 
@@ -445,7 +445,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
-			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') AS month,
 			sm.id AS student_manager_id,
 			sm.name AS student_manager_name,
 			SUM(
@@ -466,7 +466,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 	args = append(args, req.Timezone)
 
 	if req.Month != "" {
-		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?`
 		args = append(args, req.Timezone, req.Month)
 	}
 
@@ -522,7 +522,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
-			TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') AS month,
 			am.id AS academic_manager_id,
 			am.name AS academic_manager_name,
 			SUM(
@@ -543,7 +543,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 	args = append(args, req.Timezone)
 
 	if req.Month != "" {
-		query += ` AND TO_CHAR(pr.paid_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?`
 		args = append(args, req.Timezone, req.Month)
 	}
 
