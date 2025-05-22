@@ -339,6 +339,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 		hr_detail_fee,
 		days,
 		notes,
+		is_paid,
 		allocated_at
 		)
 		SELECT
@@ -365,6 +366,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.hr_detail_fee,
 			pr.days,
 			pr.notes,
+			pr.is_paid,
 			?::timestamptz AT TIME ZONE ?
 		FROM
 			program_registrations pr
