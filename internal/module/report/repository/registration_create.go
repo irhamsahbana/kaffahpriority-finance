@@ -307,8 +307,8 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 						END
 					)
 					AND pr.student_id = (SELECT student_id FROM regis)
-					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestampz
-					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestampz
+					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestamptz
+					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM (?::text) || ' 00:00:00' AT TIME ZONE ?)::timestamptz
 					AND pr.deleted_at IS NULL
 			)
 		`
