@@ -111,6 +111,7 @@ type RegisItem struct {
 	PaidAt                     string       `json:"paid_at" db:"paid_at"`
 	CreatedAt                  string       `json:"created_at" db:"created_at"`
 	UpdatedAt                  string       `json:"updated_at" db:"updated_at"`
+	AllocatedAt                *string      `json:"allocated_at" db:"allocated_at"`
 
 	// internal use only
 	IsUnused bool `json:"-"`

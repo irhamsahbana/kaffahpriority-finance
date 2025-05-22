@@ -67,6 +67,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.paid_at,
 			pr.created_at,
 			pr.updated_at,
+			pr.allocated_at,
 			pr.notes,
 			pr.program_fee +
 			COALESCE(pr.foreign_learning_fee, 0) +
