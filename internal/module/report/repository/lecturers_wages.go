@@ -35,6 +35,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			am.name AS academic_manager_name,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
+			sm.name AS student_manager_name,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
@@ -82,6 +83,8 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			students s ON pr.student_id = s.id
 		JOIN
 			marketers m ON pr.marketer_id = m.id
+		JOIN
+			student_managers sm ON m.student_manager_id = sm.id
 		WHERE
 			pr.deleted_at IS NULL
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?

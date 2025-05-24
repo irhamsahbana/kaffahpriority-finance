@@ -44,6 +44,7 @@ type LecturersWageItem struct {
 	LecturerName         string           `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
 	ProgramName          string           `json:"program_name" db:"program_name"`
+	StudentManagerName   string           `json:"student_manager_name" db:"student_manager_name"`
 	MarketerName         string           `json:"marketer_name" db:"marketer_name"`
 	AccquisitionRights   int              `json:"acquisition_rights" db:"acquisition_rights"`
 	FL                   *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
