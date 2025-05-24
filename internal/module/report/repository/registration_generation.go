@@ -2,10 +2,8 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
-	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
@@ -60,21 +58,20 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 			lecturerId, studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
 		).Scan(&programName, &lecturerName, &studentName)
 
+		// if registration already exists, skip this template
 		if err == nil {
-			// Data ditemukan, artinya registrasi sudah ada
-			log.Warn().Str("programName", programName).Str("lecturerName", lecturerName).
-				Str("studentName", studentName).Msg("repo::GenerateRegistrationReport - registration already exists in this month")
-			return errmsg.NewCustomErrors(409).SetMessage(fmt.Sprintf(
-				"Laporan untuk %s (pengajar: %s, santri: %s) sudah ada di bulan ini",
-				programName, lecturerName, studentName,
-			))
+			log.Info().Str("templateId", templateId).
+				Str("programName", programName).
+				Str("lecturerName", lecturerName).
+				Str("studentName", studentName).
+				Msg("repo::GenerateRegistrationReport - registration already exists, skipping")
+			continue
 		} else if err != sql.ErrNoRows {
-			// Error selain NoRows, artinya ada masalah dengan query
 			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to check if registration exists")
 			return err
 		}
 
-		// Jika sampai disini artinya err == sql.ErrNoRows, data belum ada, lanjutkan proses
+		// if registration does not exist, proceed to insert
 
 		// insert into program_registrations
 		programRegistrationId := ulid.Make().String()
@@ -261,7 +258,7 @@ var queryCheckRegistrationExists = `
 		AND pr.lecturer_id = ?
 		AND pr.student_id = ?
 		AND pr.program_id = ?
-		AND EXTRACT(YEAR FROM pr.paid_at AT TIME ZONE ?) = EXTRACT(YEAR FROM NOW() AT TIME ZONE ?)
-		AND EXTRACT(MONTH FROM pr.paid_at AT TIME ZONE ?) = EXTRACT(MONTH FROM NOW() AT TIME ZONE ?)
+		AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM NOW() AT TIME ZONE ?)
+		AND EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(MONTH FROM NOW() AT TIME ZONE ?)
 	LIMIT 1
 `
