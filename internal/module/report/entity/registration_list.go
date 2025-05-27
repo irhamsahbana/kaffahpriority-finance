@@ -238,12 +238,62 @@ type RegistrationYearlyMonth struct {
 type GetExportedRegistrationsForWageRecapMonthlyReq struct {
 	UserId string `validate:"required,ulid"`
 
-	Month string `query:"month" validate:"required,datetime=2006-01"`
+	Month    string `query:"month" validate:"required,datetime=2006-01"`
+	Timezone string `query:"timezone" validate:"required,timezone"`
+}
+
+func (r *GetExportedRegistrationsForWageRecapMonthlyReq) SetDefault() {
+	if r.Timezone == "" {
+		r.Timezone = "Asia/Makassar"
+	}
 }
 
 type GetExportedRegistrationsForWageRecapMonthlyResp struct {
+	Items []WageRecapAcademicManager `json:"items"`
 
 	// internal use only
 	FilePath string `json:"file_path"`
 	FileName string `json:"file_name"`
+}
+
+type WageRecapAcademicManager struct {
+	Id    string              `db:"id" json:"id"`
+	Name  string              `db:"name" json:"name"`
+	Items []WageRecapLecturer `json:"items"`
+}
+
+type WageRecapLecturer struct {
+	Id    string                  `db:"id" json:"id"`
+	Name  string                  `db:"name" json:"name"`
+	Items []WageRecapRegistration `json:"items"`
+}
+
+type WageRecapRegistration struct {
+	Id           string `db:"id" json:"id"`
+	StudentId    string `db:"student_id" json:"student_id"`
+	ProgramId    string `db:"program_id" json:"program_id"`
+	LecturerId   string `db:"lecturer_id" json:"lecturer_id"`
+	StudentName  string `db:"student_name" json:"student_name"`
+	ProgramName  string `db:"program_name" json:"program_name"`
+	MarketerName string `db:"marketer_name" json:"marketer_name"`
+
+	IsFL  bool `db:"is_fl" json:"is_fl"`
+	IsNL  bool `db:"is_nl" json:"is_nl"`
+	IsITP bool `db:"is_itp" json:"is_itp"`
+
+	Data *WageRecapRegistrationData `db:"data" json:"data"`
+}
+
+type WageRecapRegistrationData struct {
+	ProgramMeetings      int64    `db:"program_meetings" json:"program_meetings"`
+	ProgramFeePerMeeting float64  `db:"program_fee_per_meeting" json:"program_fee_per_meeting"`
+	FullFee              float64  `db:"full_fee" json:"full_fee"`
+	IsFullFee            bool     `db:"is_full_fee" json:"is_full_fee"`
+	InitialFee           *float64 `db:"initial_fee" json:"initial_fee"`
+	FL                   *float64 `db:"foreign_learning_fee" json:"foreign_learning_fee"`
+	NL                   *float64 `db:"night_learning_fee" json:"night_learning_fee"`
+	RealFee              float64  `db:"real_fee" json:"real_fee"`
+	MentorDetailFeeUsed  float64  `db:"mentor_detail_fee_used" json:"mentor_detail_fee_used"`
+	AcquisitionRights    int64    `db:"acquisition_rights" json:"acquisition_rights"`
+	Notes                *string  `db:"notes" json:"notes"`
 }

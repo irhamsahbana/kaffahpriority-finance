@@ -241,6 +241,7 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 	}
 
 	req.UserId = l.GetUserId()
+	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForX - invalid request")

@@ -705,6 +705,18 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 		NumFmt: 3,
 	})
 
+	academicManagerNameStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:  true,
+			Size:  24,
+			Color: "#000000",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
 	// Headering START
 	f.SetCellValue(sheetName, "A1", "NO")
 	f.SetCellValue(sheetName, "B1", "NAMA")
@@ -718,26 +730,64 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	f.SetCellValue(sheetName, "J1", "FL")
 	f.SetCellValue(sheetName, "K1", "NL")
 	f.SetCellValue(sheetName, "L1", "UJROH REAL")
-	f.SetCellValue(sheetName, "M1", "TOTAL")
-	f.SetCellValue(sheetName, "N1", "KETERANGAN")
-	f.SetCellValue(sheetName, "O1", "KEEP GAJI")
-	f.SetCellValue(sheetName, "P1", "ANGKA")
-	f.SetCellValue(sheetName, "Q1", "PENASEHAT AKADEMIK")
-	f.SetCellValue(sheetName, "R1", "MS 1")
-	f.SetCellValue(sheetName, "S1", "MS 2")
-	f.SetCellValue(sheetName, "T1", "MS 3")
-	f.SetCellValue(sheetName, "U1", "MS 4")
+	f.SetCellValue(sheetName, "M1", "KETERANGAN")
+	f.SetCellValue(sheetName, "N1", "KEEP GAJI")
+	f.SetCellValue(sheetName, "O1", "ANGKA")
+	f.SetCellValue(sheetName, "P1", "PENASEHAT AKADEMIK")
 
-	f.SetCellStyle(sheetName, "A1", "U1", HeaderStyle)
+	f.SetCellStyle(sheetName, "A1", "Q1", HeaderStyle)
 	f.SetColWidth(sheetName, "B", "B", 20)
 	f.SetColWidth(sheetName, "D", "D", 20)
 	f.SetColWidth(sheetName, "E", "E", 20)
 	f.SetColWidth(sheetName, "G", "I", 20)
 	f.SetColWidth(sheetName, "L", "L", 20)
 	f.SetColWidth(sheetName, "N", "O", 20)
-	f.SetColWidth(sheetName, "Q", "Q", 20)
-
+	f.SetColWidth(sheetName, "P", "P", 20)
 	// Headering END
+
+	lastRow := 1
+
+	for _, academicManager := range resp.Items {
+		lastRow++
+		f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), academicManager.Name)
+		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1))
+		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1), academicManagerNameStyle)
+		lastRow++
+
+		for lecturerIndex, lecturer := range academicManager.Items {
+			lastRow++
+			f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), lecturerIndex+1)
+			f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow), lecturer.Name)
+			for templateIndex, template := range lecturer.Items {
+				f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow), templateIndex+1)
+				f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), template.StudentName)
+				f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), template.ProgramName)
+				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), template.MarketerName)
+				if template.Data != nil {
+					data := template.Data
+					f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow), data.ProgramMeetings)
+					f.SetCellValue(sheetName, fmt.Sprintf("G%v", lastRow), data.ProgramFeePerMeeting)
+					f.SetCellValue(sheetName, fmt.Sprintf("H%v", lastRow), data.FullFee)
+					if data.InitialFee != nil {
+						f.SetCellValue(sheetName, fmt.Sprintf("I%v", lastRow), *data.InitialFee)
+					}
+					if data.FL != nil {
+						f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow), *data.FL)
+					}
+					if data.NL != nil {
+						f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), *data.NL)
+					}
+					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), data.RealFee)
+					f.SetCellValue(sheetName, fmt.Sprintf("N%v", lastRow), data.MentorDetailFeeUsed)
+					f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), data.AcquisitionRights)
+				}
+
+				if templateIndex+1 != len(lecturer.Items) { // not the last item in the lecturer.Items
+					lastRow++
+				}
+			}
+		}
+	}
 
 	// timestampe in unix
 	tmstmp := time.Now().Unix()

@@ -3,6 +3,8 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -1060,7 +1062,205 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 	ctx context.Context,
 	req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error) {
-	resp := &entity.GetExportedRegistrationsForWageRecapMonthlyResp{}
+	resp := new(entity.GetExportedRegistrationsForWageRecapMonthlyResp)
 
+	queryAcademicManagers := `
+		SELECT id, name FROM academic_managers
+		WHERE deleted_at IS NULL
+	`
+
+	var academicManagers = make([]entity.WageRecapAcademicManager, 0)
+
+	err := r.db.SelectContext(ctx, &academicManagers, r.db.Rebind(queryAcademicManagers))
+	if err != nil {
+		log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch academic managers")
+		return nil, err
+	}
+
+	for i := range academicManagers {
+		academicManagers[i].Items = make([]entity.WageRecapLecturer, 0)
+
+		query := `
+			SELECT
+				l.id,
+				l.name
+			FROM
+				lecturers l
+			WHERE
+				l.deleted_at IS NULL
+				AND l.academic_manager_id = ?
+		`
+
+		err = r.db.SelectContext(ctx, &academicManagers[i].Items, r.db.Rebind(query), academicManagers[i].Id)
+		if err != nil {
+			log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch lecturers")
+			return nil, err
+		}
+
+		for j := range academicManagers[i].Items {
+			academicManagers[i].Items[j].Items = make([]entity.WageRecapRegistration, 0)
+
+			query = `
+				SELECT
+					prt.id,
+					prt.student_id,
+					prt.program_id,
+					prt.lecturer_id,
+					s.name AS student_name,
+					p.name AS program_name,
+					m.name AS marketer_name,
+
+					CASE
+						WHEN prt.foreign_learning_fee IS NOT NULL THEN TRUE
+						ELSE FALSE
+					END AS is_fl,
+					CASE
+						WHEN prt.night_learning_fee IS NOT NULL THEN TRUE
+						ELSE FALSE
+					END AS is_nl,
+					prt.is_itp
+				FROM
+					program_registration_templates prt
+				JOIN
+					students s ON prt.student_id = s.id
+				JOIN
+					programs p ON prt.program_id = p.id
+				JOIN
+					marketers m ON prt.marketer_id = m.id
+				WHERE
+					prt.deleted_at IS NULL
+					AND prt.lecturer_id = ?
+				ORDER BY
+					prt.id ASC
+			`
+
+			var registrations = make([]entity.WageRecapRegistration, 0)
+			err = r.db.SelectContext(ctx, &registrations, r.db.Rebind(query), academicManagers[i].Items[j].Id)
+			if err != nil {
+				log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch registrations")
+				return nil, err
+			}
+
+			academicManagers[i].Items[j].Items = registrations
+
+			for k := range academicManagers[i].Items[j].Items {
+				if academicManagers[i].Items[j].Items[k].IsFL {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + FL"
+				}
+				if academicManagers[i].Items[j].Items[k].IsNL {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + NL"
+				}
+				if academicManagers[i].Items[j].Items[k].IsITP {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + ITP"
+				}
+
+				queryAddStudents := `
+					SELECT
+						adds.student_id,
+						CASE
+							WHEN s.id IS NULL THEN adds.name
+							ELSE s.name
+						END AS name
+					FROM
+						prt_additional_students adds
+					LEFT JOIN
+						students s
+						ON adds.student_id = s.id
+					WHERE
+						adds.prt_id = ?
+				`
+
+				var addStudents = make([]entity.AddStudent, 0)
+				err = r.db.SelectContext(ctx, &addStudents, r.db.Rebind(queryAddStudents), academicManagers[i].Items[j].Items[k].Id)
+				if err != nil {
+					log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch additional students")
+					return nil, err
+				}
+				for _, addStudent := range addStudents {
+					academicManagers[i].Items[j].Items[k].StudentName += ", " + *addStudent.Name
+				}
+
+				query := `
+					SELECT
+						pr.program_meetings, -- jumlah
+						pr.program_fee_per_meeting, -- hitungan
+						pr.full_fee, -- ujroh full
+						pr.is_full_fee,
+						COALESCE(pr.initial_fee, (
+							CASE
+								WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
+								WHEN pr.is_full_fee = TRUE THEN pr.full_fee
+								ELSE pr.program_fee_per_meeting * pr.program_meetings
+							END
+							)
+						) AS initial_fee, -- ujroh awal
+						pr.foreign_learning_fee, -- fl
+						pr.night_learning_fee, -- nl
+						(
+							COALESCE(pr.night_learning_fee, 0) +
+							COALESCE(pr.foreign_learning_fee, 0) +
+							COALESCE(pr.initial_fee,
+								CASE
+									WHEN pr.is_full_fee THEN pr.full_fee
+									ELSE pr.program_fee_per_meeting * pr.program_meetings
+								END
+							)
+						) AS real_fee, -- ujroh real
+						CASE
+							WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
+							ELSE 0
+						END AS mentor_detail_fee_used, -- keep gaji
+						CASE
+							WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+							ELSE pr.program_acquisition_rights
+						END AS acquisition_rights, -- angka
+						pr.notes_for_lecturer_wage AS notes
+					FROM
+						program_registrations pr
+					WHERE
+						pr.deleted_at IS NULL
+						AND pr.is_paid = TRUE
+						AND pr.lecturer_id = ?
+						AND pr.student_id = ?
+						AND pr.program_id = ?
+						AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = (
+							TO_CHAR(
+								(((? || '-01')::timestamptz) AT TIME ZONE 'UTC')
+								, 'YYYY-MM'
+							)
+						)
+					ORDER BY
+						pr.id DESC
+					LIMIT 1
+				`
+
+				args := make([]any, 0, 5)
+				args = append(args,
+					academicManagers[i].Items[j].Items[k].LecturerId,
+					academicManagers[i].Items[j].Items[k].StudentId,
+					academicManagers[i].Items[j].Items[k].ProgramId,
+					req.Timezone,
+					req.Month,
+				)
+
+				var (
+					registration entity.WageRecapRegistrationData
+				)
+				err = r.db.GetContext(ctx, &registration, r.db.Rebind(query), args...)
+				if err != nil && !errors.Is(err, sql.ErrNoRows) {
+
+					log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch registration details")
+					return nil, err
+				}
+
+				if !errors.Is(err, sql.ErrNoRows) {
+					academicManagers[i].Items[j].Items[k].Data = &registration
+				}
+			}
+		}
+
+	}
+
+	resp.Items = academicManagers
 	return resp, nil
 }
