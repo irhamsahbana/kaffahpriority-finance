@@ -750,8 +750,8 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	for _, academicManager := range resp.Items {
 		lastRow++
 		f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), academicManager.Name)
-		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1))
-		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1), academicManagerNameStyle)
+		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("P%v", lastRow+1))
+		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("P%v", lastRow+1), academicManagerNameStyle)
 		lastRow++
 
 		for lecturerIndex, lecturer := range academicManager.Items {
