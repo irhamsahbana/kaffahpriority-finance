@@ -109,8 +109,8 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 
 	query += `
 		ORDER BY
-			pr.lecturer_id ASC,
-			pr.student_id ASC,
+			am.id ASC,
+			l.id ASC,
 			pr.template_id ASC
 		LIMIT ? OFFSET ?
 	`
