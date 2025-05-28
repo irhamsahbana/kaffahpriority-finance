@@ -111,7 +111,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		ORDER BY
 			pr.lecturer_id ASC,
 			pr.student_id ASC,
-			pr.program_name ASC
+			pr.template_id ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
