@@ -735,15 +735,22 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	f.SetCellValue(sheetName, "O1", "ANGKA")
 	f.SetCellValue(sheetName, "P1", "PENASEHAT AKADEMIK")
 
-	f.SetCellStyle(sheetName, "A1", "Q1", HeaderStyle)
+	f.SetCellStyle(sheetName, "A1", "P1", HeaderStyle)
 	f.SetColWidth(sheetName, "B", "B", 20)
 	f.SetColWidth(sheetName, "D", "D", 20)
 	f.SetColWidth(sheetName, "E", "E", 20)
 	f.SetColWidth(sheetName, "G", "I", 20)
 	f.SetColWidth(sheetName, "L", "L", 20)
+	f.SetColWidth(sheetName, "M", "M", 20)
 	f.SetColWidth(sheetName, "N", "O", 20)
 	f.SetColWidth(sheetName, "P", "P", 20)
 	// Headering END
+
+	f.SetPanes(sheetName, &excelize.Panes{
+		Freeze: true,
+		XSplit: 5,
+		YSplit: 1,
+	})
 
 	lastRow := 1
 
@@ -784,6 +791,10 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 
 				if templateIndex+1 != len(lecturer.Items) { // not the last item in the lecturer.Items
 					lastRow++
+				}
+
+				if templateIndex == len(lecturer.Items)-1 { // last item in the lecturer.Items
+					lastRow++ // add an extra row for the next lecturer
 				}
 			}
 		}
