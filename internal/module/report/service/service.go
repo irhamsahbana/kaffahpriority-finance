@@ -109,3 +109,7 @@ func (s *reportService) GetAcquisitionRightsAggregate(ctx context.Context, req *
 func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
 	return s.repo.GenerateRegistrationReports(ctx, req)
 }
+
+func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
+	return s.repo.RegistrationMultiAllocation(ctx, req)
+}

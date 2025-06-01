@@ -61,6 +61,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Get("/acquisition-rights-aggregate", m.AuthBearer, h.getAcquisitionRightsAggregate)
 
 	router.Post("/generate-registration-reports", m.AuthBearer, h.generateRegistrationReports)
+	router.Post("/multi-allocation-registrations", m.AuthBearer, h.registrationMultiAllocation)
 
 	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
 }
@@ -594,6 +595,36 @@ func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 	}
 
 	err := h.service.GenerateRegistrationReports(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) registrationMultiAllocation(c *fiber.Ctx) error {
+	var (
+		req = new(entity.RegistrationMuliAllocationReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::registrationMultiAllocation - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::registrationMultiAllocation - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.RegistrationMultiAllocation(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

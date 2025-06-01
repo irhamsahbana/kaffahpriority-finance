@@ -40,6 +40,7 @@ type ReportRepository interface {
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 
 	GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error
+	RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error
 }
 
 type ReportService interface {
@@ -77,4 +78,5 @@ type ReportService interface {
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 
 	GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error
+	RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error
 }

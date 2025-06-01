@@ -10,9 +10,11 @@ import (
 )
 
 func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
+	fnName := "repo::GenerateRegistrationReport"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::GenerateRegistrationReport - failed to begin transaction")
+		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+		return err
 	}
 	defer tx.Rollback()
 
@@ -33,7 +35,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 	// query all templates that are not deleted and have a marketer_id and lecturer_id
 	if err := tx.SelectContext(ctx, &templateIds, queryTemplates); err != nil {
-		log.Error().Err(err).Msg("repo::GenerateRegistrationReport - failed to select templates")
+		log.Error().Err(err).Msgf("%s - failed to select templates", fnName)
 		return err
 	}
 
@@ -48,7 +50,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
 			templateId).Scan(&lecturerId, &studentId, &programId)
 		if err != nil {
-			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to get template data")
+			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to get template data", fnName)
 			return err
 		}
 
@@ -60,14 +62,9 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// if registration already exists, skip this template
 		if err == nil {
-			log.Info().Str("templateId", templateId).
-				Str("programName", programName).
-				Str("lecturerName", lecturerName).
-				Str("studentName", studentName).
-				Msg("repo::GenerateRegistrationReport - registration already exists, skipping")
 			continue
 		} else if err != sql.ErrNoRows {
-			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to check if registration exists")
+			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to check if registration exists", fnName)
 			return err
 		}
 
@@ -86,14 +83,14 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// insert into program_registrations
 		if _, err := tx.ExecContext(ctx, queryInsertRegistration, args...); err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to insert program registration")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert program registration", fnName)
 			return err
 		}
 
 		// fetch additional students from prt_additional_students
 		err = tx.SelectContext(ctx, &students, queryStudents, templateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GenerateRegistrationReport - failed to select students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to select additional students", fnName)
 			return err
 		}
 
@@ -103,18 +100,16 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 				ulid.Make().String(), programRegistrationId, student.StudentId, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msg("repo::GenerateRegistrationReport - failed to insert additional students")
+				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error().Err(err).Msg("repo::GenerateRegistrationReport - failed to commit transaction")
+		log.Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
-
-	log.Debug().Msg("repo::GenerateRegistrationReport - successfully generated registration reports")
 
 	return nil
 }
