@@ -18,10 +18,14 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 		return nil, err
 	}
 
-	f := excelize.NewFile()
-	sheetName := "Sheet1"
+	var (
+		fnName    = "service::GetExportedRegistrations"
+		sheetName = "Sheet1"
+	)
 
-	headerStyle, err := f.NewStyle(&excelize.Style{
+	f := excelize.NewFile()
+
+	headerStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Size:  12,
@@ -59,12 +63,8 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 			Pattern: 1,
 		},
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating style")
-		return nil, err
-	}
 
-	penyetoranStyle, err := f.NewStyle(&excelize.Style{
+	penyetoranStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Size:  12,
@@ -75,18 +75,10 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 			Vertical:   "center",
 		},
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating style")
-		return nil, err
-	}
 
-	numberFormatStyle, err := f.NewStyle(&excelize.Style{
+	numberFormatStyle, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 3,
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating number format")
-		return nil, err
-	}
 
 	f.NewSheet(sheetName)
 
@@ -155,7 +147,7 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 
 		// save the file
 		if err := f.SaveAs(filepath); err != nil {
-			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+			log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 			return nil, err
 		}
 
@@ -172,7 +164,7 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 		// item.PaidAt is still in string that came from sql without modification so we need convert to time.Time
 		paidAt, err := time.Parse("2006-01-02T15:04:05Z", item.PaidAt)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error parsing date")
+			log.Error().Err(err).Any("req", req).Msgf("%s - error parsing date", fnName)
 			return nil, err
 		}
 
@@ -258,8 +250,7 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 
 	// save the file
 	if err := f.SaveAs(filepath); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
-		log.Debug().Any("lastRow", lastRow).Msg("service::GetExportedRegistrations - last row")
+		log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 		return nil, err
 	}
 
@@ -277,9 +268,13 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	}
 
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
 
-	HeaderStyle, err := f.NewStyle(&excelize.Style{
+	var (
+		fnName    = "service::GetExportedRegistrationsForCFO2Monthly"
+		sheetName = "Sheet1"
+	)
+
+	HeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Size:  12,
@@ -318,30 +313,18 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		},
 		NumFmt: 3,
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating style")
-		return nil, err
-	}
 
-	numberFormatStyle, err := f.NewStyle(&excelize.Style{
+	numberFormatStyle, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 3,
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating number format")
-		return nil, err
-	}
 
-	unusedStyle, err := f.NewStyle(&excelize.Style{
+	unusedStyle, _ := f.NewStyle(&excelize.Style{
 		Fill: excelize.Fill{
 			Type:    "pattern",
 			Color:   []string{"#D3D3D3"},
 			Pattern: 1,
 		},
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error creating unused style")
-		return nil, err
-	}
 
 	timeStart, _ := time.Parse("2006-01-02", req.PaidAtFrom)
 	timeEnd, _ := time.Parse("2006-01-02", req.PaidAtTo)
@@ -393,7 +376,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		filepath := "./" + filename
 
 		if err := f.SaveAs(filepath); err != nil {
-			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+			log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 			return nil, err
 		}
 
@@ -410,7 +393,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		// item.PaidAt is still in string that came from sql without modification so we need convert to time.Time
 		paidAt, err := time.Parse("2006-01-02T15:04:05Z", item.PaidAt)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error parsing date")
+			log.Error().Err(err).Any("req", req).Msgf("%s - error parsing date", fnName)
 			return nil, err
 		}
 
@@ -500,7 +483,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 
 	// save the file
 	if err := f.SaveAs(filepath); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+		log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 		return nil, err
 	}
 
@@ -519,7 +502,11 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 	}
 
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
+
+	var (
+		fnName    = "service::GetExportedRegistrationsForCFO2Yearly"
+		sheetName = "Sheet1"
+	)
 
 	borderStyle := []excelize.Border{
 		{
@@ -544,7 +531,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 		},
 	}
 
-	HeaderStyle, err := f.NewStyle(&excelize.Style{
+	HeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Size:  12,
@@ -562,12 +549,8 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 		},
 		NumFmt: 3,
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForCFO2Yearly - error creating style")
-		return nil, err
-	}
 
-	bodyStyle, err := f.NewStyle(&excelize.Style{
+	bodyStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Size: 12,
 		},
@@ -576,10 +559,6 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 		},
 		Border: borderStyle,
 	})
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForCFO2Yearly - error creating body style")
-		return nil, err
-	}
 
 	// Headering START
 	f.SetCellValue(sheetName, "A1", "LAPORAN KEUANGAN AKADEMIK "+req.PaidAtYear)
@@ -641,7 +620,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 
 	// save the file
 	if err := f.SaveAs(filepath); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrations - error saving file")
+		log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 		return nil, err
 	}
 
@@ -661,7 +640,11 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	}
 
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
+
+	var (
+		fnName    = "service::GetExportedRegistrationsForWageRecapMonthly"
+		sheetName = "Sheet1"
+	)
 
 	borderStyle := []excelize.Border{
 		{
@@ -807,7 +790,7 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	filepath := "./" + filename
 
 	if err := f.SaveAs(filepath); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("service::GetExportedRegistrationsForX - error saving file")
+		log.Error().Err(err).Any("req", req).Msgf("%s - error saving file", fnName)
 		return nil, err
 	}
 
