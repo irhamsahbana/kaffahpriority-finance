@@ -11,22 +11,23 @@ import (
 )
 
 func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error {
+	fnName := "repo::CreateRegistrations"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::CreateRegistrations - failed to begin transaction")
+		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Any("req", req).Msg("repo::CreateRegistrations - failed to rollback transaction")
+				log.Error().Err(errRB).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Any("req", req).Msg("repo::CreateRegistrations - failed to commit transaction")
+			log.Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -190,12 +191,12 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		var exist bool
 		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to check data")
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to check data", fnName)
 			return err
 		}
 
 		if exist {
-			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - data already exist")
+			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - data already exist", fnName)
 			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateId + ` sudah dibuat di bulan ini`)
 			return err
 		}
@@ -219,11 +220,11 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		var isTemplateValid bool
 		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to check template")
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to check template", fnName)
 			return err
 		}
 		if !isTemplateValid {
-			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - template is not valid")
+			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - template is not valid", fnName)
 			err = errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
 			return err
 		}
@@ -234,14 +235,14 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			// item.IsFirstRegistration,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert data")
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to insert data", fnName)
 			return err
 		}
 
 		// fetch additional students from prt_additional_students
 		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to fetch additional students")
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to fetch additional students", fnName)
 			return err
 		}
 
@@ -251,7 +252,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 				ulid.Make().String(), prId, student.StudentId, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msg("repo::CreateRegistrations - failed to insert additional students")
+				log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}
@@ -262,22 +263,23 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 }
 
 func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error {
+	fnName := "repo::CopyRegistrations"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::CopyRegistrations - failed to begin transaction")
+		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Any("req", req).Msg("repo::CopyRegistrations - failed to rollback transaction")
+				log.Error().Err(errRB).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Any("req", req).Msg("repo::CopyRegistrations - failed to commit transaction")
+			log.Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -407,11 +409,11 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			item.Timezone, item.AllocatedAt, item.Timezone,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to check data")
+			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to check data", fnName)
 		}
 
 		if exist {
-			log.Warn().Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - data already exist")
+			log.Warn().Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - data already exist", fnName)
 			err = errmsg.NewCustomErrors(403).SetMessage(fmt.Sprintf(`Data yang sama (program, pengajar dan murid) sudah dialokasikan pada %s (timezone %s)`, item.AllocatedAt, item.Timezone))
 			return err
 		}
@@ -423,13 +425,13 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			item.RegisId,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to insert data")
+			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to insert data", fnName)
 			return err
 		}
 
 		err = tx.SelectContext(ctx, &students, queryStudents, item.RegisId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to fetch additional students")
+			log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to fetch additional students", fnName)
 			return err
 		}
 
@@ -438,7 +440,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 				ulid.Make().String(), prId, student.StudentId, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msg("repo::CopyRegistrations - failed to insert additional students")
+				log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}

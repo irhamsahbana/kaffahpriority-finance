@@ -11,7 +11,8 @@ import (
 
 func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error) {
 	var (
-		resp = new(entity.GetTemplateResp)
+		fnName = "repo::GetTemplate"
+		resp   = new(entity.GetTemplateResp)
 	)
 	resp.Students = make([]entity.AddStudent, 0)
 
@@ -72,10 +73,10 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetTemplate - data not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - data not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Template tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplate - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -97,7 +98,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 
 	err = r.db.SelectContext(ctx, &resp.Students, r.db.Rebind(query), req.Id)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplate - failed to fetch additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 

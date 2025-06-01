@@ -12,6 +12,7 @@ import (
 )
 
 func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
+	fnName := "repo::GetRegistrations"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.RegisItem
@@ -207,7 +208,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -246,14 +247,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 		query, args, err := sqlx.In(query, registrationIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to build query")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &daosData, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrations - failed to fetch additional students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 
@@ -271,6 +272,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.GetExportedRegistrationsReq) (*entity.GetExportedRegistrationsResp, error) {
 	var (
+		fnName          = "repo::GetExportedRegistrations"
 		resp            = new(entity.GetExportedRegistrationsResp)
 		args            = make([]any, 0, 3)
 		registrationIds = make([]string, 0)
@@ -440,7 +442,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrations - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -476,7 +478,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	respSummary, err := r.GetSummaries(ctx, reqSummary)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrations - failed to get summaries")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
 		return nil, err
 	}
 
@@ -508,14 +510,14 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	query, args, err = sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrations - failed to build query")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &daosData, query, args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrations - failed to fetch additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 
@@ -535,6 +537,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 	ctx context.Context, req *entity.GetExportedRegistrationsForCFO2MonthlyReq,
 ) (*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
 	var (
+		fnName          = "repo::GetExportedRegistrationsForCFO2Monthly"
 		resp            = new(entity.GetExportedRegistrationsForCFO2MonthlyResp)
 		args            = make([]any, 0, 3)
 		registrationIds = make([]string, 0)
@@ -643,7 +646,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2Monthly - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -705,14 +708,14 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(
 
 	query, args, err = sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2Monthly - failed to build query")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &daosData, query, args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2Monthly - failed to fetch additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 
@@ -736,6 +739,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
 	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
 	var (
+		fnName          = "repo::GetExportedRegistrationsForCFO2MonthlyUnused"
 		resp            = new(entity.GetExportedRegistrationsForCFO2MonthlyResp)
 		registrationIds = make([]string, 0)
 	)
@@ -837,7 +841,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2MonthlyUnused - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -892,14 +896,14 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	query, args, err := sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2MonthlyUnused - failed to build query")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &daosData, query, args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2MonthlyUnused - failed to fetch additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 
@@ -924,8 +928,9 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 		Notes       *string `db:"notes"`
 	}
 	var (
-		resp = new(entity.GetExportedRegistrationsForCFO2YearlyResp)
-		data = make([]dao, 0)
+		fnName = "repo::GetExportedRegistrationsForCFO2Yearly"
+		resp   = new(entity.GetExportedRegistrationsForCFO2YearlyResp)
+		data   = make([]dao, 0)
 	)
 	resp.Items = make([]entity.RegistrationYearlyRow, 0)
 
@@ -989,7 +994,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 		paidAtTo,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetExportedRegistrationsForCFO2Yearly - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -1062,7 +1067,10 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 	ctx context.Context,
 	req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error) {
-	resp := new(entity.GetExportedRegistrationsForWageRecapMonthlyResp)
+	var (
+		fnName = "repo::GetExportedRegistrationsForWageRecapMonthly"
+		resp   = new(entity.GetExportedRegistrationsForWageRecapMonthlyResp)
+	)
 
 	queryAcademicManagers := `
 		SELECT id, name FROM academic_managers
@@ -1073,7 +1081,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 	err := r.db.SelectContext(ctx, &academicManagers, r.db.Rebind(queryAcademicManagers))
 	if err != nil {
-		log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch academic managers")
+		log.Error().Err(err).Msgf("%s - failed to fetch academic managers", fnName)
 		return nil, err
 	}
 
@@ -1093,7 +1101,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 		err = r.db.SelectContext(ctx, &academicManagers[i].Items, r.db.Rebind(query), academicManagers[i].Id)
 		if err != nil {
-			log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch lecturers")
+			log.Error().Err(err).Msgf("%s - failed to fetch lecturers", fnName)
 			return nil, err
 		}
 
@@ -1137,7 +1145,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 			var registrations = make([]entity.WageRecapRegistration, 0)
 			err = r.db.SelectContext(ctx, &registrations, r.db.Rebind(query), academicManagers[i].Items[j].Id)
 			if err != nil {
-				log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch registrations")
+				log.Error().Err(err).Msgf("%s - failed to fetch registrations", fnName)
 				return nil, err
 			}
 
@@ -1173,7 +1181,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				var addStudents = make([]entity.AddStudent, 0)
 				err = r.db.SelectContext(ctx, &addStudents, r.db.Rebind(queryAddStudents), academicManagers[i].Items[j].Items[k].Id)
 				if err != nil {
-					log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch additional students")
+					log.Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
 					return nil, err
 				}
 				for _, addStudent := range addStudents {
@@ -1249,7 +1257,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				err = r.db.GetContext(ctx, &registration, r.db.Rebind(query), args...)
 				if err != nil && !errors.Is(err, sql.ErrNoRows) {
 
-					log.Error().Err(err).Msg("repo::GetExportedRegistrationsForWageRecapMonthly - failed to fetch registration details")
+					log.Error().Err(err).Msgf("%s - failed to fetch registration details", fnName)
 					return nil, err
 				}
 

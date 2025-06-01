@@ -11,14 +11,14 @@ import (
 )
 
 func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
+	fnName := "repo::RegistrationMultiAllocation"
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("repo::RegistrationMultiAllocation - failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback()
-
-	fnName := "repo::RegistrationMultiAllocation"
 
 	// check if template exists
 	query := `SELECT id, program_id, student_id, lecturer_id FROM program_registration_templates WHERE id = $1 AND deleted_at IS NULL`

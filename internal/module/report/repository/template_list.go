@@ -14,6 +14,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		entity.TemplateItem
 	}
 	var (
+		fnName      = "repo::GetTemplates"
 		data        = make([]dao, 0, req.Paginate)
 		templateIds = make([]string, 0)
 		resp        = new(entity.GetTemplatesResp)
@@ -140,7 +141,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -179,14 +180,14 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 		query, args, err := sqlx.In(query, templateIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to build query")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &daosData, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetTemplates - failed to fetch additional students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 

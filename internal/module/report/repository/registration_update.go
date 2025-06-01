@@ -12,22 +12,23 @@ import (
 )
 
 func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
+	fnName := "repo::UpdateRegistration"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::UpdateRegistration - failed to begin transaction")
+		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Msg("repo::UpdateRegistration - failed to rollback transaction")
+				log.Error().Err(errRB).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Msg("repo::UpdateRegistration - failed to commit transaction")
+			log.Error().Err(errCommit).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -66,7 +67,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.Id,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to update data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return nil, err
 	}
 
@@ -75,7 +76,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	`
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to delete additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
 	}
 
@@ -90,7 +91,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			ulid.Make().String(), req.Id, item.StudentId, item.Name,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to insert additional students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
 			return nil, err
 		}
 	}
@@ -113,10 +114,10 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	err = tx.GetContext(ctx, &reg, tx.Rebind(query), req.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::UpdateRegistration - registration not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("template tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to get registration data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get registration data", fnName)
 		return nil, err
 	}
 
@@ -154,7 +155,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		reg.TemplateId,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to update template data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update template data", fnName)
 		return nil, err
 	}
 
@@ -163,7 +164,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	`
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), reg.TemplateId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to delete additional students from template")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students from template", fnName)
 		return nil, err
 	}
 
@@ -178,7 +179,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			ulid.Make().String(), reg.TemplateId, item.StudentId, item.Name,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistration - failed to insert additional students into template")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
 			return nil, err
 		}
 	}

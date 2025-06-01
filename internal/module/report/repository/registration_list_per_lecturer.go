@@ -10,6 +10,7 @@ import (
 )
 
 func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error) {
+	fnName := "repo::GetRegistrationsPerLecturer"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.RegistrationListPerLecturer
@@ -94,7 +95,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -212,7 +213,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	err = r.db.SelectContext(ctx, &dataPerMonth, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data per month", fnName)
 		return nil, err
 	}
 
@@ -328,13 +329,13 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	query, args, err = sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
 		return nil, err
 	}
 
 	err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistrationListPerLecturer - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 

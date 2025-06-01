@@ -32,6 +32,7 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 	}
 
 	var (
+		fnName       = "repo::GetLecturerPrograms"
 		resp         = new(entity.GetLecturerProgramsResp)
 		data         = make([]daoLecturer, 0, req.Paginate)
 		dataTemplate = make([]entity.LecturerTemplate, req.Paginate)
@@ -72,7 +73,7 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturerPrograms - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -120,14 +121,14 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 
 		query, args, err := sqlx.In(query, lecturerIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetLecturerPrograms - failed to build query")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &dataTemplate, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::GetLecturerPrograms - failed to fetch data")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 			return nil, err
 		}
 
@@ -146,9 +147,11 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 }
 
 func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
+	fnName := "repo::DistributeHRFee"
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to start transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to start transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -159,10 +162,10 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 	err = tx.GetContext(ctx, &hrFee, r.db.Rebind(queryFee), req.RegistrationId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msg("repo::DistributeHRFee - HR fee not found")
+			log.Warn().Any("req", req).Msgf("%s - HR fee not found", fnName)
 			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to fetch HR fee")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch HR fee", fnName)
 		return err
 	}
 
@@ -170,7 +173,7 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 	hrFeeForHR := decimal.NewFromFloat(req.HRFeeForHR)
 
 	if hrFeeForMentor.Add(hrFeeForHR).GreaterThan(hrFee) || hrFeeForMentor.Add(hrFeeForHR).LessThan(hrFee) {
-		log.Warn().Any("req", req).Msg("repo::DistributeHRFee - HR fee is greater than total HR fee")
+		log.Warn().Any("req", req).Msgf("%s - HR fee is greater than total HR fee", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Distribusi Pengeluaran SDM tidak boleh melebihi atau kurang dari total biaya SDM")
 	}
 
@@ -187,13 +190,13 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 
 	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.HRFeeForMentor, req.HRFeeForHR, req.RegistrationId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DjsonistributeHRFee - failed to update data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DistributeHRFee - failed to commit transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

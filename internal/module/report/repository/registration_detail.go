@@ -11,7 +11,8 @@ import (
 
 func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error) {
 	var (
-		resp = new(entity.GetRegistrationResp)
+		fnName = "repo::GetRegistration"
+		resp   = new(entity.GetRegistrationResp)
 	)
 	resp.Students = make([]entity.AddStudent, 0)
 
@@ -87,10 +88,10 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetRegistration - data not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Registrasi tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistration - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -112,7 +113,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 
 	err = r.db.SelectContext(ctx, &resp.Students, r.db.Rebind(query), req.Id)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRegistration - failed to fetch additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 

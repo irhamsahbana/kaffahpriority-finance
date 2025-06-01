@@ -11,9 +11,11 @@ import (
 )
 
 func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
+	fnName := "repo::UseHRfeeForLecturer"
+
 	Tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UseHRfeeForLLecturer - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer Tx.Rollback()
@@ -31,30 +33,30 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - mentor detail fee not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - mentor detail fee not found", fnName)
 			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - failed to get mentor detail fee")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get mentor detail fee", fnName)
 		return err
 	}
 
 	if req.UsedAmount == nil && req.Notes == nil {
-		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount and notes are nil")
+		log.Warn().Any("req", req).Msgf("%s - used amount and notes are nil", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan atau catatan harus diisi")
 	}
 
 	if req.UsedAmount != nil && req.Notes != nil {
-		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount and notes are not nil")
+		log.Warn().Any("req", req).Msgf("%s - used amount and notes are not nil", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan dan catatan tidak boleh diisi bersamaan")
 	}
 
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(mentorDetailFee) {
-		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount greater than mentor detail fee")
+		log.Warn().Any("req", req).Msgf("%s - used amount greater than mentor detail fee", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan melebihi jumlah yang tersedia")
 	}
 
 	if req.UsedAmount != nil && req.UsedAmount.LessThanOrEqual(decimal.Zero) {
-		log.Warn().Any("req", req).Msg("repo::UseHRfeeForLecturer - used amount less than or equal to 0")
+		log.Warn().Any("req", req).Msgf("%s - used amount less than or equal to 0", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan harus lebih dari 0")
 	}
 
@@ -71,12 +73,12 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, req.Notes, req.RegistrationId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - failed to update mentor detail fee used")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update mentor detail fee used", fnName)
 		return err
 	}
 
 	if err = Tx.Commit(); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UseHRfeeForLecturer - failed to commit transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

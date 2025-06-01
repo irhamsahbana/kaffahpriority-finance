@@ -11,22 +11,23 @@ import (
 )
 
 func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
+	fnName := "repo::UpdateTemplate"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::UpdateTemplate - failed to begin transaction")
+		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Msg("repo::UpdateTemplate - failed to rollback transaction")
+				log.Error().Err(errRB).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Msg("repo::UpdateTemplate - failed to commit transaction")
+			log.Error().Err(errCommit).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -52,12 +53,12 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId, req.Id,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to check combination")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
 		return nil, err
 	}
 
 	if isCombinationExist {
-		log.Warn().Any("req", req).Msg("repo::UpdateTemplate - combination already exist")
+		log.Warn().Any("req", req).Msgf("%s - combination already exist", fnName)
 		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
 	}
 
@@ -96,7 +97,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		req.Id,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to update data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return nil, err
 	}
 
@@ -105,11 +106,11 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 	`
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to delete additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
 	}
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to delete additional students")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
 	}
 
@@ -124,7 +125,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			ulid.Make().String(), req.Id, item.StudentId, item.Name,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateTemplate - failed to insert additional students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
 			return nil, err
 		}
 	}

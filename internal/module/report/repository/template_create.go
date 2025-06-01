@@ -11,22 +11,24 @@ import (
 )
 
 func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
+	fnName := "repo::CreateTemplate"
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Any("req", req).Msg("repo::CreateTemplate - failed to rollback transaction")
+				log.Error().Err(errRB).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Any("req", req).Msg("repo::CreateTemplate - failed to commit transaction")
+			log.Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -54,12 +56,12 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to check combination")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
 		return nil, err
 	}
 
 	if isCombinationExist {
-		log.Warn().Any("req", req).Msg("repo::CreateTemplate - combination already exist")
+		log.Warn().Any("req", req).Msgf("%s - combination already exist", fnName)
 		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
 	}
 
@@ -133,7 +135,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.ClosingFeeForReward,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to insert data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert data", fnName)
 		return nil, err
 	}
 
@@ -148,7 +150,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			ulid.Make().String(), Id, item.StudentId, item.Name,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::CreateTemplate - failed to insert additional students")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
 			return nil, err
 		}
 	}
