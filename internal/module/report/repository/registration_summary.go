@@ -74,6 +74,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 	query := `
 		SELECT
 			COALESCE(SUM(COALESCE(pr.mentor_detail_fee, 0) + COALESCE(pr.hr_detail_fee, 0)), 0) AS total_debit,
+			COALESCE(SUM(pr.overpayment_fee), 0) AS total_overpayment,
 			0 AS total_credit
 			-- COALESCE(SUM(pr.credit), 0) AS total_credit
 		FROM
@@ -91,6 +92,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 
 	err := r.db.QueryRowContext(ctx, r.db.Rebind(query), args...).Scan(
 		&resp.TotalDebit,
+		&resp.TotalOverpayment,
 		&resp.TotalCredit,
 	)
 	if err != nil {
@@ -99,7 +101,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 	}
 	resp.PaidAtFrom = req.PaidAtFrom
 	resp.PaidAtTo = req.PaidAtTo
-	resp.TotalBalance = resp.TotalDebit.Sub(resp.TotalCredit)
+	resp.TotalBalance = resp.TotalDebit.Add(resp.TotalOverpayment).Sub(resp.TotalCredit)
 
 	return resp, nil
 }

@@ -73,7 +73,8 @@ type GetSummariesForCFO2Resp struct {
 	PaidAtFrom string `json:"paid_at_from"`
 	PaidAtTo   string `json:"paid_at_to"`
 
-	TotalDebit   decimal.Decimal `json:"total_debit"`
-	TotalCredit  decimal.Decimal `json:"total_credit"`
-	TotalBalance decimal.Decimal `json:"total_balance"`
+	TotalDebit       decimal.Decimal `json:"total_debit"`
+	TotalOverpayment decimal.Decimal `json:"total_overpayment"`
+	TotalCredit      decimal.Decimal `json:"total_credit"`
+	TotalBalance     decimal.Decimal `json:"total_balance"`
 }
