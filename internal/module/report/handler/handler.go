@@ -31,40 +31,44 @@ func NewReportHandler() *reportHandler {
 }
 
 func (h *reportHandler) Register(router fiber.Router) {
-	router.Post("/templates", m.AuthBearer, h.createTemplate)
-	router.Get("/templates", m.AuthBearer, h.getTemplates)
-	router.Put("/templates/:id", m.AuthBearer, h.updateTemplate)
-	router.Get("/templates/:id", m.AuthBearer, h.getTemplate)
-	router.Delete("/templates/:id", m.AuthBearer, h.deleteTemplate)
+	protected := router.Group("/", m.AuthBearer)
 
-	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
-	router.Post("/copy-registrations", m.AuthBearer, h.copyRegistrations)
-	router.Get("/registration-summaries", m.AuthBearer, h.getSummaries)
-	router.Get("/registration-summaries-for-cfo2", m.AuthBearer, h.getSummariesForCFO2)
-	router.Get("/registrations", m.AuthBearer, h.getRegistrations)
-	router.Get("/exported-registrations", m.AuthBearer, h.getExportedRegistrations)
-	router.Get("/exported-registrations-for-cfo2-monthly", m.AuthBearer, h.getExportedRegistrationsForCFO2Monthly)
-	router.Get("/exported-registrations-for-cfo2-yearly", m.AuthBearer, h.getExportedRegistrationsForCFO2Yearly)
-	router.Get("/exported-registrations-for-wage-recap-monthly", m.AuthBearer, h.getExportedRegistrationsForWageRecapMonthly)
+	protected.Post("/templates", h.createTemplate)
+	protected.Get("/templates", h.getTemplates)
+	protected.Put("/templates/:id", h.updateTemplate)
+	protected.Get("/templates/:id", h.getTemplate)
+	protected.Delete("/templates/:id", h.deleteTemplate)
 
-	router.Put("/registrations/:id", m.AuthBearer, h.updateRegistration)
-	router.Get("/registrations/:id", m.AuthBearer, h.getRegistration)
-	router.Delete("/registrations/:id", m.AuthBearer, h.deleteRegistration)
-	router.Put("/registrations/:id/hr-fee-distributions", m.AuthBearer, h.hrDistributions)
-	router.Put("/registrations/:id/lecturer-distributions", m.AuthBearer, h.lecturerDistributions)
-	router.Put("/registrations/:id/lecturers", m.AuthBearer, h.updateRegistrationLecturer)
-	router.Put("/registrations/:id/is-paid", m.AuthBearer, h.updateRegistrationIsPaid)
+	protected.Post("/registrations", h.createRegistrations)
+	protected.Post("/copy-registrations", h.copyRegistrations)
+	protected.Get("/registration-summaries", h.getSummaries)
+	protected.Get("/registration-summaries-for-cfo2", h.getSummariesForCFO2)
+	protected.Patch("/registration-paid-at-attributes", h.updateRegistrationsPaidAt)
 
-	router.Get("/registration-per-lecturers", m.AuthBearer, h.getRegistrationListPerLecturer)
-	router.Patch("/lecturers-wages/:id", m.AuthBearer, h.updateLecturerWages)
-	router.Get("/lecturers-wages", m.AuthBearer, h.getLecturerWages)
-	router.Get("/lecturers-wages-aggregate", m.AuthBearer, h.getLecturerWagesAggregate)
-	router.Get("/acquisition-rights-aggregate", m.AuthBearer, h.getAcquisitionRightsAggregate)
+	protected.Get("/registrations", h.getRegistrations)
+	protected.Get("/exported-registrations", h.getExportedRegistrations)
+	protected.Get("/exported-registrations-for-cfo2-monthly", h.getExportedRegistrationsForCFO2Monthly)
+	protected.Get("/exported-registrations-for-cfo2-yearly", h.getExportedRegistrationsForCFO2Yearly)
+	protected.Get("/exported-registrations-for-wage-recap-monthly", h.getExportedRegistrationsForWageRecapMonthly)
 
-	router.Post("/generate-registration-reports", m.AuthBearer, h.generateRegistrationReports)
-	router.Post("/multi-allocation-registrations", m.AuthBearer, h.registrationMultiAllocation)
+	protected.Put("/registrations/:id", h.updateRegistration)
+	protected.Get("/registrations/:id", h.getRegistration)
+	protected.Delete("/registrations/:id", h.deleteRegistration)
+	protected.Put("/registrations/:id/hr-fee-distributions", h.hrDistributions)
+	protected.Put("/registrations/:id/lecturer-distributions", h.lecturerDistributions)
+	protected.Put("/registrations/:id/lecturers", h.updateRegistrationLecturer)
+	protected.Put("/registrations/:id/is-paid", h.updateRegistrationIsPaid)
 
-	router.Get("/lecturer-programs", m.AuthBearer, h.getLecturerPrograms)
+	protected.Get("/registration-per-lecturers", h.getRegistrationListPerLecturer)
+	protected.Patch("/lecturers-wages/:id", h.updateLecturerWages)
+	protected.Get("/lecturers-wages", h.getLecturerWages)
+	protected.Get("/lecturers-wages-aggregate", h.getLecturerWagesAggregate)
+	protected.Get("/acquisition-rights-aggregate", h.getAcquisitionRightsAggregate)
+
+	protected.Post("/generate-registration-reports", h.generateRegistrationReports)
+	protected.Post("/multi-allocation-registrations", h.registrationMultiAllocation)
+
+	protected.Get("/lecturer-programs", h.getLecturerPrograms)
 }
 
 func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
@@ -133,6 +137,35 @@ func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
+	var (
+		req = new(entity.UpdateRegisPaidAtReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::updateRegistrationsPaidAt - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistrationsPaidAt - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.UpdateRegistrationsPaidAt(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
 
 func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {

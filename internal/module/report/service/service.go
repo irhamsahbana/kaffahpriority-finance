@@ -58,6 +58,10 @@ func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entit
 	return s.repo.UpdateRegistrationIsPaid(ctx, req)
 }
 
+func (s *reportService) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.UpdateRegisPaidAtReq) error {
+	return s.repo.UpdateRegistrationsPaidAt(ctx, req)
+}
+
 func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
 	return s.repo.GetRegistrations(ctx, req)
 }
