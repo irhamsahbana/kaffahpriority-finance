@@ -337,7 +337,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	timeEndLocalFormatted := timeEndLocal.Format("02/01/2006")
 
 	f.SetCellValue(sheetName, "A1", "LAPORAN KEUANGAN AKADEMIK "+timeStartLocalFormatted+" - "+timeEndLocalFormatted)
-	f.MergeCell(sheetName, "A1", "I2")
+	f.MergeCell(sheetName, "A1", "J2")
 
 	f.SetCellValue(sheetName, "A3", "TANGGAL")
 	f.MergeCell(sheetName, "A3", "A4")
@@ -351,13 +351,15 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	f.MergeCell(sheetName, "E3", "G3")
 	f.SetCellValue(sheetName, "E4", "MENTOR")
 	f.SetCellValue(sheetName, "F4", "SDM")
-	f.SetCellValue(sheetName, "G4", "TOTAL")
-	f.SetCellValue(sheetName, "H3", "DEBET (PEMASUKAN)")
-	f.MergeCell(sheetName, "H3", "H4")
-	f.SetCellValue(sheetName, "I3", "KREDIT (PENGELUARAN)")
-	f.MergeCell(sheetName, "I3", "I4")
+	f.SetCellValue(sheetName, "G4", "KELEBIHAN")
 
-	f.SetCellStyle(sheetName, "A1", "I4", HeaderStyle)
+	f.SetCellValue(sheetName, "H4", "TOTAL")
+	f.SetCellValue(sheetName, "I3", "DEBET (PEMASUKAN)")
+	f.MergeCell(sheetName, "I3", "I4")
+	f.SetCellValue(sheetName, "J3", "KREDIT (PENGELUARAN)")
+	f.MergeCell(sheetName, "J3", "J4")
+
+	f.SetCellStyle(sheetName, "A1", "J4", HeaderStyle)
 	f.SetColWidth(sheetName, "A", "J", 20)
 
 	lastRow := 4
@@ -366,6 +368,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	totalStudentParticipant := 0
 	totalMentorFee := decimal.NewFromFloat(0)
 	totalHRFee := decimal.NewFromFloat(0)
+	totalOverpaymentFee := decimal.NewFromFloat(0)
 	totalIncome := decimal.NewFromFloat(0)
 	totalOutcome := decimal.NewFromFloat(0)
 
@@ -421,31 +424,46 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		// PROGRAM
 		f.SetCellValue(sheetName, fmt.Sprintf("D%v", row), item.ProgramName)
 		// RINCIAN
+		var totalForRow *decimal.Decimal
 		// -- MENTOR
 		if item.HRFeeForMentor != nil {
 			f.SetCellValue(sheetName, fmt.Sprintf("E%v", row), *item.HRFeeForMentor)
+			totalMentorFee = totalMentorFee.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
+			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
+
+			t := decimal.NewFromFloat(0)
+			totalForRow = &t
+			*totalForRow = totalForRow.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
 		}
 		// -- SDM
 		if item.HRFeeForHR != nil {
 			f.SetCellValue(sheetName, fmt.Sprintf("F%v", row), *item.HRFeeForHR)
-		}
-		// -- TOTAL
-		if item.HRFeeForHR != nil && item.HRFeeForMentor != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), *item.HRFeeForHR+*item.HRFeeForMentor)
-			f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), *item.HRFeeForHR+*item.HRFeeForMentor) // DEBET (PEMASUKAN)
-			totalMentorFee = totalMentorFee.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
-			totalHRFee = totalHRFee.Add(decimal.NewFromFloat(*item.HRFeeForHR))
-			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.HRFeeForHR + *item.HRFeeForMentor))
-		} else if item.HRFeeForHR != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), *item.HRFeeForHR)
-			f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), *item.HRFeeForHR) // DEBET (PEMASUKAN)
 			totalHRFee = totalHRFee.Add(decimal.NewFromFloat(*item.HRFeeForHR))
 			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.HRFeeForHR))
-		} else if item.HRFeeForMentor != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), *item.HRFeeForMentor)
-			f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), *item.HRFeeForMentor) // DEBET (PEMASUKAN)
-			totalMentorFee = totalMentorFee.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
-			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.HRFeeForMentor))
+
+			if totalForRow == nil {
+				t := decimal.NewFromFloat(0)
+				totalForRow = &t
+			}
+			*totalForRow = totalForRow.Add(decimal.NewFromFloat(*item.HRFeeForHR))
+		}
+		// -- KELEBIHAN
+		if item.OverpaymentFee != nil {
+			f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), *item.OverpaymentFee)
+			totalOverpaymentFee = totalOverpaymentFee.Add(decimal.NewFromFloat(*item.OverpaymentFee))
+			totalIncome = totalIncome.Add(decimal.NewFromFloat(*item.OverpaymentFee))
+
+			if totalForRow == nil {
+				t := decimal.NewFromFloat(0)
+				totalForRow = &t
+			}
+			*totalForRow = totalForRow.Add(decimal.NewFromFloat(*item.OverpaymentFee))
+		}
+
+		if totalForRow != nil {
+			totalForRowFloat, _ := totalForRow.Float64()
+			f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), totalForRowFloat)
+			f.SetCellValue(sheetName, fmt.Sprintf("I%v", row), totalForRowFloat) // DEBET (PEMASUKAN)
 		}
 
 		if item.IsUnused {
@@ -453,10 +471,11 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		}
 	}
 
-	f.SetCellStyle(sheetName, "E5", fmt.Sprintf("H%v", lastRow+1), numberFormatStyle)
+	f.SetCellStyle(sheetName, "E5", fmt.Sprintf("I%v", lastRow+1), numberFormatStyle)
 
 	totalMentorFeeFloat, _ := totalMentorFee.Float64()
 	totalHRFeeFloat, _ := totalHRFee.Float64()
+	totalOverpaymentFeeFloat, _ := totalOverpaymentFee.Float64()
 	totalIncomeFloat, _ := totalIncome.Float64()
 	totalOutcomeFloat, _ := totalOutcome.Float64()
 	totalRemainingFloat, _ := totalIncome.Sub(totalOutcome).Float64()
@@ -467,8 +486,9 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow+2), totalStudentParticipant)
 	f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow+2), totalMentorFeeFloat)
 	f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow+2), totalHRFeeFloat)
-	f.SetCellValue(sheetName, fmt.Sprintf("H%v", lastRow+2), totalIncomeFloat)
-	f.SetCellValue(sheetName, fmt.Sprintf("I%v", lastRow+2), totalOutcomeFloat)
+	f.SetCellValue(sheetName, fmt.Sprintf("G%v", lastRow+2), totalOverpaymentFeeFloat)
+	f.SetCellValue(sheetName, fmt.Sprintf("I%v", lastRow+2), totalIncomeFloat)
+	f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow+2), totalOutcomeFloat)
 
 	f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow+1), "TOTAL SALDO")
 	f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow+2), totalRemainingFloat)
