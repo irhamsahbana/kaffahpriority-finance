@@ -40,6 +40,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	router.Post("/registrations", m.AuthBearer, h.createRegistrations)
 	router.Post("/copy-registrations", m.AuthBearer, h.copyRegistrations)
 	router.Get("/registration-summaries", m.AuthBearer, h.getSummaries)
+	router.Get("/registration-summaries-for-cfo2", m.AuthBearer, h.getSummariesForCFO2)
 	router.Get("/registrations", m.AuthBearer, h.getRegistrations)
 	router.Get("/exported-registrations", m.AuthBearer, h.getExportedRegistrations)
 	router.Get("/exported-registrations-for-cfo2-monthly", m.AuthBearer, h.getExportedRegistrationsForCFO2Monthly)
@@ -95,6 +96,37 @@ func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 	}
 
 	resp, err := h.service.GetSummaries(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
+func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetSummariesReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	req.UserId = l.GetUserId()
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getSummariesForCFO2 - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getSummariesForCFO2 - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetSummariesForCFO2(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

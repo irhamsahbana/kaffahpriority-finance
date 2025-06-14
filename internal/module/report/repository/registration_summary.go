@@ -64,3 +64,42 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 
 	return resp, nil
 }
+
+func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesForCFO2Resp, error) {
+	var (
+		resp = new(entity.GetSummariesForCFO2Resp)
+		args = make([]any, 0, 3)
+	)
+
+	query := `
+		SELECT
+			COALESCE(SUM(COALESCE(pr.mentor_detail_fee, 0) + COALESCE(pr.hr_detail_fee, 0)), 0) AS total_debit,
+			0 AS total_credit
+			-- COALESCE(SUM(pr.credit), 0) AS total_credit
+		FROM
+			program_registrations pr
+		WHERE
+			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
+			AND pr.paid_at AT TIME ZONE ? BETWEEN
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+	`
+	// TODO: add credit column in database migration, // and uncomment the total_credit line and remove the 0 above
+
+	args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+
+	err := r.db.QueryRowContext(ctx, r.db.Rebind(query), args...).Scan(
+		&resp.TotalDebit,
+		&resp.TotalCredit,
+	)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetSummariesForCFO2 - failed to get summaries for CFO2")
+		return nil, err
+	}
+	resp.PaidAtFrom = req.PaidAtFrom
+	resp.PaidAtTo = req.PaidAtTo
+	resp.TotalBalance = resp.TotalDebit.Sub(resp.TotalCredit)
+
+	return resp, nil
+}

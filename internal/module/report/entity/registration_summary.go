@@ -16,16 +16,29 @@ type GetSummariesReq struct {
 }
 
 func (r *GetSummariesReq) SetDefault() {
+	// Set default timezone first so it can be used for date calculations
+	if r.Timezone == "" {
+		r.Timezone = "Asia/Makassar"
+	}
+
+	// Load the location for the timezone
+	loc, err := time.LoadLocation(r.Timezone)
+	if err != nil {
+		// Fallback to system timezone if the specified timezone is invalid
+		loc = time.Local
+	}
+
+	// Use the timezone for consistent date operations
+	now := time.Now().In(loc)
+
 	if r.PaidAtFrom == "" {
-		r.PaidAtFrom = time.Now().AddDate(0, 0, -time.Now().Day()+1).Format("2006-01-02")
+		// First day of current month in the specified timezone
+		r.PaidAtFrom = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).Format("2006-01-02")
 	}
 
 	if r.PaidAtTo == "" {
-		r.PaidAtTo = time.Now().Format("2006-01-02")
-	}
-
-	if r.Timezone == "" {
-		r.Timezone = "Asia/Makassar"
+		// Current date in the specified timezone
+		r.PaidAtTo = now.Format("2006-01-02")
 	}
 }
 
@@ -54,4 +67,13 @@ type GetSummariesResp struct {
 	TotalMarketerGifts       decimal.Decimal `json:"total_marketer_gifts_fee"`
 	TotalClosingFeeForReward decimal.Decimal `json:"total_closing_fee_for_reward"`
 	TotalProfit              decimal.Decimal `json:"total_profit"`
+}
+
+type GetSummariesForCFO2Resp struct {
+	PaidAtFrom string `json:"paid_at_from"`
+	PaidAtTo   string `json:"paid_at_to"`
+
+	TotalDebit   decimal.Decimal `json:"total_debit"`
+	TotalCredit  decimal.Decimal `json:"total_credit"`
+	TotalBalance decimal.Decimal `json:"total_balance"`
 }

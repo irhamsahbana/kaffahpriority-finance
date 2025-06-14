@@ -74,6 +74,10 @@ func (s *reportService) GetSummaries(ctx context.Context, req *entity.GetSummari
 	return s.repo.GetSummaries(ctx, req)
 }
 
+func (s *reportService) GetSummariesForCFO2(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesForCFO2Resp, error) {
+	return s.repo.GetSummariesForCFO2(ctx, req)
+}
+
 func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
 	return s.repo.GetLecturerPrograms(ctx, req)
 }
