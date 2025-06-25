@@ -20,6 +20,7 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 		UPDATE program_registrations
 		SET
 			paid_at = ($1::timestamp AT TIME ZONE 'Asia/Makassar'),
+			is_paid = TRUE,
 			updated_at = NOW()
 		WHERE id = $2
 		AND deleted_at IS NULL
