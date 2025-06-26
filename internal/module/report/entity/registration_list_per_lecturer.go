@@ -10,6 +10,7 @@ import (
 type GetRegistrationListPerLecturerReq struct {
 	UserId string `json:"user_id"`
 	types.MetaQuery
+
 	Q                 string `query:"q"`
 	LecturerId        string `query:"lecturer_id"`
 	StudentId         string `query:"student_id"`
