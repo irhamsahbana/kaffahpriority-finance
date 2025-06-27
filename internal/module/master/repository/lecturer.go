@@ -44,8 +44,8 @@ func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersR
 
 	if req.Q != "" {
 		query += ` AND (
-			name ILIKE '%' || ? || '%' OR
-			phone ILIKE '%' || ? || '%'
+			l.name ILIKE '%' || ? || '%' OR
+			l.phone ILIKE '%' || ? || '%'
 		)
 		`
 		args = append(args, req.Q, req.Q)
