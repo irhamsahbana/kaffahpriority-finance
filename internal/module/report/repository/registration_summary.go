@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
@@ -101,7 +102,28 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 	}
 	resp.PaidAtFrom = req.PaidAtFrom
 	resp.PaidAtTo = req.PaidAtTo
-	resp.TotalBalance = resp.TotalDebit.Add(resp.TotalOverpayment).Sub(resp.TotalCredit)
+	// resp.TotalBalance = resp.TotalDebit.Add(resp.TotalOverpayment).Sub(resp.TotalCredit)
+
+	// menambahkan total balance dari awal app ada sampai sekarang
+	queryBalance := `
+		SELECT
+			COALESCE(SUM(COALESCE(pr.mentor_detail_fee, 0) + COALESCE(pr.hr_detail_fee, 0)), 0) AS total_balance
+		FROM
+			program_registrations pr
+		WHERE
+			pr.deleted_at IS NULL
+			AND pr.is_paid = TRUE
+			AND pr.paid_at AT TIME ZONE ? <=
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+	`
+	var totalBalance decimal.Decimal
+	err = r.db.QueryRowContext(ctx, r.db.Rebind(queryBalance), req.Timezone, req.PaidAtTo).Scan(&totalBalance)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msg("repo::GetSummariesForCFO2 - failed to get total balance")
+		return nil, err
+	}
+
+	resp.TotalBalance = totalBalance
 
 	return resp, nil
 }
