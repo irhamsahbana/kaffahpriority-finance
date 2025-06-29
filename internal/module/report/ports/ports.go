@@ -15,6 +15,7 @@ type ReportRepository interface {
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
+	GetUnusedRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
 	DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)
@@ -55,6 +56,7 @@ type ReportService interface {
 	CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error
 	CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error
 	GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
+	GetUnusedRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error)
 	GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error)
 	DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error
 	UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error)

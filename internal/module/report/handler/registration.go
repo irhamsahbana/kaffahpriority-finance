@@ -141,6 +141,42 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
 }
 
+func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
+	var (
+		req = new(entity.GetRegistrationsReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msg("handler::getUnusedRegistrations - invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getUnusedRegistrations - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	if err := req.Validate(); err != nil {
+		log.Warn().Err(err).Any("req", req).Msg("handler::getUnusedRegistrations - invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetUnusedRegistrations(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+
 func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 	var (
 		req = new(entity.UpdateRegistrationLecturerReq)

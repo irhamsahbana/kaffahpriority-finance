@@ -46,6 +46,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Patch("/registration-paid-at-attributes", h.updateRegistrationsPaidAt)
 
 	protected.Get("/registrations", h.getRegistrations)
+	protected.Get("/unused-registrations", h.getUnusedRegistrations)
 	protected.Get("/exported-registrations", h.getExportedRegistrations)
 	protected.Get("/exported-registrations-for-cfo2-monthly", h.getExportedRegistrationsForCFO2Monthly)
 	protected.Get("/exported-registrations-for-cfo2-yearly", h.getExportedRegistrationsForCFO2Yearly)

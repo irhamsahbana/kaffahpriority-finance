@@ -66,6 +66,10 @@ func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetReg
 	return s.repo.GetRegistrations(ctx, req)
 }
 
+func (s *reportService) GetUnusedRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
+	return s.repo.GetUnusedRegistrations(ctx, req)
+}
+
 func (s *reportService) GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error) {
 	return s.repo.GetRegistration(ctx, req)
 }
