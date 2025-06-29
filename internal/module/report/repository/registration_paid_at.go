@@ -23,7 +23,7 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 			allocated_at = ($2::timestamp AT TIME ZONE 'Asia/Makassar'),
 			is_paid = TRUE,
 			updated_at = NOW()
-		WHERE id = $2
+		WHERE id = $3
 		AND deleted_at IS NULL
 	`
 
@@ -31,7 +31,8 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 		if _, err := tx.ExecContext(ctx, query,
 			(req.PaidAt + " 01:00:00"),
 			(req.AllocatedAt + " 01:00:00"),
-			registrationId); err != nil {
+			registrationId,
+		); err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration paid_at for id %s", fnName, registrationId)
 			return err
 		}
