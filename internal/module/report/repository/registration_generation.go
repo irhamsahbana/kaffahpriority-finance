@@ -203,7 +203,7 @@ SELECT
 	(SELECT overpayment_fee FROM template),
 	(SELECT hr_fee FROM template),
 	(SELECT hr_fee - 40000 FROM template),
-	(SELECT hr_fee - 40000 FROM template),
+	NULL,
 	40000,
 	(SELECT marketer_gifts_fee FROM template),
 	(SELECT closing_fee_for_office FROM template),

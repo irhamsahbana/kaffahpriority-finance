@@ -189,7 +189,7 @@ SELECT
 	(SELECT hr_fee - 40000 FROM template),
 	CASE
 		WHEN
-		? > TO_CHAR(NOW() AT TIME ZONE 'Asia/Makassar', 'YYYY-MM')
+		? >= TO_CHAR(NOW() AT TIME ZONE 'Asia/Makassar', 'YYYY-MM')
 		THEN NULL
 		ELSE (SELECT hr_fee - 40000 FROM template)
 	END,

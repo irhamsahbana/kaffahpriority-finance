@@ -364,7 +364,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			pr.overpayment_fee,
 			pr.hr_fee,
 			pr.mentor_detail_fee,
-			pr.mentor_detail_fee_used,
+			NULL,
 			pr.hr_detail_fee,
 			pr.days,
 			pr.notes,
