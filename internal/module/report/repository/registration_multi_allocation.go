@@ -61,6 +61,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			registrationId, // New registration ID
 			req.UserId,     // User ID
 
+			allocation, // Allocation month
 			req.PaidAt, // Paid at date
 			allocation, // Allocation date
 		); err != nil {
@@ -186,7 +187,12 @@ SELECT
 	(SELECT overpayment_fee FROM template),
 	(SELECT hr_fee FROM template),
 	(SELECT hr_fee - 40000 FROM template),
-	(SELECT hr_fee - 40000 FROM template),
+	CASE
+		WHEN
+		? > TO_CHAR(NOW() AT TIME ZONE 'Asia/Makassar', 'YYYY-MM')
+		THEN NULL
+		ELSE (SELECT hr_fee - 40000 FROM template)
+	END,
 	40000,
 	(SELECT marketer_gifts_fee FROM template),
 	(SELECT closing_fee_for_office FROM template),
