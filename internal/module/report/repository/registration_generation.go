@@ -10,7 +10,7 @@ import (
 )
 
 func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
-	fnName := "repo::GenerateRegistrationReport"
+	fnName := "repo::GenerateRegistrationReports"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
@@ -28,7 +28,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		WHERE
 			deleted_at IS NULL
 			AND marketer_id IS NOT NULL
-			AND lecturer_id IS NOT NULL
+			-- AND lecturer_id IS NOT NULL
 		ORDER BY
 			created_at ASC
 	`
@@ -46,7 +46,8 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 	for _, templateId := range templateIds {
 		// Ambil data dari template untuk pengecekan
-		var lecturerId, studentId, programId string
+		var studentId, programId string
+		var lecturerId *string
 		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
 			templateId).Scan(&lecturerId, &studentId, &programId)
 		if err != nil {
@@ -55,9 +56,11 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		}
 
 		// check if registration already exists
-		var programName, lecturerName, studentName string
+		var programName, studentName string
+		var lecturerName *string
 		err = tx.QueryRowxContext(ctx, r.db.Rebind(queryCheckRegistrationExists),
-			lecturerId, studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
+			lecturerId, lecturerId,
+			studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
 		).Scan(&programName, &lecturerName, &studentName)
 
 		// if registration already exists, skip this template
@@ -242,7 +245,7 @@ var queryCheckRegistrationExists = `
 	JOIN
 		programs p
 		ON pr.program_id = p.id
-	JOIN
+	LEFT JOIN
 		lecturers l
 		ON pr.lecturer_id = l.id
 	JOIN
@@ -250,7 +253,11 @@ var queryCheckRegistrationExists = `
 		ON pr.student_id = s.id
 	WHERE
 		pr.deleted_at IS NULL
-		AND pr.lecturer_id = ?
+		AND (
+			(pr.lecturer_id IS NULL AND ?::TEXT IS NULL)
+			OR
+			(pr.lecturer_id = ?)
+		)
 		AND pr.student_id = ?
 		AND pr.program_id = ?
 		AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM NOW() AT TIME ZONE ?)

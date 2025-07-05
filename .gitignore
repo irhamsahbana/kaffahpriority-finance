@@ -3,6 +3,7 @@
 .env
 ~$seeds.xlsx
 digihub-app
+GEMINI.md
 
 # directories to ignore
 .idea
