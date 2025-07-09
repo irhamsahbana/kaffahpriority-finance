@@ -71,6 +71,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
 				ELSE 0
 			END AS mentor_detail_fee_used,
+			pr.allocated_at,
 			pr.notes_for_lecturer_wage AS notes
 		FROM
 			program_registrations pr
@@ -78,7 +79,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			programs p ON pr.program_id = p.id
 		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
-		JOIN
+		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
 		JOIN
 			students s ON pr.student_id = s.id

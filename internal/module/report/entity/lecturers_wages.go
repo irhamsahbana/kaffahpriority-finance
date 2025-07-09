@@ -41,7 +41,7 @@ type GetLecturersWagesResp struct {
 
 type LecturersWageItem struct {
 	RegistrationId       string           `json:"registration_id" db:"registration_id"`
-	AcademicManagerName  string           `json:"academic_manager_name" db:"academic_manager_name"`
+	AcademicManagerName  *string          `json:"academic_manager_name" db:"academic_manager_name"`
 	LecturerName         *string          `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
 	ProgramName          string           `json:"program_name" db:"program_name"`
@@ -58,6 +58,7 @@ type LecturersWageItem struct {
 	InitialFee           decimal.Decimal  `json:"initial_fee" db:"initial_fee"`                       // ujrah awal
 	RealFee              decimal.Decimal  `json:"real_fee" db:"real_fee"`                             // ujrah real
 	MentorDetailFeeUsed  *decimal.Decimal `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"` // wage for mentor / keep gaji
+	AllocatedAt          *string          `json:"allocated_at" db:"allocated_at"`
 	Notes                *string          `json:"notes" db:"notes"`
 }
 
