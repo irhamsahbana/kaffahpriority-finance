@@ -13,10 +13,11 @@ type GetLecturersWagesReq struct {
 
 	Q string `query:"q" validate:"omitempty,min=3"`
 
-	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
-	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
-	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
-	Timezone          string `query:"timezone" validate:"required,timezone"`
+	AcademicManagerId          string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	LecturerId                 string `query:"lecturer_id" validate:"omitempty,ulid"`
+	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
+	Month                      string `query:"month" validate:"omitempty,datetime=2006-01"`
+	Timezone                   string `query:"timezone" validate:"required,timezone"`
 }
 
 func (r *GetLecturersWagesReq) SetDefault() {
@@ -41,7 +42,7 @@ type GetLecturersWagesResp struct {
 type LecturersWageItem struct {
 	RegistrationId       string           `json:"registration_id" db:"registration_id"`
 	AcademicManagerName  string           `json:"academic_manager_name" db:"academic_manager_name"`
-	LecturerName         string           `json:"lecturer_name" db:"lecturer_name"`
+	LecturerName         *string          `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
 	ProgramName          string           `json:"program_name" db:"program_name"`
 	StudentManagerName   string           `json:"student_manager_name" db:"student_manager_name"`

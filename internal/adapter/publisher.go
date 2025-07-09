@@ -71,3 +71,34 @@ func WithExcelProductNatsPublisher() Option {
 		log.Info().Msg("Excel Product NATS publisher connected")
 	}
 }
+
+func WithReportGenerationNatsPublisher() Option {
+	return func(a *Adapter) {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		nc, err := nats.Connect(config.Envs.EmailVerificationQueueNats.NatsURL)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error while connecting to nats server")
+		}
+
+		js, err := jetstream.New(nc)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error while connecting to nats jetstream")
+		}
+
+		// create a stream
+		_, err = js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+			Name:        "report-generation-service",
+			Description: "Report generation service stream",
+			Subjects:    []string{"report.generate.>"},
+			MaxBytes:    1024 * 1024 * 1024,
+		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error while creating nats jetstream stream")
+		}
+
+		a.ReportGenerationPublisher = js
+		log.Info().Msg("Report Generation NATS publisher connected")
+	}
+}

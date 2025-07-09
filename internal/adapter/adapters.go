@@ -36,8 +36,9 @@ type Adapter struct {
 	//Driven Adapters
 	Postgres              *sqlx.DB
 	Validator             Validator // *validator.Validator
-	EmailPublisher        jetstream.Publisher
-	ExcelProductPublisher jetstream.Publisher
+	EmailPublisher            jetstream.Publisher
+	ExcelProductPublisher     jetstream.Publisher
+	ReportGenerationPublisher jetstream.Publisher
 	Storage               *s3.Client
 	VenamonGolog          *tele.Bot
 	FirebaseSDK           *firebase.App

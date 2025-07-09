@@ -76,7 +76,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			program_registrations pr
 		JOIN
 			programs p ON pr.program_id = p.id
-		JOIN
+		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
 		JOIN
 			academic_managers am ON l.academic_manager_id = am.id
@@ -101,6 +101,15 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	if req.LecturerId != "" {
 		query += ` AND pr.lecturer_id = ?`
 		args = append(args, req.LecturerId)
+	}
+
+	if req.IsMandatoryFieldsCompleted != "" {
+		switch req.IsMandatoryFieldsCompleted {
+		case "true":
+			query += ` AND pr.lecturer_id IS NOT NULL`
+		case "false":
+			query += ` AND pr.lecturer_id IS NULL`
+		}
 	}
 
 	if req.Q != "" {
