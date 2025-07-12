@@ -202,7 +202,12 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		"":     "DESC",
 	}
 
-	query += ` ORDER BY pr.is_paid ASC, ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType]
+	if req.SortBy == "paid_at" {
+		query += ` ORDER BY pr.is_paid ASC, pr.paid_at ` + sortTypeMap[req.SortType] + `, m.id DESC`
+	} else {
+		query += ` ORDER BY pr.is_paid ASC, ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType]
+
+	}
 	query += ` LIMIT ? OFFSET ?`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
