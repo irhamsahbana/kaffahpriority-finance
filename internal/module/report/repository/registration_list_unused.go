@@ -117,6 +117,11 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			AND pr.mentor_detail_fee_used IS NULL
 	`
 
+	if req.ExcludeAllocatedMonth != "" {
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') != ?`
+		args = append(args, req.Timezone, req.ExcludeAllocatedMonth)
+	}
+
 	if req.Q != "" {
 		query += ` AND (
 			pr.program_name ILIKE '%' || ? || '%' OR
@@ -134,9 +139,10 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 	}
 
 	if req.MentorFeeAllocationStatus != "all" {
-		if req.MentorFeeAllocationStatus == "full" {
+		switch req.MentorFeeAllocationStatus {
+		case "full":
 			query += ` AND (COALESCE(pr.mentor_detail_fee, 0) - COALESCE(pr.mentor_detail_fee_used, 0)) = 0`
-		} else if req.MentorFeeAllocationStatus == "partial" {
+		case "partial":
 			query += ` AND (COALESCE(pr.mentor_detail_fee, 0) - COALESCE(pr.mentor_detail_fee_used, 0)) > 0`
 		}
 	}
@@ -183,7 +189,12 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		"":     "DESC",
 	}
 
-	query += ` ORDER BY pr.is_paid ASC, ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType]
+	if req.SortBy == "paid_at" {
+		query += ` ORDER BY pr.is_paid ASC, pr.paid_at ` + sortTypeMap[req.SortType] + `, m.id DESC`
+	} else {
+		query += ` ORDER BY pr.is_paid ASC, ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType]
+	}
+
 	query += ` LIMIT ? OFFSET ?`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 

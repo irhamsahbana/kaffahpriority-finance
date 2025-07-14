@@ -28,6 +28,12 @@ type GetRegistrationsReq struct {
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
 
 	types.MetaQuery
+
+	GetUnusedRegistrationsReq
+}
+
+type GetUnusedRegistrationsReq struct {
+	ExcludeAllocatedMonth string `query:"exclude_allocated_month" validate:"omitempty,datetime=2006-01"`
 }
 
 func (r *GetRegistrationsReq) SetDefault() {
