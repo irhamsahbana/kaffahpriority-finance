@@ -12,11 +12,13 @@ type GetTemplatesReq struct {
 
 	types.MetaQuery
 
-	MarketerId       string `query:"marketer_id" validate:"omitempty,ulid"`
-	StudentManagerId string `query:"student_manager_id" validate:"omitempty,ulid"`
-	LecturerId       string `query:"lecturer_id" validate:"omitempty,ulid"`
-	StudentId        string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramId        string `query:"program_id" validate:"omitempty,ulid"`
+	MarketerId        string `query:"marketer_id" validate:"omitempty,ulid"`
+	StudentManagerId  string `query:"student_manager_id" validate:"omitempty,ulid"`
+	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
+
+	StudentId string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramId string `query:"program_id" validate:"omitempty,ulid"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {

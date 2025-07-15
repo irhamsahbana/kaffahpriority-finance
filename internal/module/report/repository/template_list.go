@@ -101,6 +101,11 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		args = append(args, req.LecturerId)
 	}
 
+	if req.AcademicManagerId != "" {
+		query += ` AND l.academic_manager_id = ? `
+		args = append(args, req.AcademicManagerId)
+	}
+
 	if req.StudentId != "" {
 		query += ` AND prt.student_id = ? `
 		args = append(args, req.StudentId)
