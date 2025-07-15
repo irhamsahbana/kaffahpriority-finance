@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -18,8 +19,9 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	}
 	defer tx.Rollback()
 
-	// get all templates from the database
+	// get all templates from the database that are not deleted
 	templateIds := []string{}
+
 	queryTemplates := `
 		SELECT
 			id
@@ -28,17 +30,56 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		WHERE
 			deleted_at IS NULL
 			AND marketer_id IS NOT NULL
-			-- AND lecturer_id IS NOT NULL
 		ORDER BY
 			created_at ASC
 	`
 
-	// query all templates that are not deleted and have a marketer_id and lecturer_id
+	// query all templates that are not deleted and have a marketer_id set
 	if err := tx.SelectContext(ctx, &templateIds, queryTemplates); err != nil {
 		log.Error().Err(err).Msgf("%s - failed to select templates", fnName)
 		return err
 	}
 
+	// query all deleted templates
+	deletedTemplateIds := []string{}
+	queryDeletedTemplates := `
+		SELECT
+			id
+		FROM
+			program_registration_templates
+		WHERE
+			deleted_at IS NOT NULL
+	`
+
+	if err := tx.SelectContext(ctx, &deletedTemplateIds, queryDeletedTemplates); err != nil {
+		log.Error().Err(err).Msgf("%s - failed to select deleted templates", fnName)
+		return err
+	}
+
+	// delete registration that their master (template) has been deleted
+	if len(deletedTemplateIds) > 0 {
+		queryDeleteRegistrations := `
+			UPDATE
+				program_registrations
+			SET
+				deleted_at = NOW()
+			WHERE
+				template_id = ANY($1)
+				AND deleted_at IS NULL
+				AND is_paid = FALSE
+				AND TO_CHAR(created_at AT TIME ZONE $2, 'YYYY-MM') = TO_CHAR(NOW() AT TIME ZONE $2, 'YYYY-MM')
+		`
+
+		if _, err := tx.ExecContext(ctx, queryDeleteRegistrations,
+			pq.Array(deletedTemplateIds),
+			req.Timezone,
+		); err != nil {
+			log.Error().Err(err).Msgf("%s - failed to delete registrations", fnName)
+			return err
+		}
+	}
+
+	// setup create registration batch
 	batchId := ulid.Make().String()
 	queryInsertRegistration := r.db.Rebind(queryInsertRegistration)
 	queryStudents := r.db.Rebind(queryStudents)
