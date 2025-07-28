@@ -5,6 +5,7 @@ import (
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
@@ -52,11 +53,33 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			days = ?,
 			notes = ?,
 			is_itp = ?,
+			paid_at = ?,
+			allocated_at = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
 			AND deleted_at IS NULL
 	`
+
+	// specify timezone
+	loc, err := time.LoadLocation("Asia/Makassar")
+	if err != nil {
+		log.Error().Err(err).Msgf("%s - failed to load location", fnName)
+		return nil, err
+	}
+
+	// parse date
+	parsedPaidAt, err := time.ParseInLocation("2006-01-02", req.PaidAt, loc)
+	if err != nil {
+		log.Error().Err(err).Msgf("%s - failed to parse paid_at", fnName)
+		return nil, err
+	}
+
+	parsedAllocatedAt, err := time.ParseInLocation("2006-01-02", req.AllocatedAt, loc)
+	if err != nil {
+		log.Error().Err(err).Msgf("%s - failed to parse allocated_at", fnName)
+		return nil, err
+	}
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
@@ -64,6 +87,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
+		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),
 		req.Id,
 	)
 	if err != nil {
