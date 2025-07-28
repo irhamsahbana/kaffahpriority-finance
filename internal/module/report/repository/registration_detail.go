@@ -45,6 +45,8 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.closing_fee_for_reward,
 			pr.created_at,
 			pr.updated_at,
+			pr.paid_at,
+			pr.allocated_at,
 			pr.notes,
 			(
 				COALESCE(pr.administration_fee, 0)

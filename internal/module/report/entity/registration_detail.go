@@ -42,4 +42,6 @@ type GetRegistrationResp struct {
 	Days                  pq.Int64Array `json:"days" db:"days"`
 	CreatedAt             string        `json:"created_at" db:"created_at"`
 	UpdatedAt             string        `json:"updated_at" db:"updated_at"`
+	PaidAt                *string       `json:"paid_at" db:"paid_at"`
+	AllocatedAt           *string       `json:"allocated_at" db:"allocated_at"`
 }
