@@ -27,6 +27,8 @@ type UpdateRegistrationReq struct {
 	Days                  []int64      `json:"days" validate:"required,unique_in_slice,dive,min=1,max=7"`
 	Notes                 *string      `json:"notes" validate:"omitempty,max=255"`
 	IsITP                 bool         `json:"is_itp"`
+
+	IsUpdateTemplate bool `json:"is_update_template"`
 }
 
 func (r *UpdateRegistrationReq) Validate() error {

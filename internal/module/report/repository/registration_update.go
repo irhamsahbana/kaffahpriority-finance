@@ -96,6 +96,12 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		}
 	}
 
+	if !req.IsUpdateTemplate {
+		resp := new(entity.UpdateRegistrationResp)
+		resp.Id = req.Id
+		return resp, nil
+	}
+
 	// update template
 	type registration struct {
 		TemplateId string `db:"template_id"`
