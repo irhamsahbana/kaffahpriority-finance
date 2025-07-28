@@ -28,7 +28,9 @@ type UpdateRegistrationReq struct {
 	Notes                 *string      `json:"notes" validate:"omitempty,max=255"`
 	IsITP                 bool         `json:"is_itp"`
 
-	IsUpdateTemplate bool `json:"is_update_template"`
+	IsUpdateTemplate bool   `json:"is_update_template"`
+	PaidAt           string `json:"paid_at" validate:"required,datetime=2006-01-02"`
+	AllocatedAt      string `json:"allocated_at" validate:"required,datetime=2006-01-02"`
 }
 
 func (r *UpdateRegistrationReq) Validate() error {
