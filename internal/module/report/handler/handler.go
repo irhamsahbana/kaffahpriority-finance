@@ -51,6 +51,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Get("/exported-registrations-for-cfo2-monthly", h.getExportedRegistrationsForCFO2Monthly)
 	protected.Get("/exported-registrations-for-cfo2-yearly", h.getExportedRegistrationsForCFO2Yearly)
 	protected.Get("/exported-registrations-for-wage-recap-monthly", h.getExportedRegistrationsForWageRecapMonthly)
+	protected.Get("/exported-lecturers-wages", h.getExportedLecturersWages)
 
 	protected.Put("/registrations/:id", h.updateRegistration)
 	protected.Get("/registrations/:id", h.getRegistration)
@@ -541,6 +542,47 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
+}
+func (h *reportHandler) getExportedLecturersWages(c *fiber.Ctx) error {
+	var (
+		req    = new(entity.GetExportedLecturersWagesReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
+		fnName = "handler::getExportedLecturerWages"
+	)
+
+	if err := c.QueryParser(req); err != nil {
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserId = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetExportedLecturersWages(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	defer func() {
+		if err := os.Remove(resp.FilePath); err != nil {
+			log.Warn().Err(err).Msgf("%s - delete file error", fnName)
+		}
+	}()
+
+	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
+		log.Warn().Err(err).Msgf("%s - download file error", fnName)
+		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
+	}
+
+	return nil
 }
 
 func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
