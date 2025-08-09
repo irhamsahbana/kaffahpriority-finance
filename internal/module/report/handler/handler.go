@@ -53,6 +53,8 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Get("/exported-registrations-for-wage-recap-monthly", h.getExportedRegistrationsForWageRecapMonthly)
 	protected.Get("/exported-lecturers-wages", h.getExportedLecturersWages)
 
+	protected.Post("import-lecturers-wages", h.importLecturersWages)
+
 	protected.Put("/registrations/:id", h.updateRegistration)
 	protected.Get("/registrations/:id", h.getRegistration)
 	protected.Delete("/registrations/:id", h.deleteRegistration)
@@ -583,6 +585,37 @@ func (h *reportHandler) getExportedLecturersWages(c *fiber.Ctx) error {
 	}
 
 	return nil
+}
+
+func (h *reportHandler) importLecturersWages(c *fiber.Ctx) error {
+	var (
+		req    = new(entity.ImportLecturersWagesReq)
+		l      = m.GetLocals(c)
+		fnName = "handler::importLecturersWages"
+	)
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+	defer file.Close()
+
+	req.File = file
+	req.UserId = l.GetUserId()
+
+	if err := h.service.ImportLecturersWages(c.Context(), req); err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
 
 func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {

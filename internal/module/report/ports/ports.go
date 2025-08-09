@@ -29,6 +29,8 @@ type ReportRepository interface {
 	GetExportedRegistrationsForWageRecapMonthly(ctx context.Context, req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error)
 	GetExportedLecturersWages(ctx context.Context, req *entity.GetExportedLecturersWagesReq) (*entity.GetExportedLecturersWagesResp, error)
 
+	ImportLecturersWages(ctx context.Context, req *entity.ImportLecturersWagesReq) error
+
 	DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error
 	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
 
@@ -70,6 +72,8 @@ type ReportService interface {
 	GetExportedRegistrationsForCFO2Yearly(ctx context.Context, req *entity.GetExportedRegistrationsForCFO2YearlyReq) (*entity.GetExportedRegistrationsForCFO2YearlyResp, error)
 	GetExportedRegistrationsForWageRecapMonthly(ctx context.Context, req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error)
 	GetExportedLecturersWages(ctx context.Context, req *entity.GetExportedLecturersWagesReq) (*entity.GetExportedLecturersWagesResp, error)
+
+	ImportLecturersWages(ctx context.Context, req *entity.ImportLecturersWagesReq) error
 
 	DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error
 	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
