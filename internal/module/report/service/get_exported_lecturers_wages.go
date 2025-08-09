@@ -95,7 +95,11 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		f.SetCellValue(sheetName, fmt.Sprintf("G%v", no), ProgramFeePerMeeting)
 		f.SetCellValue(sheetName, fmt.Sprintf("H%v", no), FullFee)
 		f.SetCellValue(sheetName, fmt.Sprintf("I%v", no), InitialFee)
-		f.SetCellValue(sheetName, fmt.Sprintf("J%v", no), item.IsFullFee)
+		if item.IsFullFee {
+			f.SetCellValue(sheetName, fmt.Sprintf("J%v", no), "full")
+		} else {
+			f.SetCellValue(sheetName, fmt.Sprintf("J%v", no), "tidak full")
+		}
 		if item.FL != nil {
 			FL, _ := item.FL.Float64()
 			f.SetCellValue(sheetName, fmt.Sprintf("K%v", no), FL)

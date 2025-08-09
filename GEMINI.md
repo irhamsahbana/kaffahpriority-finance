@@ -9,7 +9,7 @@ This project is a Go-based application named "kaffapriority-finance". It appears
 - Ask for permission before modifying or creating any files.
 - When making changes to a file, explain why the change is being made.
 - When generating code, add comments in English.
-- When creating a commit message, follow the pattern and style of previous commit messages.
+- When creating a commit message, follow the pattern and style of previous commit messages, check on unstaged changes first and then staged changes.
 - When asked to commit, first review the changes that have been made, especially in staging.
 
 ## How to Run the Application
