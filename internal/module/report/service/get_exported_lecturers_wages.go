@@ -45,7 +45,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 	f.SetCellValue(sheetName, "K1", "FL")         // editable
 	f.SetCellValue(sheetName, "L1", "NL")         // editable
 	f.SetCellValue(sheetName, "M1", "Ujroh Real")
-	f.SetCellValue(sheetName, "N1", "Keterangan")
+	f.SetCellValue(sheetName, "N1", "Keterangan") // editable
 	f.SetCellValue(sheetName, "O1", "Keep Gaji")
 	f.SetCellValue(sheetName, "P1", "Angka")
 	f.SetCellValue(sheetName, "Q1", "MPA")
@@ -82,7 +82,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		RealFee, _ := item.RealFee.Float64()
 
 		f.SetCellValue(sheetName, fmt.Sprintf("R%v", no), item.RegistrationId)
-		f.SetCellValue(sheetName, fmt.Sprintf("A%v", no), no)
+		f.SetCellValue(sheetName, fmt.Sprintf("A%v", no), no-1)
 		if item.AcademicManagerName != nil {
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", no), *item.AcademicManagerName)
 		}
@@ -91,6 +91,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		}
 		f.SetCellValue(sheetName, fmt.Sprintf("D%v", no), item.StudentName)
 		f.SetCellValue(sheetName, fmt.Sprintf("E%v", no), item.ProgramName)
+
 		f.SetCellValue(sheetName, fmt.Sprintf("F%v", no), item.ProgramMeetings)
 		f.SetCellValue(sheetName, fmt.Sprintf("G%v", no), ProgramFeePerMeeting)
 		f.SetCellValue(sheetName, fmt.Sprintf("H%v", no), FullFee)

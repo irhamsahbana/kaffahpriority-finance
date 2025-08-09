@@ -129,6 +129,16 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	for _, d := range data {
 		registrationIds = append(registrationIds, d.RegistrationId)
+		if d.FL != nil {
+			d.ProgramName = d.ProgramName + " + FL"
+		}
+		if d.NL != nil {
+			d.ProgramName = d.ProgramName + " + NL"
+		}
+		if d.IsITP {
+			d.ProgramName = d.ProgramName + " + ITP"
+		}
+
 		resp.Items = append(resp.Items, d.LecturersWageItem)
 	}
 
