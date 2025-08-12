@@ -299,7 +299,7 @@ type WageRecapRegistrationData struct {
 	FL                   *float64 `db:"foreign_learning_fee" json:"foreign_learning_fee"`
 	NL                   *float64 `db:"night_learning_fee" json:"night_learning_fee"`
 	RealFee              float64  `db:"real_fee" json:"real_fee"`
-	MentorDetailFeeUsed  float64  `db:"mentor_detail_fee_used" json:"mentor_detail_fee_used"`
+	MentorDetailFeeUsed  *float64 `db:"mentor_detail_fee_used" json:"mentor_detail_fee_used"`
 	AcquisitionRights    int64    `db:"acquisition_rights" json:"acquisition_rights"`
 	Notes                *string  `db:"notes" json:"notes"`
 }

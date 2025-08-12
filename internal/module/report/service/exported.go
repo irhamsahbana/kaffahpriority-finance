@@ -469,7 +469,9 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 						f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), *data.NL)
 					}
 					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), data.RealFee)
-					f.SetCellValue(sheetName, fmt.Sprintf("N%v", lastRow), data.MentorDetailFeeUsed)
+					if data.MentorDetailFeeUsed != nil {
+						f.SetCellValue(sheetName, fmt.Sprintf("N%v", lastRow), *data.MentorDetailFeeUsed)
+					}
 					f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), data.AcquisitionRights)
 				}
 
