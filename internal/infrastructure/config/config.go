@@ -44,6 +44,7 @@ type Config struct {
 		PasswordReset     string `env:"FRONTEND_PASSWORD_RESET_URL" env-default:"/auth/reset-password"`
 	}
 	Postgres struct {
+		Env      string `env:"POSTGRES_ENV" env-default:"production"`
 		Host     string `env:"POSTGRES_HOST" env-default:"localhost"`
 		Port     string `env:"POSTGRES_PORT" env-default:"5432"`
 		Username string `env:"POSTGRES_USER" env-default:"postgres"`
