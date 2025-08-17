@@ -78,6 +78,11 @@ func (s *reportService) ImportLecturersWages(
 		nlStr = strings.TrimSpace(nlStr)
 		notesStr = strings.TrimSpace(notesStr)
 
+		// skip baris kosong
+		if registrationId == "" {
+			continue
+		}
+
 		data := entity.ImportedLecturersWages{}
 
 		// field RegistrationId

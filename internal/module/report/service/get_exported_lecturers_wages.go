@@ -73,52 +73,69 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 	})
 
 	// data
+	var prevLecturer string
+	var row = 2
+	var seq = 1
 	for index, item := range resp.Items {
-		no := index + 2
+		// handle lecturer saat ini (aman dari nil)
+		curLecturer := ""
+		if item.LecturerName != nil {
+			curLecturer = *item.LecturerName
+		}
+
+		// kalau ganti lecturer (bukan item pertama), sisip 1 baris kosong
+		if index != 0 && curLecturer != prevLecturer {
+			row++ // spare 1 row kosong
+		}
 
 		ProgramFeePerMeeting, _ := item.ProgramFeePerMeeting.Float64()
 		FullFee, _ := item.FullFee.Float64()
 		InitialFee, _ := item.InitialFee.Float64()
 		RealFee, _ := item.RealFee.Float64()
 
-		f.SetCellValue(sheetName, fmt.Sprintf("R%v", no), item.RegistrationId)
-		f.SetCellValue(sheetName, fmt.Sprintf("A%v", no), no-1)
+		f.SetCellValue(sheetName, fmt.Sprintf("R%v", row), item.RegistrationId)
+		f.SetCellValue(sheetName, fmt.Sprintf("A%v", row), seq)
 		if item.AcademicManagerName != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("B%v", no), *item.AcademicManagerName)
+			f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), *item.AcademicManagerName)
 		}
 		if item.LecturerName != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("C%v", no), *item.LecturerName)
+			f.SetCellValue(sheetName, fmt.Sprintf("C%v", row), *item.LecturerName)
 		}
-		f.SetCellValue(sheetName, fmt.Sprintf("D%v", no), item.StudentName)
-		f.SetCellValue(sheetName, fmt.Sprintf("E%v", no), item.ProgramName)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%v", row), item.StudentName)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%v", row), item.ProgramName)
 
-		f.SetCellValue(sheetName, fmt.Sprintf("F%v", no), item.ProgramMeetings)
-		f.SetCellValue(sheetName, fmt.Sprintf("G%v", no), ProgramFeePerMeeting)
-		f.SetCellValue(sheetName, fmt.Sprintf("H%v", no), FullFee)
-		f.SetCellValue(sheetName, fmt.Sprintf("I%v", no), InitialFee)
+		f.SetCellValue(sheetName, fmt.Sprintf("F%v", row), item.ProgramMeetings)
+		f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), ProgramFeePerMeeting)
+		f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), FullFee)
+		f.SetCellValue(sheetName, fmt.Sprintf("I%v", row), InitialFee)
 		if item.IsFullFee {
-			f.SetCellValue(sheetName, fmt.Sprintf("J%v", no), "full")
+			f.SetCellValue(sheetName, fmt.Sprintf("J%v", row), "full")
 		} else {
-			f.SetCellValue(sheetName, fmt.Sprintf("J%v", no), "tidak full")
+			f.SetCellValue(sheetName, fmt.Sprintf("J%v", row), "tidak full")
 		}
 		if item.FL != nil {
 			FL, _ := item.FL.Float64()
-			f.SetCellValue(sheetName, fmt.Sprintf("K%v", no), FL)
+			f.SetCellValue(sheetName, fmt.Sprintf("K%v", row), FL)
 		}
 		if item.NL != nil {
 			NL, _ := item.NL.Float64()
-			f.SetCellValue(sheetName, fmt.Sprintf("L%v", no), NL)
+			f.SetCellValue(sheetName, fmt.Sprintf("L%v", row), NL)
 		}
-		f.SetCellValue(sheetName, fmt.Sprintf("M%v", no), RealFee)
+		f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), RealFee)
 		if item.Notes != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("N%v", no), *item.Notes)
+			f.SetCellValue(sheetName, fmt.Sprintf("N%v", row), *item.Notes)
 		}
 		if item.MentorDetailFeeUsed != nil {
 			MentorDetailFeeUsed, _ := item.MentorDetailFeeUsed.Float64()
-			f.SetCellValue(sheetName, fmt.Sprintf("O%v", no), MentorDetailFeeUsed)
+			f.SetCellValue(sheetName, fmt.Sprintf("O%v", row), MentorDetailFeeUsed)
 		}
-		f.SetCellValue(sheetName, fmt.Sprintf("P%v", no), item.AccquisitionRights)
-		f.SetCellValue(sheetName, fmt.Sprintf("Q%v", no), item.MarketerName)
+		f.SetCellValue(sheetName, fmt.Sprintf("P%v", row), item.AccquisitionRights)
+		f.SetCellValue(sheetName, fmt.Sprintf("Q%v", row), item.MarketerName)
+
+		// update prev lecturer & pindah ke baris berikutnya
+		prevLecturer = curLecturer
+		row++
+		seq++
 	}
 
 	// timestampe in unix
