@@ -615,19 +615,34 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 	)
 
 	queryAcademicManagers := `
-		SELECT id, name FROM academic_managers
-		WHERE deleted_at IS NULL
+		SELECT DISTINCT
+			am.id, am.name
+		FROM
+			program_registrations pr
+		LEFT JOIN
+			lecturers l ON pr.lecturer_id = l.id
+		LEFT JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE
+			pr.deleted_at IS NULL
+			AND pr.lecturer_id IS NOT NULL
+			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
+		ORDER BY
+			am.id ASC
 	`
 
 	var academicManagers = make([]entity.WageRecapAcademicManager, 0)
 
-	err := r.db.SelectContext(ctx, &academicManagers, r.db.Rebind(queryAcademicManagers))
+	err := r.db.SelectContext(
+		ctx, &academicManagers, r.db.Rebind(queryAcademicManagers),
+		req.Timezone, req.Month,
+	)
 	if err != nil {
 		log.Error().Err(err).Msgf("%s - failed to fetch academic managers", fnName)
 		return nil, err
 	}
 
-	for i := range academicManagers {
+	for i := range academicManagers { // looping for each academic manager
 		academicManagers[i].Items = make([]entity.WageRecapLecturer, 0)
 
 		query := `
@@ -647,45 +662,50 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 			return nil, err
 		}
 
-		for j := range academicManagers[i].Items {
+		for j := range academicManagers[i].Items { // looping for each lecturer
 			academicManagers[i].Items[j].Items = make([]entity.WageRecapRegistration, 0)
 
 			query = `
 				SELECT
-					prt.id,
-					prt.student_id,
-					prt.program_id,
-					prt.lecturer_id,
+					pr.id,
+					pr.student_id,
+					pr.program_id,
+					pr.lecturer_id,
 					s.name AS student_name,
 					p.name AS program_name,
 					m.name AS marketer_name,
 
 					CASE
-						WHEN prt.foreign_learning_fee IS NOT NULL THEN TRUE
+						WHEN pr.foreign_learning_fee IS NOT NULL THEN TRUE
 						ELSE FALSE
 					END AS is_fl,
 					CASE
-						WHEN prt.night_learning_fee IS NOT NULL THEN TRUE
+						WHEN pr.night_learning_fee IS NOT NULL THEN TRUE
 						ELSE FALSE
 					END AS is_nl,
-					prt.is_itp
+					pr.is_itp
 				FROM
-					program_registration_templates prt
+					program_registrations pr
 				JOIN
-					students s ON prt.student_id = s.id
+					students s ON pr.student_id = s.id
 				JOIN
-					programs p ON prt.program_id = p.id
+					programs p ON pr.program_id = p.id
 				JOIN
-					marketers m ON prt.marketer_id = m.id
+					marketers m ON pr.marketer_id = m.id
 				WHERE
-					prt.deleted_at IS NULL
-					AND prt.lecturer_id = ?
+					pr.lecturer_id = ?
+					AND pr.deleted_at IS NULL
+					AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 				ORDER BY
-					prt.id ASC
+					pr.template_id ASC
 			`
 
 			var registrations = make([]entity.WageRecapRegistration, 0)
-			err = r.db.SelectContext(ctx, &registrations, r.db.Rebind(query), academicManagers[i].Items[j].Id)
+			err = r.db.SelectContext(ctx, &registrations, r.db.Rebind(query),
+				academicManagers[i].Items[j].Id,
+				req.Timezone,
+				req.Month,
+			)
 			if err != nil {
 				log.Error().Err(err).Msgf("%s - failed to fetch registrations", fnName)
 				return nil, err
@@ -769,7 +789,6 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 						program_registrations pr
 					WHERE
 						pr.deleted_at IS NULL
-						AND pr.is_paid = TRUE
 						AND pr.lecturer_id = ?
 						AND pr.student_id = ?
 						AND pr.program_id = ?
