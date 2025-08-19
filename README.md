@@ -1,6 +1,43 @@
-# Kaffah Priority Finance Backend
+# Kaffah Priority Finance
 
-Backend of Kaffah Priority Finance project.
+## Project Overview
+
+### Problem Statement
+
+Managing the operations of an educational institution is often a complex, manual, and inefficient process. The main challenges include:
+
+* **Fragmented Data Management:** Data for students, lecturers, programs, and finances are scattered across various locations, making synchronization difficult.
+* **Manual Processes:** Program registration, lecturer salary calculations, and financial reporting, when done manually, are time-consuming and prone to human error.
+* **Limited Access Control:** It is difficult to securely grant appropriate access rights to each role (manager, admin, marketing, lecturer).
+* **Lack of Visibility:** The absence of a centralized dashboard hinders stakeholders from monitoring performance and making strategic decisions quickly.
+
+### The Proposed Solution
+
+**Kaffah Priority Finance** is a centralized backend system designed to address the challenges above. This application serves as a single source of truth that automates and simplifies the entire operational workflow of the institution.
+
+By providing a set of powerful and structured APIs, the system enables:
+
+* Seamless data integration between modules.
+* Automation of core business processes such as registration and reporting.
+* Data security through an authentication system and Role-Based Access Control (RBAC).
+
+### Key Features
+
+* **Master Data Management:** Centralized management of Program, Lecturer, Student, Academic Manager, and Marketer data.
+* **Access Control (RBAC):** A flexible access rights system to ensure that each user can only access data and features relevant to their role.
+* **Registration Management:** A complete workflow for managing student registrations for programs, including the use of templates for recurring registrations.
+* **Reporting & Finance:** A dedicated module for generating crucial reports such as lecturer salary recaps, acquisition reports, and registration summaries for financial analysis.
+* **Data Import/Export:** Functionality to import and export key financial data, such as lecturer wages, via Excel files.
+* **Authentication & Security:** A secure login process using JWT, complete with email verification and forgot/reset password features.
+
+### Tech Stack
+
+* **Language & Framework:** **Go** with the **Fiber** framework
+* **Database:** **PostgreSQL** with **sqlx** as a query builder
+* **Excel Processing:** **Excelize** (`github.com/xuri/excelize/v2`)
+* **Authentication:** **JSON Web Token (JWT)**
+* **Logging:** **Zerolog**
+* **Task Runner:** **Go-Task**
 
 ## Developer Guide
 
@@ -62,12 +99,16 @@ inexpensive to create and maintain. Even small fixes and changes should have the
 ### User
 
 * `POST /users/login`: User login
+* `POST /users/forgot-password`: User forgot password
+* `POST /users/reset-password`: User reset password
 * `GET /users/me`: Get current user
 * `POST /users/entities`: Create a new user
 * `GET /users/entities`: Get all users
 * `GET /users/entities/:id`: Get user by ID
 * `PUT /users/entities/:id`: Update user by ID
 * `DELETE /users/entities/:id`: Delete user by ID
+* `GET /users/email/verify`: Verify user email
+* `POST /users/email/verify/resend`: Resend verification email
 
 ### RBAC
 
