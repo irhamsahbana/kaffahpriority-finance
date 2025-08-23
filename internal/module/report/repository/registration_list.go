@@ -73,6 +73,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.allocated_at,
 			pr.notes,
 			pr.program_fee +
+			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
@@ -331,6 +332,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			pr.updated_at,
 			pr.notes,
 			pr.program_fee +
+			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
