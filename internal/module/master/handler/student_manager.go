@@ -18,7 +18,7 @@ func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getStudentManagers - failed to parse request")
@@ -49,8 +49,8 @@ func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getStudentManager - invalid request")
@@ -74,7 +74,7 @@ func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createStudentManager - failed to parse request")
@@ -103,8 +103,8 @@ func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateStudentManager - failed to parse request")
@@ -133,8 +133,8 @@ func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteStudentManager - invalid request")
@@ -158,7 +158,7 @@ func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getAcademicManagers - failed to parse request")
@@ -189,8 +189,8 @@ func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getAcademicManager - invalid request")
@@ -214,7 +214,7 @@ func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createAcademicManager - failed to parse request")
@@ -243,8 +243,8 @@ func (h *masterHandler) updateAcademicManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateAcademicManager - failed to parse request")
@@ -273,8 +273,8 @@ func (h *masterHandler) deleteAcademicManager(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteAcademicManager - invalid request")

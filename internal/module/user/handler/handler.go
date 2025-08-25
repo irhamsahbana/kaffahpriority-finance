@@ -71,7 +71,7 @@ func (h *userHandler) me(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::me - Invalid request")
 		code, errs := errmsg.Errors(err, req)
@@ -94,7 +94,7 @@ func (h *userHandler) getUsers(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -119,8 +119,8 @@ func (h *userHandler) getUser(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getUser - Invalid request")
@@ -144,8 +144,8 @@ func (h *userHandler) updateUser(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateUser - Invalid request")
@@ -174,8 +174,8 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteUser - Invalid request")
@@ -199,7 +199,7 @@ func (h *userHandler) createUser(c *fiber.Ctx) error {
 		l   = middleware.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::createUser - Invalid request")

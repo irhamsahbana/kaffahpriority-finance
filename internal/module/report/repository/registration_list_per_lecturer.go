@@ -17,9 +17,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	}
 
 	type argCombine struct {
-		LecturerId *string
-		StudentId  string
-		ProgramId  string
+		LecturerID *string
+		StudentID  string
+		ProgramID  string
 	}
 
 	var (
@@ -60,19 +60,19 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		args = append(args, "%"+req.Q+"%", "%"+req.Q+"%")
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND prt.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
-	if req.StudentId != "" {
+	if req.StudentID != "" {
 		query += ` AND prt.student_id = ?`
-		args = append(args, req.StudentId)
+		args = append(args, req.StudentID)
 	}
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND l.academic_manager_id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	query += `
@@ -107,9 +107,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		resp.Meta.TotalData = item.TotalData
 
 		argsCombine = append(argsCombine, argCombine{
-			LecturerId: item.LecturerId,
-			StudentId:  item.StudentId,
-			ProgramId:  item.ProgramId,
+			LecturerID: item.LecturerID,
+			StudentID:  item.StudentID,
+			ProgramID:  item.ProgramID,
 		})
 	}
 
@@ -170,19 +170,19 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 
 	args = append(args, req.Tz, req.Tz, req.Year)
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND l.academic_manager_id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
-	if req.StudentId != "" {
+	if req.StudentID != "" {
 		query += ` AND pr.student_id = ?`
-		args = append(args, req.StudentId)
+		args = append(args, req.StudentID)
 	}
 
 	if len(argsCombine) > 0 {
@@ -193,12 +193,12 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 				query += ` OR `
 			}
 
-			if item.LecturerId != nil {
+			if item.LecturerID != nil {
 				query += ` (pr.lecturer_id = ? AND pr.student_id = ? AND pr.program_id = ?) `
-				args = append(args, *item.LecturerId, item.StudentId, item.ProgramId)
+				args = append(args, *item.LecturerID, item.StudentID, item.ProgramID)
 			} else {
 				query += ` (pr.student_id = ? AND pr.program_id = ? AND pr.lecturer_id IS NULL) `
-				args = append(args, item.StudentId, item.ProgramId)
+				args = append(args, item.StudentID, item.ProgramID)
 			}
 		}
 
@@ -241,17 +241,17 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		// Isi map dengan data hasil query
 		for _, item := range dataPerMonth {
 			var lecturerId1, lecturerId2 string
-			if resp.Items[i].LecturerId != nil {
-				lecturerId1 = *resp.Items[i].LecturerId
+			if resp.Items[i].LecturerID != nil {
+				lecturerId1 = *resp.Items[i].LecturerID
 			}
-			if item.LecturerId != nil {
-				lecturerId2 = *item.LecturerId
+			if item.LecturerID != nil {
+				lecturerId2 = *item.LecturerID
 			}
 
-			if (resp.Items[i].LecturerId == nil && item.LecturerId == nil) ||
-				(resp.Items[i].LecturerId != nil && item.LecturerId != nil && lecturerId1 == lecturerId2) &&
-					resp.Items[i].StudentId == item.StudentId &&
-					resp.Items[i].ProgramId == item.ProgramId {
+			if (resp.Items[i].LecturerID == nil && item.LecturerID == nil) ||
+				(resp.Items[i].LecturerID != nil && item.LecturerID != nil && lecturerId1 == lecturerId2) &&
+					resp.Items[i].StudentID == item.StudentID &&
+					resp.Items[i].ProgramID == item.ProgramID {
 				monthMap[item.MonthNum] = item
 			}
 		}
@@ -266,9 +266,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 					IsUsed:     nil, // Nilai default jika tidak ada data
 					UsedAmount: nil, // Nilai default jika tidak ada data
 					Notes:      nil, // Nilai default jika tidak ada data
-					ProgramId:  resp.Items[i].ProgramId,
-					LecturerId: resp.Items[i].LecturerId,
-					StudentId:  resp.Items[i].StudentId,
+					ProgramID:  resp.Items[i].ProgramID,
+					LecturerID: resp.Items[i].LecturerID,
+					StudentID:  resp.Items[i].StudentID,
 				})
 			} else {
 				// Jika bulan sudah ada dalam data, tambahkan ke Registrations
@@ -286,7 +286,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 				}
 
 				// Simpan data registrasi terakhir
-				lastRegistrations[i] = resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].RegistrationId
+				lastRegistrations[i] = resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].RegistrationID
 				registrationIds = append(registrationIds, *lastRegistrations[i])
 
 				// Simpan index registrasi terakhir

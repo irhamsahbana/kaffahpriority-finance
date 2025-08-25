@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetStudentManagersReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 	types.MetaQuery
 }
 
@@ -21,32 +21,32 @@ type GetStudentManagersResp struct {
 }
 
 type CreateStudentManagerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
 	Name string `json:"name" validate:"required,min=3,max=255"`
 }
 
 type CreateStudentManagerResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type UpdateStudentManagerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id   string `json:"id" validate:"required"`
+	ID   string `json:"id" validate:"required"`
 	Name string `json:"name" validate:"required,min=3,max=255"`
 }
 
 type DeleteStudentManagerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required"`
 }
 
 type GetStudentManagerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required"`
 }
 
 type GetStudentManagerResp struct {

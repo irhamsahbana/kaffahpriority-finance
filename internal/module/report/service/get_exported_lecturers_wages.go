@@ -93,7 +93,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		InitialFee, _ := item.InitialFee.Float64()
 		RealFee, _ := item.RealFee.Float64()
 
-		f.SetCellValue(sheetName, fmt.Sprintf("R%v", row), item.RegistrationId)
+		f.SetCellValue(sheetName, fmt.Sprintf("R%v", row), item.RegistrationID)
 		f.SetCellValue(sheetName, fmt.Sprintf("A%v", row), seq)
 		if item.AcademicManagerName != nil {
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), *item.AcademicManagerName)

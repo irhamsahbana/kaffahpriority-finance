@@ -65,7 +65,7 @@ func (r *masterRepo) CreateAcademicManager(ctx context.Context, req *entity.Crea
 		return nil, err
 	}
 
-	resp.Id = id
+	resp.ID = id
 
 	return resp, nil
 }
@@ -86,7 +86,7 @@ func (r *masterRepo) GetAcademicManager(ctx context.Context, req *entity.GetAcad
 			id = ?
 	`
 
-	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetAcademicManager - failed to query academic manager")
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (r *masterRepo) UpdateAcademicManager(ctx context.Context, req *entity.Upda
 			id = ?
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateAcademicManager - failed to update academic manager")
 		return err
 	}
@@ -123,7 +123,7 @@ func (r *masterRepo) DeleteAcademicManager(ctx context.Context, req *entity.Dele
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteAcademicManager - failed to delete academic manager")
 		return err
 	}

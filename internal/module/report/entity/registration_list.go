@@ -6,7 +6,7 @@ import (
 )
 
 type GetRegistrationsReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	Q          string `query:"q" validate:"omitempty,min=3"` // search by student name
 	PaidAtFrom string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
@@ -14,10 +14,10 @@ type GetRegistrationsReq struct {
 	Timezone   string `query:"timezone" validate:"required,timezone"`
 	IsPaid     string `query:"is_paid" validate:"omitempty,oneof=true false"`
 
-	MarketerId string `query:"marketer_id" validate:"omitempty,ulid"`
-	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
-	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
+	MarketerID string `query:"marketer_id" validate:"omitempty,ulid"`
+	LecturerID string `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentID  string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramID  string `query:"program_id" validate:"omitempty,ulid"`
 
 	// mentor_detail_fee_used
 	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
@@ -76,14 +76,14 @@ type GetRegistrationsResp struct {
 }
 
 type RegisItem struct {
-	Id                         string       `json:"id" db:"id"`
-	TemplateId                 string       `json:"template_id" db:"template_id"`
-	ProgramId                  string       `json:"program_id" db:"program_id"`
-	MarketerId                 string       `json:"marketer_id" db:"marketer_id"`
-	StudentManagerId           string       `json:"student_manager_id" db:"student_manager_id"`
-	LecturerId                 *string      `json:"lecturer_id" db:"lecturer_id"`
-	AcademicManagerId          *string      `json:"academic_manager_id" db:"academic_manager_id"`
-	StudentId                  string       `json:"student_id" db:"student_id"`
+	ID                         string       `json:"id" db:"id"`
+	TemplateID                 string       `json:"template_id" db:"template_id"`
+	ProgramID                  string       `json:"program_id" db:"program_id"`
+	MarketerID                 string       `json:"marketer_id" db:"marketer_id"`
+	StudentManagerID           string       `json:"student_manager_id" db:"student_manager_id"`
+	LecturerID                 *string      `json:"lecturer_id" db:"lecturer_id"`
+	AcademicManagerID          *string      `json:"academic_manager_id" db:"academic_manager_id"`
+	StudentID                  string       `json:"student_id" db:"student_id"`
 	StudentIdentifier          string       `json:"student_identifier" db:"student_identifier"`
 	IsMandatoryFieldsCompleted bool         `json:"is_mandatory_fields_completed" db:"is_mandatory_fields_completed"`
 	ProgramName                string       `json:"program_name" db:"program_name"`
@@ -124,17 +124,17 @@ type RegisItem struct {
 }
 
 type GetExportedRegistrationsReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	Q          string `query:"q" validate:"omitempty,min=3"` // search by student name
 	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
 
-	MarketerId string `query:"marketer_id" validate:"omitempty,ulid"`
-	LecturerId string `query:"lecturer_id" validate:"omitempty,ulid"`
-	StudentId  string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramId  string `query:"program_id" validate:"omitempty,ulid"`
+	MarketerID string `query:"marketer_id" validate:"omitempty,ulid"`
+	LecturerID string `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentID  string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramID  string `query:"program_id" validate:"omitempty,ulid"`
 
 	// mentor_detail_fee_used
 	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
@@ -188,7 +188,7 @@ type GetExportedRegistrationsResp struct {
 }
 
 type GetExportedRegistrationsForCFO2MonthlyReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`
@@ -205,7 +205,7 @@ type GetExportedRegistrationsForCFO2MonthlyResp struct {
 }
 
 type GetExportedRegistrationsForCFO2YearlyReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	PaidAtYear string `query:"paid_at_year" validate:"required,datetime=2006"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
@@ -220,21 +220,21 @@ type GetExportedRegistrationsForCFO2YearlyResp struct {
 }
 
 type RegistrationYearlyRow struct {
-	AcademicManagerId   string                    `db:"academic_manager_id" json:"academic_manager_id"`
+	AcademicManagerID   string                    `db:"academic_manager_id" json:"academic_manager_id"`
 	AcademicManagerName string                    `db:"academic_manager_name" json:"academic_manager_name"`
-	LecturerId          string                    `db:"lecturer_id" json:"lecturer_id"`
+	LecturerID          string                    `db:"lecturer_id" json:"lecturer_id"`
 	LecturerName        string                    `db:"lecturer_name" json:"lecturer_name"`
-	StudentId           string                    `db:"student_id" json:"student_id"`
+	StudentID           string                    `db:"student_id" json:"student_id"`
 	StudentName         string                    `db:"student_name" json:"student_name"`
-	ProgramId           string                    `db:"program_id" json:"program_id"`
+	ProgramID           string                    `db:"program_id" json:"program_id"`
 	ProgramName         string                    `db:"program_name" json:"program_name"`
-	MarketerId          string                    `db:"marketer_id" json:"marketer_id"`
+	MarketerID          string                    `db:"marketer_id" json:"marketer_id"`
 	MarketerName        string                    `db:"marketer_name" json:"marketer_name"`
 	Months              []RegistrationYearlyMonth `json:"months"`
 }
 
 type RegistrationYearlyMonth struct {
-	RegistrationId string   `db:"registration_id" json:"registration_id"`
+	RegistrationID string   `db:"registration_id" json:"registration_id"`
 	HRFeeForMentor *float64 `db:"hr_fee_for_mentor" json:"hr_fee_for_mentor"`
 	PaidAt         string   `db:"paid_at" json:"paid_at"`
 	PaidAtMonth    int      `db:"paid_at_month" json:"paid_at_month"`
@@ -242,7 +242,7 @@ type RegistrationYearlyMonth struct {
 }
 
 type GetExportedRegistrationsForWageRecapMonthlyReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	Month    string `query:"month" validate:"required,datetime=2006-01"`
 	Timezone string `query:"timezone" validate:"required,timezone"`
@@ -263,22 +263,22 @@ type GetExportedRegistrationsForWageRecapMonthlyResp struct {
 }
 
 type WageRecapAcademicManager struct {
-	Id    string              `db:"id" json:"id"`
+	ID    string              `db:"id" json:"id"`
 	Name  string              `db:"name" json:"name"`
 	Items []WageRecapLecturer `json:"items"`
 }
 
 type WageRecapLecturer struct {
-	Id    string                  `db:"id" json:"id"`
+	ID    string                  `db:"id" json:"id"`
 	Name  string                  `db:"name" json:"name"`
 	Items []WageRecapRegistration `json:"items"`
 }
 
 type WageRecapRegistration struct {
-	Id           string `db:"id" json:"id"`
-	StudentId    string `db:"student_id" json:"student_id"`
-	ProgramId    string `db:"program_id" json:"program_id"`
-	LecturerId   string `db:"lecturer_id" json:"lecturer_id"`
+	ID           string `db:"id" json:"id"`
+	StudentID    string `db:"student_id" json:"student_id"`
+	ProgramID    string `db:"program_id" json:"program_id"`
+	LecturerID   string `db:"lecturer_id" json:"lecturer_id"`
 	StudentName  string `db:"student_name" json:"student_name"`
 	ProgramName  string `db:"program_name" json:"program_name"`
 	MarketerName string `db:"marketer_name" json:"marketer_name"`

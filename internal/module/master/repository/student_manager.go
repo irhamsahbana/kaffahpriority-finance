@@ -67,7 +67,7 @@ func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.Creat
 		return nil, err
 	}
 
-	resp.Id = Id
+	resp.ID = Id
 
 	return resp, nil
 }
@@ -89,7 +89,7 @@ func (r *masterRepo) GetStudentManager(ctx context.Context, req *entity.GetStude
 			AND deleted_at IS NULL
 	`
 
-	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Any("req", req).Msg("repo::GetStudentManager - student manager not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Pengelola Santri tidak ditemukan")
@@ -114,7 +114,7 @@ func (r *masterRepo) UpdateStudentManager(ctx context.Context, req *entity.Updat
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateStudentManager - failed to update student manager")
 		return err
 	}
@@ -132,7 +132,7 @@ func (r *masterRepo) DeleteStudentManager(ctx context.Context, req *entity.Delet
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteStudentManager - failed to delete student manager")
 		return err
 	}

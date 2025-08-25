@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetStudentsReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	IsActive string `query:"is_active" validate:"omitempty,oneof=true false"`
 	Q        string `query:"q" validate:"omitempty,min=3"`
@@ -28,9 +28,9 @@ type GetStudentsResp struct {
 }
 
 type GetStudentReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id string `params:"id" validate:"required,ulid"`
+	ID string `params:"id" validate:"required,ulid"`
 }
 
 type GetStudentResp struct {
@@ -38,7 +38,7 @@ type GetStudentResp struct {
 }
 
 type CreateStudentReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	Identifier   string  `json:"identifier" validate:"required"`
 	Name         string  `json:"name" validate:"required,min=3"`
@@ -46,13 +46,13 @@ type CreateStudentReq struct {
 }
 
 type CreateStudentResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type UpdateStudentReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id           string  `params:"id" validate:"required,ulid"`
+	ID           string  `params:"id" validate:"required,ulid"`
 	Identifier   string  `json:"identifier" validate:"required"`
 	Name         string  `json:"name" validate:"required,min=3"`
 	RegisteredAt *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
@@ -60,7 +60,7 @@ type UpdateStudentReq struct {
 }
 
 type DeleteStudentReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id string `params:"id" validate:"required,ulid"`
+	ID string `params:"id" validate:"required,ulid"`
 }

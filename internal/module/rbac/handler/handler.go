@@ -48,7 +48,7 @@ func (h *rbacHandler) GetRoleAndPermissions(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::GetRoleAndPermissions - invalid request")
@@ -72,7 +72,7 @@ func (h *rbacHandler) CreateRole(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::CreateRole - invalid request")
@@ -101,8 +101,8 @@ func (h *rbacHandler) UpdateRole(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRole - invalid request")
@@ -131,8 +131,8 @@ func (h *rbacHandler) GetRoleDetail(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.RoleId = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.RoleID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::GetRoleDetail - invalid request")
@@ -156,8 +156,8 @@ func (h *rbacHandler) DeleteRole(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::DeleteRole - invalid request")
@@ -180,7 +180,7 @@ func (h *rbacHandler) GetPermissions(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::GetPermissions - invalid request")
@@ -204,8 +204,8 @@ func (h *rbacHandler) UpdateRolePermissions(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.RoleId = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.RoleID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRolePermissions - invalid request")

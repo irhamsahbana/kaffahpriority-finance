@@ -15,7 +15,7 @@ func (r *reportRepo) DeleteRegistration(ctx context.Context, req *entity.GetRegi
 		AND deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, query, req.Id)
+	_, err := r.db.ExecContext(ctx, query, req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteRegistration - error deleting registration")
 		return err

@@ -153,7 +153,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 			resp.TotalITP++
 		}
 
-		registrationIds = append(registrationIds, resp.Items[i].Id)
+		registrationIds = append(registrationIds, resp.Items[i].ID)
 	}
 
 	type daos struct {
@@ -196,7 +196,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 
 	for i, item := range resp.Items {
 		for _, data := range daosData {
-			if item.Id == data.PrId {
+			if item.ID == data.PrId {
 				resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				resp.Items[i].StudentName += ", " + *data.AddStudent.Name
 			}

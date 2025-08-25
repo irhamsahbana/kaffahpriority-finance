@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetUsersReq struct {
-	UserId string `json:"user_id" validate:"required,ulid"`
+	UserID string `json:"user_id" validate:"required,ulid"`
 
 	types.MetaQuery
 }
@@ -14,8 +14,8 @@ type GetUsersResp struct {
 }
 
 type UserItem struct {
-	Id     string `json:"id" db:"id"`
-	RoleId string `json:"role_id" db:"role_id"`
+	ID     string `json:"id" db:"id"`
+	RoleID string `json:"role_id" db:"role_id"`
 	Name   string `json:"name" db:"name"`
 	Email  string `json:"email" db:"email"`
 	Role   string `json:"role" db:"role"`

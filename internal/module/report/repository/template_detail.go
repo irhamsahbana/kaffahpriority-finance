@@ -70,7 +70,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 			AND prt.deleted_at IS NULL
 	`
 
-	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id)
+	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - data not found", fnName)
@@ -96,7 +96,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 			adds.prt_id = ?
 	`
 
-	err = r.db.SelectContext(ctx, &resp.Students, r.db.Rebind(query), req.Id)
+	err = r.db.SelectContext(ctx, &resp.Students, r.db.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err

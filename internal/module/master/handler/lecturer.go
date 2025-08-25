@@ -46,8 +46,8 @@ func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturer - invalid request")
@@ -71,7 +71,7 @@ func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createLecturer - failed to parse request")
@@ -100,8 +100,8 @@ func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateLecturer - failed to parse request")
@@ -130,8 +130,8 @@ func (h *masterHandler) deleteLecturer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteLecturer - invalid request")

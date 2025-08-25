@@ -6,8 +6,8 @@ import (
 )
 
 type UpdateTemplateGeneralReq struct {
-	Id     string `params:"id" validate:"ulid"`
-	UserId string ` json:"user_id" validate:"ulid"`
+	ID     string `params:"id" validate:"ulid"`
+	UserID string ` json:"user_id" validate:"ulid"`
 
 	ProgramId          string       `json:"program_id" validate:"ulid"`
 	MarketerId         *string      `json:"marketer_id" validate:"omitempty,ulid"`
@@ -34,7 +34,7 @@ func (req *UpdateTemplateGeneralReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
 
 	for i, s := range req.AdditionalStudents {
-		if s.StudentId != nil && s.Name != nil {
+		if s.StudentID != nil && s.Name != nil {
 			err.Add(fmt.Sprintf("additional_students[%d].student_id", i), "student_id dan name tidak boleh diisi bersamaan")
 			err.Add(fmt.Sprintf("additional_students[%d].name", i), "student_id dan name tidak boleh diisi bersamaan")
 		}
@@ -48,7 +48,7 @@ func (req *UpdateTemplateGeneralReq) Validate() error {
 }
 
 type UpdateTemplateFinanceReq struct {
-	Id string `params:"id" validate:"ulid"`
+	ID string `params:"id" validate:"ulid"`
 
 	ProgramFee            *float64 `json:"program_fee" validate:"required,min=0"`
 	AdministrationFee     float64  `json:"administration_fee" validate:"min=0"`
@@ -63,5 +63,5 @@ type UpdateTemplateFinanceReq struct {
 }
 
 type UpdateTemplateResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }

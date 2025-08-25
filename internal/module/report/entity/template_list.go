@@ -8,7 +8,7 @@ import (
 
 type GetTemplatesReq struct {
 	Q      string `query:"q" validate:"omitempty,min=3"`
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	types.MetaQuery
 
@@ -31,14 +31,14 @@ type GetTemplatesResp struct {
 }
 
 type TemplateItem struct {
-	Id                      string        `json:"id" db:"id"`
-	UserId                  string        `json:"user_id" db:"user_id"`
-	ProgramId               string        `json:"program_id" db:"program_id"`
-	MarketerId              *string       `json:"marketer_id" db:"marketer_id"`
-	StudentManagerId        *string       `json:"student_manager_id" db:"student_manager_id"`
-	LecturerId              *string       `json:"lecturer_id" db:"lecturer_id"`
-	AcademicManagerId       *string       `json:"academic_manager_id" db:"academic_manager_id"`
-	StudentId               string        `json:"student_id" db:"student_id"`
+	ID                      string        `json:"id" db:"id"`
+	UserID                  string        `json:"user_id" db:"user_id"`
+	ProgramID               string        `json:"program_id" db:"program_id"`
+	MarketerID              *string       `json:"marketer_id" db:"marketer_id"`
+	StudentManagerID        *string       `json:"student_manager_id" db:"student_manager_id"`
+	LecturerID              *string       `json:"lecturer_id" db:"lecturer_id"`
+	AcademicManagerID       *string       `json:"academic_manager_id" db:"academic_manager_id"`
+	StudentID               string        `json:"student_id" db:"student_id"`
 	StudentIdentifier       string        `json:"student_identifier" db:"student_identifier"`
 	ProgramName             string        `json:"program_name" db:"program_name"`
 	LecturerName            *string       `json:"lecturer_name" db:"lecturer_name"`

@@ -60,7 +60,7 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 	resp.Items = make([]entity.RolePermissionItem, 0)
 
 	type RolePermission struct {
-		RoleId       string  `db:"role_id"`
+		RoleID       string  `db:"role_id"`
 		Role         string  `db:"role"`
 		PermissionId *string `db:"permission_id"`
 		Permission   *string `db:"permission"`
@@ -90,17 +90,17 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 
 	rolePermissionMap := make(map[string]*entity.RolePermissionItem)
 	for _, v := range data {
-		if _, ok := rolePermissionMap[v.RoleId]; !ok {
-			rolePermissionMap[v.RoleId] = &entity.RolePermissionItem{
-				RoleId:      v.RoleId,
+		if _, ok := rolePermissionMap[v.RoleID]; !ok {
+			rolePermissionMap[v.RoleID] = &entity.RolePermissionItem{
+				RoleID:      v.RoleID,
 				Role:        v.Role,
 				Permissions: make([]entity.Permission, 0),
 			}
 		}
 
 		if v.Permission != nil {
-			rolePermissionMap[v.RoleId].Permissions = append(rolePermissionMap[v.RoleId].Permissions, entity.Permission{
-				Id:          *v.PermissionId,
+			rolePermissionMap[v.RoleID].Permissions = append(rolePermissionMap[v.RoleID].Permissions, entity.Permission{
+				ID:          *v.PermissionId,
 				Name:        *v.Permission,
 				Description: *v.Description,
 			})
@@ -116,7 +116,7 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 
 func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error) {
 	var resp entity.CreateRoleResp
-	resp.Id = ulid.Make().String()
+	resp.ID = ulid.Make().String()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -130,7 +130,7 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 		VALUES (?, ?)
 	`
 
-	_, err = tx.ExecContext(ctx, r.db.Rebind(query), resp.Id, req.Name)
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.Name)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to create role")
 		return nil, err
@@ -153,7 +153,7 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 	query = tx.Rebind(query)
 
 	for _, v := range req.Permissions {
-		_, err = tx.ExecContext(ctx, query, resp.Id, v)
+		_, err = tx.ExecContext(ctx, query, resp.ID, v)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to insert role permissions")
 			return nil, err
@@ -171,7 +171,7 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 
 func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error) {
 	var resp entity.UpdateRoleResp
-	resp.Id = req.Id
+	resp.ID = req.ID
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -188,7 +188,7 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 		WHERE id = ?
 	`
 
-	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.Name, req.Id)
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to update role")
 		return nil, err
@@ -199,7 +199,7 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 		WHERE role_id = ?
 	`
 
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to delete role permissions")
 		return nil, err
@@ -222,7 +222,7 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 	query = tx.Rebind(query)
 
 	for _, v := range req.Permissions {
-		_, err = tx.ExecContext(ctx, query, req.Id, v)
+		_, err = tx.ExecContext(ctx, query, req.ID, v)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to insert role permissions")
 			return nil, err
@@ -246,7 +246,7 @@ func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) er
 		AND deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id)
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteRole - failed to delete role")
 		return err
@@ -282,7 +282,7 @@ func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermission
 
 func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.UpdateRolePermissionsReq) (*entity.UpdateRolePermissionsResp, error) {
 	var resp entity.UpdateRolePermissionsResp
-	resp.Id = req.RoleId
+	resp.ID = req.RoleID
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -314,14 +314,14 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 			WHERE u.id = ?
 		`
 
-		var roleId string
-		err = tx.GetContext(ctx, &roleId, tx.Rebind(query), req.UserId)
+		var roleID string
+		err = tx.GetContext(ctx, &roleID, tx.Rebind(query), req.UserID)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to get role id")
 			return nil, err
 		}
 
-		if roleId == req.RoleId && roleThatHasAllAccess == 1 {
+		if roleID == req.RoleID && roleThatHasAllAccess == 1 {
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Role ini adalah role terakhir yang memiliki all_access permission!")
 		}
 
@@ -335,7 +335,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 		WHERE role_id = ?
 	`
 
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.RoleId)
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.RoleID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to delete role permissions")
 		return nil, err
@@ -348,7 +348,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 	query = tx.Rebind(query)
 
 	for _, v := range req.Permissions {
-		_, err = tx.ExecContext(ctx, query, req.RoleId, v)
+		_, err = tx.ExecContext(ctx, query, req.RoleID, v)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to insert role permissions")
 			return nil, err
@@ -371,7 +371,7 @@ func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailR
 	resp.Permissions = make([]entity.Permission, 0)
 
 	type RolePermission struct {
-		RoleId       string  `db:"role_id"`
+		RoleID       string  `db:"role_id"`
 		Role         string  `db:"role"`
 		PermissionId *string `db:"permission_id"`
 		Permission   *string `db:"permission"`
@@ -394,7 +394,7 @@ func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailR
 	`
 
 	data := make([]RolePermission, 0)
-	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.RoleId)
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.RoleID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetRoleDetail - failed to get role detail")
 		return nil, err
@@ -402,17 +402,17 @@ func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailR
 
 	rolePermissionMap := make(map[string]*entity.RolePermissionItem)
 	for _, v := range data {
-		if _, ok := rolePermissionMap[v.RoleId]; !ok {
-			rolePermissionMap[v.RoleId] = &entity.RolePermissionItem{
-				RoleId:      v.RoleId,
+		if _, ok := rolePermissionMap[v.RoleID]; !ok {
+			rolePermissionMap[v.RoleID] = &entity.RolePermissionItem{
+				RoleID:      v.RoleID,
 				Role:        v.Role,
 				Permissions: make([]entity.Permission, 0),
 			}
 		}
 
 		if v.Permission != nil {
-			rolePermissionMap[v.RoleId].Permissions = append(rolePermissionMap[v.RoleId].Permissions, entity.Permission{
-				Id:          *v.PermissionId,
+			rolePermissionMap[v.RoleID].Permissions = append(rolePermissionMap[v.RoleID].Permissions, entity.Permission{
+				ID:          *v.PermissionId,
 				Name:        *v.Permission,
 				Description: *v.Description,
 			})

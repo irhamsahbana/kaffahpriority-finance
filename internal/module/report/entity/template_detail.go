@@ -3,14 +3,14 @@ package entity
 import "github.com/lib/pq"
 
 type GetTemplateReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id string `params:"id" validate:"ulid"`
+	ID string `params:"id" validate:"ulid"`
 }
 
 type GetTemplateResp struct {
-	Id                    string        `json:"id" db:"id"`
-	UserId                string        `json:"user_id" db:"user_id"`
+	ID                    string        `json:"id" db:"id"`
+	UserID                string        `json:"user_id" db:"user_id"`
 	ProgramId             string        `json:"program_id" db:"program_id"`
 	MarketerId            *string       `json:"marketer_id" db:"marketer_id"`
 	StudentManagerId      *string       `json:"student_manager_id" db:"student_manager_id"`

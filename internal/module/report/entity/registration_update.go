@@ -6,9 +6,9 @@ import (
 )
 
 type UpdateRegistrationReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id                    string       `params:"id" validate:"ulid"`
+	ID                    string       `params:"id" validate:"ulid"`
 	ProgramId             string       `json:"program_id" validate:"ulid"`
 	MarketerId            string       `json:"marketer_id" validate:"ulid"`
 	LecturerId            *string      `json:"lecturer_id" validate:"omitempty,ulid"`
@@ -37,7 +37,7 @@ func (r *UpdateRegistrationReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
 
 	for i, s := range r.Students {
-		if s.StudentId != nil && s.Name != nil {
+		if s.StudentID != nil && s.Name != nil {
 			err.Add(fmt.Sprintf("additional_students[%d].student_id", i), "student_id dan name tidak boleh diisi bersamaan")
 			err.Add(fmt.Sprintf("additional_students[%d].name", i), "student_id dan name tidak boleh diisi bersamaan")
 		}
@@ -51,5 +51,5 @@ func (r *UpdateRegistrationReq) Validate() error {
 }
 
 type UpdateRegistrationResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }

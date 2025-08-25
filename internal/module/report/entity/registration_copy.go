@@ -1,7 +1,7 @@
 package entity
 
 type CopyRegistrationsReq struct {
-	UserId        string          `json:"user_id" validate:"required,ulid"`
+	UserID        string          `json:"user_id" validate:"required,ulid"`
 	Registrations []CopyRegisItem `validate:"required,dive"`
 }
 

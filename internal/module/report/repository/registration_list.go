@@ -161,24 +161,24 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		}
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
-	if req.MarketerId != "" {
+	if req.MarketerID != "" {
 		query += ` AND pr.marketer_id = ?`
-		args = append(args, req.MarketerId)
+		args = append(args, req.MarketerID)
 	}
 
-	if req.StudentId != "" {
+	if req.StudentID != "" {
 		query += ` AND pr.student_id = ?`
-		args = append(args, req.StudentId)
+		args = append(args, req.StudentID)
 	}
 
-	if req.ProgramId != "" {
+	if req.ProgramID != "" {
 		query += ` AND pr.program_id = ?`
-		args = append(args, req.ProgramId)
+		args = append(args, req.ProgramID)
 	}
 
 	if req.IsPaid != "" {
@@ -220,7 +220,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	for _, item := range data {
 		resp.Meta.TotalData = item.TotalData
-		registrationIds = append(registrationIds, item.Id)
+		registrationIds = append(registrationIds, item.ID)
 		resp.Items = append(resp.Items, item.RegisItem)
 		resp.Items[len(resp.Items)-1].Students = make([]entity.AddStudent, 0)
 	}
@@ -266,7 +266,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 		for i, item := range resp.Items {
 			for _, data := range daosData {
-				if item.Id == data.PrId {
+				if item.ID == data.PrId {
 					resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				}
 			}
@@ -410,7 +410,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			resp.TotalITP++
 		}
 
-		registrationIds = append(registrationIds, resp.Items[i].Id)
+		registrationIds = append(registrationIds, resp.Items[i].ID)
 	}
 
 	type daos struct {
@@ -453,7 +453,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	for i, item := range resp.Items {
 		for _, data := range daosData {
-			if item.Id == data.PrId {
+			if item.ID == data.PrId {
 				resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				resp.Items[i].StudentName += ", " + *data.AddStudent.Name
 			}
@@ -548,51 +548,51 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 
 	for _, item := range data {
 
-		key := fmt.Sprintf("%s-%s-%s-%s-%s", *item.AcademicManagerId, *item.LecturerId, item.MarketerId, item.StudentId, item.ProgramId)
+		key := fmt.Sprintf("%s-%s-%s-%s-%s", *item.AcademicManagerID, *item.LecturerID, item.MarketerID, item.StudentID, item.ProgramID)
 
 		if _, ok := groupExist[key]; !ok {
 			groupExist[key] = struct{}{}
 			ress = append(ress, entity.RegistrationYearlyRow{
-				AcademicManagerId:   *item.AcademicManagerId,
+				AcademicManagerID:   *item.AcademicManagerID,
 				AcademicManagerName: *item.AcademicManagerName,
-				LecturerId:          *item.LecturerId,
+				LecturerID:          *item.LecturerID,
 				LecturerName:        *item.LecturerName,
-				StudentId:           item.StudentId,
+				StudentID:           item.StudentID,
 				StudentName:         item.StudentName,
-				MarketerId:          item.MarketerId,
+				MarketerID:          item.MarketerID,
 				MarketerName:        item.MarketerName,
 				Months:              []entity.RegistrationYearlyMonth{},
 			})
 
 			ress[len(ress)-1].Months = append(ress[len(ress)-1].Months, entity.RegistrationYearlyMonth{
-				RegistrationId: item.Id,
+				RegistrationID: item.ID,
 				HRFeeForMentor: item.HRFeeForMentor,
 				PaidAt:         item.PaidAt,
 				PaidAtMonth:    item.PaidAtMonth,
 			})
 
-			ress[len(ress)-1].ProgramId = item.ProgramId
+			ress[len(ress)-1].ProgramID = item.ProgramID
 			ress[len(ress)-1].ProgramName = item.ProgramName
-			ress[len(ress)-1].LecturerId = *item.LecturerId
+			ress[len(ress)-1].LecturerID = *item.LecturerID
 			ress[len(ress)-1].LecturerName = *item.LecturerName
-			ress[len(ress)-1].AcademicManagerId = *item.AcademicManagerId
+			ress[len(ress)-1].AcademicManagerID = *item.AcademicManagerID
 			ress[len(ress)-1].AcademicManagerName = *item.AcademicManagerName
-			ress[len(ress)-1].StudentId = item.StudentId
+			ress[len(ress)-1].StudentID = item.StudentID
 			ress[len(ress)-1].StudentName = item.StudentName
-			ress[len(ress)-1].MarketerId = item.MarketerId
+			ress[len(ress)-1].MarketerID = item.MarketerID
 			ress[len(ress)-1].MarketerName = item.MarketerName
 
 		} else {
 			for i, res := range ress {
-				if res.AcademicManagerId == *item.AcademicManagerId &&
-					res.LecturerId == *item.LecturerId &&
-					res.MarketerId == item.MarketerId &&
-					res.ProgramId == item.ProgramId &&
-					res.StudentId == item.StudentId {
+				if res.AcademicManagerID == *item.AcademicManagerID &&
+					res.LecturerID == *item.LecturerID &&
+					res.MarketerID == item.MarketerID &&
+					res.ProgramID == item.ProgramID &&
+					res.StudentID == item.StudentID {
 					// month in number
 
 					ress[i].Months = append(ress[i].Months, entity.RegistrationYearlyMonth{
-						RegistrationId: item.Id,
+						RegistrationID: item.ID,
 						HRFeeForMentor: item.HRFeeForMentor,
 						PaidAt:         item.PaidAt,
 						PaidAtMonth:    item.PaidAtMonth,
@@ -658,7 +658,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				AND l.academic_manager_id = ?
 		`
 
-		err = r.db.SelectContext(ctx, &academicManagers[i].Items, r.db.Rebind(query), academicManagers[i].Id)
+		err = r.db.SelectContext(ctx, &academicManagers[i].Items, r.db.Rebind(query), academicManagers[i].ID)
 		if err != nil {
 			log.Error().Err(err).Msgf("%s - failed to fetch lecturers", fnName)
 			return nil, err
@@ -704,7 +704,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 			var registrations = make([]entity.WageRecapRegistration, 0)
 			err = r.db.SelectContext(ctx, &registrations, r.db.Rebind(query),
-				academicManagers[i].Items[j].Id,
+				academicManagers[i].Items[j].ID,
 				req.Timezone,
 				req.Month,
 			)
@@ -743,7 +743,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				`
 
 				var addStudents = make([]entity.AddStudent, 0)
-				err = r.db.SelectContext(ctx, &addStudents, r.db.Rebind(queryAddStudents), academicManagers[i].Items[j].Items[k].Id)
+				err = r.db.SelectContext(ctx, &addStudents, r.db.Rebind(queryAddStudents), academicManagers[i].Items[j].Items[k].ID)
 				if err != nil {
 					log.Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
 					return nil, err
@@ -807,9 +807,9 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 				args := make([]any, 0, 5)
 				args = append(args,
-					academicManagers[i].Items[j].Items[k].LecturerId,
-					academicManagers[i].Items[j].Items[k].StudentId,
-					academicManagers[i].Items[j].Items[k].ProgramId,
+					academicManagers[i].Items[j].Items[k].LecturerID,
+					academicManagers[i].Items[j].Items[k].StudentID,
+					academicManagers[i].Items[j].Items[k].ProgramID,
 					req.Timezone,
 					req.Month,
 				)

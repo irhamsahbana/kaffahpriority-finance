@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetAcquisitionRightsAggregateReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 	types.MetaQuery
 
 	For               string `query:"for" validate:"required,oneof=academic_manager student_manager"`

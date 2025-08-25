@@ -23,7 +23,7 @@ func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::createRegistrations - invalid request")
@@ -52,7 +52,7 @@ func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::copyRegistrations - invalid request")
@@ -81,8 +81,8 @@ func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistration - invalid request")
@@ -117,7 +117,7 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -153,7 +153,7 @@ func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -189,8 +189,8 @@ func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistrationLecturer - invalid request")
@@ -219,8 +219,8 @@ func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistrationIsPaid - invalid request")

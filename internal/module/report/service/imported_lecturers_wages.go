@@ -90,7 +90,7 @@ func (s *reportService) ImportLecturersWages(
 		if err != nil {
 			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "id tidak valid")
 		}
-		data.RegistrationId = registrationId
+		data.RegistrationID = registrationId
 
 		// field ProgramMeetings
 		programMeetings, err := strconv.Atoi(jumlahStr)

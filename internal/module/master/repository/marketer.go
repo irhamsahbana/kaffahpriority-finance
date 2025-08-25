@@ -92,7 +92,7 @@ func (r *masterRepo) GetMarketer(ctx context.Context, req *entity.GetMarketerReq
 			AND m.deleted_at IS NULL
 	`
 
-	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Any("req", req).Msg("repo::GetMarketer - marketer not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Pemasar tidak ditemukan")
@@ -122,12 +122,12 @@ func (r *masterRepo) CreateMarketer(ctx context.Context, req *entity.CreateMarke
 		resp = new(entity.CreateMarketerResp)
 	)
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), Id, req.StudentManagerId, req.Name, req.Email, req.Phone); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), Id, req.StudentManagerID, req.Name, req.Email, req.Phone); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateMarketer - failed to create marketer")
 		return nil, err
 	}
 
-	resp.Id = Id
+	resp.ID = Id
 
 	return resp, nil
 }
@@ -146,7 +146,7 @@ func (r *masterRepo) UpdateMarketer(ctx context.Context, req *entity.UpdateMarke
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.StudentManagerId, req.Name, req.Email, req.Phone, req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.StudentManagerID, req.Name, req.Email, req.Phone, req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateMarketer - failed to update marketer")
 		return err
 	}
@@ -164,7 +164,7 @@ func (r *masterRepo) DeleteMarketer(ctx context.Context, req *entity.DeleteMarke
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteMarketer - failed to delete marketer")
 		return err
 	}

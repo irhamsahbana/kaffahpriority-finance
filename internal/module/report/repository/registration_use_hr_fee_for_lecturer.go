@@ -30,7 +30,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	`
 	var mentorDetailFee decimal.Decimal
 
-	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationId)
+	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - mentor detail fee not found", fnName)
@@ -71,7 +71,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 			AND deleted_at IS NULL
 	`
 
-	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, req.Notes, req.RegistrationId)
+	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, req.Notes, req.RegistrationID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update mentor detail fee used", fnName)
 		return err

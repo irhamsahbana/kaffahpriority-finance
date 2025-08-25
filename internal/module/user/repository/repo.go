@@ -155,7 +155,7 @@ func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity
 			u.deleted_at IS NULL
 	`
 
-	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.Id)
+	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msg("repo::GetUser - user not found")
@@ -174,14 +174,14 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 		queryParts = []string{}
 		args       = []any{}
 	)
-	resp.Id = req.Id
+	resp.ID = req.ID
 
 	queryParts = append(queryParts, `
 		role_id = ?,
 		name = ?,
 		email = ?
 	`)
-	args = append(args, req.RoleId, req.Name, req.Email)
+	args = append(args, req.RoleID, req.Name, req.Email)
 
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -202,7 +202,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 		WHERE
 			id = ?
 	`
-	args = append(args, req.Id)
+	args = append(args, req.ID)
 
 	queryPartsStr := strings.Join(queryParts, ", ")
 	query = fmt.Sprintf(query, queryPartsStr)
@@ -228,7 +228,7 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 			deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id)
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteUser - failed to delete user")
 		return err
@@ -239,7 +239,7 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 
 func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserResp, error) {
 	var resp entity.CreateUserResp
-	resp.Id = ulid.Make().String()
+	resp.ID = ulid.Make().String()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -261,7 +261,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*
 		)
 	`
 
-	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), resp.Id, req.RoleId, req.Name, req.Email, hashedPassword)
+	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.RoleID, req.Name, req.Email, hashedPassword)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::CreateUser - failed to create user")
 		return nil, err
@@ -292,7 +292,7 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 		AND
 			u.deleted_at IS NULL
 	`
-	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.UserId)
+	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msg("repo::GetMe - user not found")
@@ -321,7 +321,7 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 			AND p.deleted_at IS NULL
 	`
 
-	err = r.db.SelectContext(ctx, &resp.Permissions, r.db.Rebind(query), req.UserId)
+	err = r.db.SelectContext(ctx, &resp.Permissions, r.db.Rebind(query), req.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		log.Error().Err(err).Any("req", req).Msg("repo::GetMe - failed to fetch permissions")
 		return nil, err

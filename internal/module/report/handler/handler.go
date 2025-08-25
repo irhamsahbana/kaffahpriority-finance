@@ -82,7 +82,7 @@ func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getSummaries - invalid request")
@@ -119,7 +119,7 @@ func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getSummariesForCFO2 - invalid request")
@@ -155,7 +155,7 @@ func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistrationsPaidAt - invalid request")
@@ -184,7 +184,7 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -227,7 +227,7 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	// req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -270,7 +270,7 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) erro
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForCFO2Yearly - invalid request")
@@ -310,7 +310,7 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -347,8 +347,8 @@ func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistration - invalid request")
@@ -372,8 +372,8 @@ func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteRegistration - invalid request")
@@ -403,7 +403,7 @@ func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 	}
 
 	req.SetDefault()
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerPrograms - invalid request")
@@ -432,8 +432,8 @@ func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.RegistrationId = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::hrDistributions - invalid request")
@@ -462,8 +462,8 @@ func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.RegistrationId = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::lecturerDistributions - invalid request")
@@ -498,7 +498,7 @@ func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -528,7 +528,7 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -558,7 +558,7 @@ func (h *reportHandler) getExportedLecturersWages(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -608,7 +608,7 @@ func (h *reportHandler) importLecturersWages(c *fiber.Ctx) error {
 	defer file.Close()
 
 	req.File = file
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := h.service.ImportLecturersWages(c.Context(), req); err != nil {
 		code, errs := errmsg.Errors[error](err)
@@ -630,7 +630,7 @@ func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -660,7 +660,7 @@ func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
@@ -690,8 +690,8 @@ func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.RegistrationId = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateLecturerWages - invalid request")
@@ -727,7 +727,7 @@ func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 	}
 
 	req.SetDefault()
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::generateRegistrationReports - invalid request")
@@ -756,7 +756,7 @@ func (h *reportHandler) registrationMultiAllocation(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {

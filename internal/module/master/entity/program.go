@@ -7,7 +7,7 @@ import (
 )
 
 type GetProgramsReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
 	Q string `query:"q" validate:"omitempty,min=2"`
 	types.MetaQuery
@@ -37,8 +37,8 @@ type GetProgramsResp struct {
 }
 
 type GetProgramReq struct {
-	UserId string `validate:"ulid"`
-	Id     string `params:"id" validate:"ulid"`
+	UserID string `validate:"ulid"`
+	ID     string `params:"id" validate:"ulid"`
 }
 
 type GetProgramResp struct {
@@ -46,7 +46,7 @@ type GetProgramResp struct {
 }
 
 type CreateProgramReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
 	Name              string  `json:"name" validate:"required,min=3"`
 	Detail            *string `json:"detail" validate:"omitempty,min=3"`
@@ -60,13 +60,13 @@ type CreateProgramReq struct {
 }
 
 type CreateProgramResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type UpdateProgramReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id                string  `params:"id" validate:"required,ulid"`
+	ID                string  `params:"id" validate:"required,ulid"`
 	Name              string  `json:"name" validate:"required,min=3"`
 	Detail            *string `json:"detail" validate:"omitempty,min=3"`
 	Price             float64 `json:"price" validate:"required,gt=0"`
@@ -79,14 +79,14 @@ type UpdateProgramReq struct {
 }
 
 type UpdateProgramResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type DeleteProgramReq struct {
-	UserId string `validate:"ulid"`
-	Id     string `params:"id" validate:"required,ulid"`
+	UserID string `validate:"ulid"`
+	ID     string `params:"id" validate:"required,ulid"`
 }
 
 type DeleteProgramResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }

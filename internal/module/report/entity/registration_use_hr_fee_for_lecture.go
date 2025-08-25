@@ -7,9 +7,9 @@ import (
 )
 
 type UseHRfeeForLecturerReq struct {
-	UserId string `json:"user_id" validate:"ulid"`
+	UserID string `json:"user_id" validate:"ulid"`
 
-	RegistrationId string           `params:"registration_id" validate:"ulid"`
+	RegistrationID string           `params:"registration_id" validate:"ulid"`
 	UsedAmount     *decimal.Decimal `json:"used_amount"`
 	Notes          *string          `json:"notes" validate:"omitempty,max=255"`
 }

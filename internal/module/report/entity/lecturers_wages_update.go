@@ -8,9 +8,9 @@ import (
 )
 
 type UpdateLecturersWageReq struct {
-	UserId string `json:"user_id" validate:"required,ulid"`
+	UserID string `json:"user_id" validate:"required,ulid"`
 
-	RegistrationId string `json:"registration_id" validate:"required,ulid"`
+	RegistrationID string `json:"registration_id" validate:"required,ulid"`
 
 	ProgramMeetings gonull.Nullable[int]             `json:"program_meetings"`
 	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
@@ -55,7 +55,7 @@ func (r *UpdateLecturersWageReq) Validate() error {
 }
 
 type UpdateLecturersWageResp struct {
-	RegistrationId string `json:"registration_id"`
+	RegistrationID string `json:"registration_id"`
 
 	ProgramMeetings gonull.Nullable[int]             `json:"program_meetings"`
 	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`

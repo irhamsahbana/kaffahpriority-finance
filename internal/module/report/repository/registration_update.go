@@ -88,7 +88,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
 		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),
-		req.Id,
+		req.ID,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
@@ -98,7 +98,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	query = `
 		DELETE FROM pr_additional_students WHERE pr_id = ?
 	`
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
@@ -112,7 +112,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			ulid.Make().String(), req.Id, item.StudentId, item.Name,
+			ulid.Make().String(), req.ID, item.StudentID, item.Name,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
@@ -122,7 +122,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	if !req.IsUpdateTemplate {
 		resp := new(entity.UpdateRegistrationResp)
-		resp.Id = req.Id
+		resp.ID = req.ID
 		return resp, nil
 	}
 
@@ -141,7 +141,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			AND deleted_at IS NULL
 	`
 
-	err = tx.GetContext(ctx, &reg, tx.Rebind(query), req.Id)
+	err = tx.GetContext(ctx, &reg, tx.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
@@ -206,7 +206,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			ulid.Make().String(), reg.TemplateId, item.StudentId, item.Name,
+			ulid.Make().String(), reg.TemplateId, item.StudentID, item.Name,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
@@ -215,7 +215,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	}
 
 	resp := new(entity.UpdateRegistrationResp)
-	resp.Id = req.Id
+	resp.ID = req.ID
 
 	return resp, nil
 }

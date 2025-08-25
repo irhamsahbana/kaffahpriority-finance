@@ -50,7 +50,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 	`
 
 	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCombination),
-		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId, req.Id,
+		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId, req.ID,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
@@ -94,7 +94,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
-		req.Id,
+		req.ID,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
@@ -104,7 +104,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 	query = `
 		DELETE FROM prt_additional_students WHERE prt_id = ?
 	`
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.Id)
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
@@ -122,7 +122,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			ulid.Make().String(), req.Id, item.StudentId, item.Name,
+			ulid.Make().String(), req.ID, item.StudentID, item.Name,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
@@ -131,7 +131,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 	}
 
 	resp := new(entity.UpdateTemplateResp)
-	resp.Id = req.Id
+	resp.ID = req.ID
 
 	return resp, nil
 }

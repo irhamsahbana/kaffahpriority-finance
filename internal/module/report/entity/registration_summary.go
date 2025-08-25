@@ -8,7 +8,7 @@ import (
 )
 
 type GetSummariesReq struct {
-	UserId string `json:"user_id" validate:"ulid"`
+	UserID string `json:"user_id" validate:"ulid"`
 
 	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`

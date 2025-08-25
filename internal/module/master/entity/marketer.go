@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetMarketersReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
 	Q string `query:"q" validate:"omitempty,min=3"`
 	types.MetaQuery
@@ -15,7 +15,7 @@ func (r *GetMarketersReq) SetDefault() {
 
 type Marketer struct {
 	Common
-	StudentManagerId   string  `json:"student_manager_id" db:"student_manager_id"`
+	StudentManagerID   string  `json:"student_manager_id" db:"student_manager_id"`
 	StudentManagerName string  `json:"student_manager_name" db:"student_manager_name"`
 	Email              *string `json:"email" db:"email"`
 	Phone              *string `json:"phone" db:"phone"`
@@ -27,7 +27,7 @@ type GetMarketersResp struct {
 }
 
 type GetMarketerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 	Marketer
 }
 
@@ -36,30 +36,30 @@ type GetMarketerResp struct {
 }
 
 type CreateMarketerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	StudentManagerId string  `json:"student_manager_id" validate:"required,ulid"`
+	StudentManagerID string  `json:"student_manager_id" validate:"required,ulid"`
 	Name             string  `json:"name" validate:"required,min=3,max=255"`
 	Email            *string `json:"email" validate:"omitempty,email"`
 	Phone            *string `json:"phone" validate:"omitempty,min=9"`
 }
 
 type CreateMarketerResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type UpdateMarketerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id               string  `json:"id" validate:"ulid"`
-	StudentManagerId string  `json:"student_manager_id" validate:"required,ulid"`
+	ID               string  `json:"id" validate:"ulid"`
+	StudentManagerID string  `json:"student_manager_id" validate:"required,ulid"`
 	Name             string  `json:"name" validate:"required,min=3,max=255"`
 	Email            *string `json:"email" validate:"omitempty,email"`
 	Phone            *string `json:"phone" validate:"omitempty,min=9"`
 }
 
 type DeleteMarketerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id string `json:"id" validate:"required,ulid"`
+	ID string `json:"id" validate:"required,ulid"`
 }

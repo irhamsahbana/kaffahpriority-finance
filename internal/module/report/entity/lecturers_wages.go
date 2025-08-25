@@ -8,13 +8,13 @@ import (
 )
 
 type GetLecturersWagesReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 	types.MetaQuery
 
 	Q string `query:"q" validate:"omitempty,min=3"`
 
 	AcademicManagerId          string `query:"academic_manager_id" validate:"omitempty,ulid"`
-	LecturerId                 string `query:"lecturer_id" validate:"omitempty,ulid"`
+	LecturerID                 string `query:"lecturer_id" validate:"omitempty,ulid"`
 	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
 	Month                      string `query:"month" validate:"omitempty,datetime=2006-01"`
 	Timezone                   string `query:"timezone" validate:"required,timezone"`
@@ -40,7 +40,7 @@ type GetLecturersWagesResp struct {
 }
 
 type LecturersWageItem struct {
-	RegistrationId       string           `json:"registration_id" db:"registration_id"`
+	RegistrationID       string           `json:"registration_id" db:"registration_id"`
 	AcademicManagerName  *string          `json:"academic_manager_name" db:"academic_manager_name"`
 	LecturerName         *string          `json:"lecturer_name" db:"lecturer_name"`
 	StudentName          string           `json:"student_name" db:"student_name"`
@@ -65,11 +65,11 @@ type LecturersWageItem struct {
 // aggregate version
 
 type GetLecturersWagesAggregateReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 	types.MetaQuery
 
 	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
-	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	LecturerID        string `query:"lecturer_id" validate:"omitempty,ulid"`
 	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
 	Timezone          string `query:"timezone" validate:"required,timezone"`
 }
@@ -89,7 +89,7 @@ type LecturersWageAggregateResp struct {
 
 type LecturersWageAggregateItem struct {
 	Month                  string          `json:"month" db:"month"`
-	LecturerId             string          `json:"lecturer_id" db:"lecturer_id"`
+	LecturerID             string          `json:"lecturer_id" db:"lecturer_id"`
 	AcademicManagerId      string          `json:"academic_manager_id" db:"academic_manager_id"`
 	LecturerName           string          `json:"lecturer_name" db:"lecturer_name"`
 	AcademicManagerName    string          `json:"academic_manager_name" db:"academic_manager_name"`

@@ -99,9 +99,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		args = append(args, req.AcademicManagerId)
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
 	if req.IsMandatoryFieldsCompleted != "" {
@@ -135,7 +135,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	registrationIds := make([]string, 0)
 
 	for _, d := range data {
-		registrationIds = append(registrationIds, d.RegistrationId)
+		registrationIds = append(registrationIds, d.RegistrationID)
 		resp.Meta.TotalData = d.TotalData
 		resp.Items = append(resp.Items, d.LecturersWageItem)
 	}
@@ -184,7 +184,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	// Add additional students data to resp.Items field student_name
 	for _, item := range additionalStudentsData {
 		for i, d := range resp.Items {
-			if d.RegistrationId == item.RegistrationId {
+			if d.RegistrationID == item.RegistrationId {
 				resp.Items[i].StudentName += ", " + item.AdditionalStudents
 
 				break
@@ -262,9 +262,9 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 		args = append(args, req.AcademicManagerId)
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
 	query += `
@@ -367,7 +367,7 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 		`,
 		strings.Join(queryParts, ", "),
 	)
-	args = append(args, req.RegistrationId)
+	args = append(args, req.RegistrationID)
 
 	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
@@ -395,7 +395,7 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			AND pr.deleted_at IS NULL
 	`
 	var realFee decimal.Decimal
-	err = tx.GetContext(ctx, &realFee, tx.Rebind(query), req.RegistrationId)
+	err = tx.GetContext(ctx, &realFee, tx.Rebind(query), req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
@@ -417,7 +417,7 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			AND is_paid = TRUE
 	`
 
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), realFee, req.RegistrationId)
+	_, err = tx.ExecContext(ctx, tx.Rebind(query), realFee, req.RegistrationID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update ujroh real", fnName)
 		return err

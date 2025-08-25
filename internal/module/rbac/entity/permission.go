@@ -1,7 +1,7 @@
 package entity
 
 type GetPermissionsReq struct {
-	UserId string `json:"user_id" validate:"required,ulid"`
+	UserID string `json:"user_id" validate:"required,ulid"`
 }
 
 type GetPermissionsResp struct {

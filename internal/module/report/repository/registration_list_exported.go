@@ -142,24 +142,24 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 		}
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
-	if req.MarketerId != "" {
+	if req.MarketerID != "" {
 		query += ` AND pr.marketer_id = ?`
-		args = append(args, req.MarketerId)
+		args = append(args, req.MarketerID)
 	}
 
-	if req.StudentId != "" {
+	if req.StudentID != "" {
 		query += ` AND pr.student_id = ?`
-		args = append(args, req.StudentId)
+		args = append(args, req.StudentID)
 	}
 
-	if req.ProgramId != "" {
+	if req.ProgramID != "" {
 		query += ` AND pr.program_id = ?`
-		args = append(args, req.ProgramId)
+		args = append(args, req.ProgramID)
 	}
 
 	sortByMap := map[string]string{
@@ -199,7 +199,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			resp.Items[i].ProgramName += " + ITP"
 		}
 
-		registrationIds = append(registrationIds, resp.Items[i].Id)
+		registrationIds = append(registrationIds, resp.Items[i].ID)
 	}
 
 	type daos struct {
@@ -212,7 +212,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 	reqSummary.PaidAtFrom = req.PaidAtFrom
 	reqSummary.PaidAtTo = req.PaidAtTo
 	reqSummary.Timezone = req.Timezone
-	reqSummary.UserId = req.UserId
+	reqSummary.UserID = req.UserID
 
 	respSummary, err := r.GetSummaries(ctx, reqSummary)
 	if err != nil {
@@ -261,7 +261,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	for i, item := range resp.Items {
 		for _, data := range daosData {
-			if item.Id == data.PrId {
+			if item.ID == data.PrId {
 				resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				resp.Items[i].StudentName += ", " + *data.AddStudent.Name
 			}

@@ -18,7 +18,7 @@ func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getMarketers - failed to parse request")
@@ -49,8 +49,8 @@ func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getMarketer - invalid request")
@@ -74,7 +74,7 @@ func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createMarketer - failed to parse request")
@@ -103,8 +103,8 @@ func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateMarketer - failed to parse request")
@@ -133,8 +133,8 @@ func (h *masterHandler) deleteMarketer(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteMarketer - invalid request")

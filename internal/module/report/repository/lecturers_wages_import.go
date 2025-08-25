@@ -42,9 +42,9 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 			data.NL,
 			data.IsFullFee,
 			data.Notes,
-			data.RegistrationId,
+			data.RegistrationID,
 		); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration for id %s", fnName, data.RegistrationId)
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration for id %s", fnName, data.RegistrationID)
 			return err
 		}
 	}

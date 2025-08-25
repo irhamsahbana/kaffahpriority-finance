@@ -7,14 +7,14 @@ import (
 )
 
 type ImportLecturersWagesReq struct {
-	UserId string `json:"user_id" validate:"required,ulid"`
+	UserID string `json:"user_id" validate:"required,ulid"`
 	File   multipart.File
 
 	Registrations []ImportedLecturersWages `json:"registrations" validate:"required,dive"`
 }
 
 type ImportedLecturersWages struct {
-	RegistrationId  string           `json:"registration_id"`
+	RegistrationID  string           `json:"registration_id"`
 	ProgramMeetings int              `json:"program_meetings"`
 	FL              *decimal.Decimal `json:"foreign_learning_fee"`
 	NL              *decimal.Decimal `json:"night_learning_fee"`

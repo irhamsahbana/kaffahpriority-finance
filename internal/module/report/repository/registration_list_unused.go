@@ -147,24 +147,24 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		}
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
-	if req.MarketerId != "" {
+	if req.MarketerID != "" {
 		query += ` AND pr.marketer_id = ?`
-		args = append(args, req.MarketerId)
+		args = append(args, req.MarketerID)
 	}
 
-	if req.StudentId != "" {
+	if req.StudentID != "" {
 		query += ` AND pr.student_id = ?`
-		args = append(args, req.StudentId)
+		args = append(args, req.StudentID)
 	}
 
-	if req.ProgramId != "" {
+	if req.ProgramID != "" {
 		query += ` AND pr.program_id = ?`
-		args = append(args, req.ProgramId)
+		args = append(args, req.ProgramID)
 	}
 
 	if req.IsPaid != "" {
@@ -206,7 +206,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 
 	for _, item := range data {
 		resp.Meta.TotalData = item.TotalData
-		registrationIds = append(registrationIds, item.Id)
+		registrationIds = append(registrationIds, item.ID)
 		resp.Items = append(resp.Items, item.RegisItem)
 		resp.Items[len(resp.Items)-1].Students = make([]entity.AddStudent, 0)
 	}
@@ -252,7 +252,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 
 		for i, item := range resp.Items {
 			for _, data := range daosData {
-				if item.Id == data.PrId {
+				if item.ID == data.PrId {
 					resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				}
 			}

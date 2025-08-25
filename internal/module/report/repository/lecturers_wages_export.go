@@ -94,9 +94,9 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 		args = append(args, req.AcademicManagerId)
 	}
 
-	if req.LecturerId != "" {
+	if req.LecturerID != "" {
 		query += ` AND pr.lecturer_id = ?`
-		args = append(args, req.LecturerId)
+		args = append(args, req.LecturerID)
 	}
 
 	if req.IsMandatoryFieldsCompleted != "" {
@@ -128,7 +128,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 	registrationIds := make([]string, 0)
 
 	for _, d := range data {
-		registrationIds = append(registrationIds, d.RegistrationId)
+		registrationIds = append(registrationIds, d.RegistrationID)
 		if d.FL != nil {
 			d.ProgramName = d.ProgramName + " + FL"
 		}
@@ -184,7 +184,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 	// Add additional students data to resp.Items field student_name
 	for _, item := range additionalStudentsData {
 		for i, d := range resp.Items {
-			if d.RegistrationId == item.RegistrationId {
+			if d.RegistrationID == item.RegistrationId {
 				resp.Items[i].StudentName += ", " + item.AdditionalStudents
 
 				break

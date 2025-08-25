@@ -121,7 +121,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		args := []any{
 			templateId,
 			programRegistrationId,
-			req.UserId,
+			req.UserID,
 			batchId,
 		}
 
@@ -141,7 +141,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		// insert into pr_additional_students
 		for _, student := range students {
 			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), programRegistrationId, student.StudentId, student.Name,
+				ulid.Make().String(), programRegistrationId, student.StudentID, student.Name,
 			)
 			if err != nil {
 				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)

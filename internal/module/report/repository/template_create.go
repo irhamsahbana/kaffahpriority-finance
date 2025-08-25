@@ -53,7 +53,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 	`
 
 	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCheckCombination),
-		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId,
+		req.ProgramID, req.MarketerID, req.StudentID, req.LecturerID, req.LecturerID,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
@@ -69,7 +69,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		Id   = ulid.Make().String()
 		resp = new(entity.CreateTemplateResp)
 	)
-	resp.Id = Id
+	resp.ID = Id
 
 	query := `
 		WITH program AS (
@@ -120,8 +120,8 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 	`
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
-		req.ProgramId,
-		Id, req.UserId, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
+		req.ProgramID,
+		Id, req.UserID, req.ProgramID, req.LecturerID, req.MarketerID, req.StudentID,
 		pq.Array(req.Days), req.Notes, req.ProgramFee,
 
 		req.AdministrationFee,
@@ -147,7 +147,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			ulid.Make().String(), Id, item.StudentId, item.Name,
+			ulid.Make().String(), Id, item.StudentID, item.Name,
 		)
 		if err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)

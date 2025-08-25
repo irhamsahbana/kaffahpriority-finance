@@ -18,7 +18,7 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getTemplates - invalid request")
@@ -49,8 +49,8 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getTemplate - invalid request")
@@ -79,7 +79,7 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::createTemplate - invalid request")
@@ -114,8 +114,8 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::updateTemplate - invalid request")
@@ -145,8 +145,8 @@ func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
-	req.Id = c.Params("id")
+	req.UserID = l.GetUserId()
+	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteTemplate - invalid request")

@@ -3,7 +3,7 @@ package entity
 import "codebase-app/pkg/types"
 
 type GetLecturerProgramsReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
 	types.MetaQuery
 	IsFinanceUpdated string `query:"is_finance_updated" validate:"omitempty,oneof=true false"`
@@ -19,16 +19,16 @@ type GetLecturerProgramsResp struct {
 }
 
 type LecturerProgramItem struct {
-	LecturerId   string             `json:"lecturer_id" db:"lecturer_id"`
+	LecturerID   string             `json:"lecturer_id" db:"lecturer_id"`
 	LecturerName string             `json:"lecturer_name" db:"lecturer_name"`
 	Templates    []LecturerTemplate `json:"templates"`
 }
 
 type LecturerTemplate struct {
-	LecturerId       string  `json:"-" db:"lecturer_id"`
-	TemplateId       string  `json:"template_id" db:"template_id"`
-	ProgramId        string  `json:"program_id" db:"program_id"`
-	StudentId        string  `json:"student_id" db:"student_id"`
+	LecturerID       string  `json:"-" db:"lecturer_id"`
+	TemplateID       string  `json:"template_id" db:"template_id"`
+	ProgramID        string  `json:"program_id" db:"program_id"`
+	StudentID        string  `json:"student_id" db:"student_id"`
 	MarketerId       string  `json:"marketer_id" db:"marketer_id"`
 	ProgramName      string  `json:"program_name" db:"program_name"`
 	StudentName      string  `json:"student_name" db:"student_name"`

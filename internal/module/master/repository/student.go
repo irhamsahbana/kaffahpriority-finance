@@ -75,9 +75,9 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 	for _, d := range data {
 		resp.Meta.TotalData = d.TotalData
 		resp.Items = append(resp.Items, d.Student)
-		StudentIds = append(StudentIds, d.Id)
+		StudentIds = append(StudentIds, d.ID)
 
-		lastPaymentAt[d.Id] = nil
+		lastPaymentAt[d.ID] = nil
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
@@ -122,7 +122,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 	}
 
 	for i, student := range resp.Items {
-		if v, ok := lastPaymentAt[student.Id]; ok {
+		if v, ok := lastPaymentAt[student.ID]; ok {
 			resp.Items[i].LastPaymentAt = v
 		}
 	}
@@ -152,7 +152,7 @@ func (r *masterRepo) CreateStudent(ctx context.Context, req *entity.CreateStuden
 		return nil, err
 	}
 
-	resp.Id = Id
+	resp.ID = Id
 
 	return resp, nil
 }
@@ -180,7 +180,7 @@ func (r *masterRepo) GetStudent(ctx context.Context, req *entity.GetStudentReq) 
 			AND deleted_at IS NULL
 	`
 
-	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Any("req", req).Msg("repo::GetStudent - student not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Santri tidak ditemukan")
@@ -209,7 +209,7 @@ func (r *masterRepo) UpdateStudent(ctx context.Context, req *entity.UpdateStuden
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
-		req.Identifier, req.Name, req.RegisteredAt, req.IsActive, req.Id); err != nil {
+		req.Identifier, req.Name, req.RegisteredAt, req.IsActive, req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateStudent - failed to update student")
 		return err
 	}
@@ -227,7 +227,7 @@ func (r *masterRepo) DeleteStudent(ctx context.Context, req *entity.DeleteStuden
 			AND deleted_at IS NULL
 	`
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteStudent - failed to delete student")
 		return err
 	}

@@ -152,7 +152,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 	for _, item := range data {
 		resp.Meta.TotalData = item.TotalData
-		templateIds = append(templateIds, item.Id)
+		templateIds = append(templateIds, item.ID)
 		item.Students = make([]entity.AddStudent, 0)
 		resp.Items = append(resp.Items, item.TemplateItem)
 	}
@@ -198,7 +198,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 		for i, item := range resp.Items {
 			for _, data := range daosData {
-				if item.Id == data.PrtId {
+				if item.ID == data.PrtId {
 					resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
 				}
 			}

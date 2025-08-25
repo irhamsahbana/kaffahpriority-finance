@@ -189,15 +189,15 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		`
 
 		var exist bool
-		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateId)
+		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to check data", fnName)
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to check data", fnName)
 			return err
 		}
 
 		if exist {
-			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - data already exist", fnName)
-			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateId + ` sudah dibuat di bulan ini`)
+			log.Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - data already exist", fnName)
+			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateID + ` sudah dibuat di bulan ini`)
 			return err
 		}
 
@@ -218,41 +218,41 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		`
 		queryCheckTemplate = r.db.Rebind(queryCheckTemplate)
 		var isTemplateValid bool
-		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateId)
+		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to check template", fnName)
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to check template", fnName)
 			return err
 		}
 		if !isTemplateValid {
-			log.Warn().Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - template is not valid", fnName)
+			log.Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - template is not valid", fnName)
 			err = errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
 			return err
 		}
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			item.TemplateId,
-			prId, req.UserId,
+			item.TemplateID,
+			prId, req.UserID,
 			// item.IsFirstRegistration,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to insert data", fnName)
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to insert data", fnName)
 			return err
 		}
 
 		// fetch additional students from prt_additional_students
-		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateId)
+		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to fetch additional students", fnName)
+			log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to fetch additional students", fnName)
 			return err
 		}
 
 		// insert additional students into pr_additional_students
 		for _, student := range students {
 			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), prId, student.StudentId, student.Name,
+				ulid.Make().String(), prId, student.StudentID, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateId).Msgf("%s - failed to insert additional students", fnName)
+				log.Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}
@@ -420,7 +420,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 
 		// create new registration based on existing registration
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, req.UserId,
+			prId, req.UserID,
 			item.AllocatedAt, item.Timezone,
 			item.RegisId,
 		)
@@ -437,7 +437,7 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 
 		for _, student := range students {
 			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), prId, student.StudentId, student.Name,
+				ulid.Make().String(), prId, student.StudentID, student.Name,
 			)
 			if err != nil {
 				log.Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to insert additional students", fnName)

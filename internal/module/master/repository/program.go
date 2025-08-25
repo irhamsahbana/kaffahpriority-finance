@@ -95,7 +95,7 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 			AND deleted_at IS NULL
 	`
 
-	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msg("repo::GetProgram - program not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Program tidak ditemukan")
@@ -165,7 +165,7 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 		return nil, err
 	}
 
-	resp.Id = id
+	resp.ID = id
 
 	return resp, nil
 }
@@ -185,7 +185,7 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 		)
 	`
 
-	if err := r.db.GetContext(ctx, &isExist, r.db.Rebind(queryExist), req.Id); err != nil {
+	if err := r.db.GetContext(ctx, &isExist, r.db.Rebind(queryExist), req.ID); err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to check program exist")
 		return nil, err
 	}
@@ -221,14 +221,14 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 		pq.Array(req.Days),
 		req.LecturerFee,
 		req.CommissionFee,
-		req.Id,
+		req.ID,
 	)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to update program")
 		return nil, err
 	}
 
-	resp.Id = req.Id
+	resp.ID = req.ID
 
 	return resp, nil
 }
@@ -243,7 +243,7 @@ func (r *masterRepo) DeleteProgram(ctx context.Context, req *entity.DeleteProgra
 			AND deleted_at IS NULL
 	`
 
-	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Id)
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msg("repo::DeleteProgram - failed to delete program")
 		return err

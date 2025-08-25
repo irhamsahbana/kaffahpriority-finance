@@ -59,7 +59,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			templateId, // Template ID
 
 			registrationId, // New registration ID
-			req.UserId,     // User ID
+			req.UserID,     // User ID
 
 			allocation, // Allocation month
 			req.PaidAt, // Paid at date
@@ -82,7 +82,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 		// insert into pr_additional_students
 		for _, student := range students {
 			_, err = tx.ExecContext(ctx, tx.Rebind(queryInsertStudents),
-				ulid.Make().String(), registrationId, student.StudentId, student.Name,
+				ulid.Make().String(), registrationId, student.StudentID, student.Name,
 			)
 			if err != nil {
 				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)

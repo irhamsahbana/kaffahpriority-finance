@@ -13,7 +13,7 @@ func (r *GetLecturersReq) SetDefault() {
 
 type Lecturer struct {
 	Common
-	AcademicManagerId   string  `json:"academic_manager_id" db:"academic_manager_id"`
+	AcademicManagerID   string  `json:"academic_manager_id" db:"academic_manager_id"`
 	AcademicManagerName string  `json:"academic_manager_name" db:"academic_manager_name"`
 	Phone               *string `json:"phone" db:"phone"`
 	RegisteredAt        *string `json:"registered_at" db:"registered_at"`
@@ -25,9 +25,9 @@ type GetLecturersResp struct {
 }
 
 type GetLecturerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required"`
 }
 
 type GetLecturerResp struct {
@@ -35,30 +35,30 @@ type GetLecturerResp struct {
 }
 
 type CreateLecturerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	AcademicManagerId string  `json:"academic_manager_id" validate:"required,ulid"`
+	AcademicManagerID string  `json:"academic_manager_id" validate:"required,ulid"`
 	Name              string  `json:"name" validate:"required,min=3"`
 	Phone             *string `json:"phone" validate:"omitempty,min=9"`
 	RegisteredAt      *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type CreateLecturerResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type UpdateLecturerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id                string  `params:"id" validate:"required"`
-	AcademicManagerId string  `json:"academic_manager_id" validate:"required,ulid,exist=academic_managers.id"`
+	ID                string  `params:"id" validate:"required"`
+	AcademicManagerID string  `json:"academic_manager_id" validate:"required,ulid,exist=academic_managers.id"`
 	Name              string  `json:"name" validate:"required,min=3"`
 	Phone             *string `json:"phone" validate:"omitempty,min=9"`
 	RegisteredAt      *string `json:"registered_at" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type DeleteLecturerReq struct {
-	UserId string `validate:"ulid"`
+	UserID string `validate:"ulid"`
 
-	Id string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required"`
 }

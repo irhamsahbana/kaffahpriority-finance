@@ -8,13 +8,13 @@ import (
 )
 
 type GetRegistrationListPerLecturerReq struct {
-	UserId string `json:"user_id"`
+	UserID string `json:"user_id"`
 	types.MetaQuery
 
 	Q                 string `query:"q"`
-	LecturerId        string `query:"lecturer_id"`
-	StudentId         string `query:"student_id"`
-	AcademicManagerId string `query:"academic_manager_id"`
+	LecturerID        string `query:"lecturer_id"`
+	StudentID         string `query:"student_id"`
+	AcademicManagerID string `query:"academic_manager_id"`
 	Year              int    `query:"year"`
 	Tz                string `query:"timezone"`
 }
@@ -39,10 +39,10 @@ type GetRegistrationListPerLecturerResp struct {
 }
 
 type RegistrationListPerLecturer struct {
-	AcademicManagerId   *string                               `json:"academic_manager_id" db:"academic_manager_id"`
-	LecturerId          *string                               `json:"lecturer_id" db:"lecturer_id"`
-	StudentId           string                                `json:"student_id" db:"student_id"`
-	ProgramId           string                                `json:"program_id" db:"program_id"`
+	AcademicManagerID   *string                               `json:"academic_manager_id" db:"academic_manager_id"`
+	LecturerID          *string                               `json:"lecturer_id" db:"lecturer_id"`
+	StudentID           string                                `json:"student_id" db:"student_id"`
+	ProgramID           string                                `json:"program_id" db:"program_id"`
 	AcademicManagerName *string                               `json:"academic_manager_name" db:"academic_manager_name"`
 	LecturerName        *string                               `json:"lecturer_name" db:"lecturer_name"`
 	StudentName         string                                `json:"student_name" db:"student_name"`
@@ -55,7 +55,7 @@ type RegistrationListPerLecturer struct {
 }
 
 type RegistrationListPerLecturerPerMonth struct {
-	RegistrationId *string          `json:"registration_id" db:"registration_id"`
+	RegistrationID *string          `json:"registration_id" db:"registration_id"`
 	Month          string           `json:"month" db:"month"` // indonesia month
 	MonthNum       int              `json:"month_num" db:"month_num"`
 	UsedAmount     *decimal.Decimal `json:"used_amount" db:"used_amount"`
@@ -63,9 +63,9 @@ type RegistrationListPerLecturerPerMonth struct {
 	IsUsed         *bool            `json:"is_used" db:"is_used"`
 	Notes          *string          `json:"notes" db:"notes"`
 
-	ProgramId  string           `json:"program_id" db:"program_id"`
-	LecturerId *string          `json:"lecturer_id" db:"lecturer_id"`
-	StudentId  string           `json:"student_id" db:"student_id"`
+	ProgramID  string           `json:"program_id" db:"program_id"`
+	LecturerID *string          `json:"lecturer_id" db:"lecturer_id"`
+	StudentID  string           `json:"student_id" db:"student_id"`
 	FL         *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NL         *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP      bool             `json:"is_itp" db:"is_itp"`

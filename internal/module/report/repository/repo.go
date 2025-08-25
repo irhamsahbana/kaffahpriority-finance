@@ -80,7 +80,7 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 	for _, item := range data {
 		resp.Meta.TotalData = item.TotalData
 		item.Templates = make([]entity.LecturerTemplate, 0)
-		lecturerIds = append(lecturerIds, item.LecturerId)
+		lecturerIds = append(lecturerIds, item.LecturerID)
 		resp.Items = append(resp.Items, item.LecturerProgramItem)
 	}
 
@@ -133,11 +133,11 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 		}
 
 		for _, item := range dataTemplate {
-			mapTemplate[item.LecturerId] = append(mapTemplate[item.LecturerId], item)
+			mapTemplate[item.LecturerID] = append(mapTemplate[item.LecturerID], item)
 		}
 
 		for i, item := range resp.Items {
-			resp.Items[i].Templates = mapTemplate[item.LecturerId]
+			resp.Items[i].Templates = mapTemplate[item.LecturerID]
 		}
 	}
 
@@ -159,7 +159,7 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 	// get HR fee
 	queryFee := `SELECT hr_fee from program_registrations WHERE id = ? AND deleted_at IS NULL`
 	var hrFee decimal.Decimal
-	err = tx.GetContext(ctx, &hrFee, r.db.Rebind(queryFee), req.RegistrationId)
+	err = tx.GetContext(ctx, &hrFee, r.db.Rebind(queryFee), req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Any("req", req).Msgf("%s - HR fee not found", fnName)
@@ -188,7 +188,7 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 			AND deleted_at IS NULL
 		`
 
-	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.HRFeeForMentor, req.HRFeeForHR, req.RegistrationId)
+	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.HRFeeForMentor, req.HRFeeForHR, req.RegistrationID)
 	if err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err

@@ -18,7 +18,7 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::getPrograms - failed to parse request")
@@ -49,8 +49,8 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::getProgram - invalid request")
@@ -74,7 +74,7 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.UserId = l.GetUserId()
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::createProgram - failed to parse request")
@@ -103,8 +103,8 @@ func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Warn().Err(err).Msg("handler::updateProgram - failed to parse request")
@@ -133,8 +133,8 @@ func (h *masterHandler) deleteProgram(c *fiber.Ctx) error {
 		l   = m.GetLocals(c)
 	)
 
-	req.Id = c.Params("id")
-	req.UserId = l.GetUserId()
+	req.ID = c.Params("id")
+	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msg("handler::deleteProgram - invalid request")

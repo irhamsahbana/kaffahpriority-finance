@@ -1,14 +1,14 @@
 package entity
 
 type CreateUserReq struct {
-	UserId string `json:"user_id" validate:"required,ulid"`
+	UserID string `json:"user_id" validate:"required,ulid"`
 
-	RoleId   string `json:"role_id" validate:"required,ulid"`
+	RoleID   string `json:"role_id" validate:"required,ulid"`
 	Name     string `json:"name" validate:"required,max=255,min=3"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
 }
 
 type CreateUserResp struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }

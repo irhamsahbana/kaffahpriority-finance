@@ -3,18 +3,18 @@ package entity
 import "github.com/lib/pq"
 
 type GetRegistrationReq struct {
-	UserId string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid"`
 
-	Id string `params:"id" validate:"ulid"`
+	ID string `params:"id" validate:"ulid"`
 }
 
 type GetRegistrationResp struct {
-	Id                    string        `json:"id" db:"id"`
-	ProgramId             string        `json:"program_id" db:"program_id"`
-	MarketerId            string        `json:"marketer_id" db:"marketer_id"`
-	LecturerId            *string       `json:"lecturer_id" db:"lecturer_id"`
-	StudentId             string        `json:"student_id" db:"student_id"`
-	StudentManagerId      string        `json:"student_manager_id" db:"student_manager_id"`
+	ID                    string        `json:"id" db:"id"`
+	ProgramID             string        `json:"program_id" db:"program_id"`
+	MarketerID            string        `json:"marketer_id" db:"marketer_id"`
+	LecturerID            *string       `json:"lecturer_id" db:"lecturer_id"`
+	StudentID             string        `json:"student_id" db:"student_id"`
+	StudentManagerID      string        `json:"student_manager_id" db:"student_manager_id"`
 	StudentIdentifier     string        `json:"student_identifier" db:"student_identifier"`
 	ProgramName           string        `json:"program_name" db:"program_name"`
 	ProgramFee            float64       `json:"program_fee" db:"program_fee"`
