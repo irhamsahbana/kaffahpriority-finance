@@ -11,6 +11,7 @@ import (
 )
 
 func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error) {
+	fnName := "repo::GetStudentManagers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.StudentManager
@@ -35,7 +36,7 @@ func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStud
 	`
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetStudentManagers - failed to query student managers")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query student managers", fnName)
 		return nil, err
 	}
 
@@ -50,6 +51,7 @@ func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStud
 }
 
 func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.CreateStudentManagerReq) (*entity.CreateStudentManagerResp, error) {
+	fnName := "repo::CreateStudentManager"
 	query := `
 		INSERT INTO student_managers (
 			id,
@@ -63,7 +65,7 @@ func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.Creat
 	)
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), Id, req.Name); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateStudentManager - failed to create student manager")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create student manager", fnName)
 		return nil, err
 	}
 
@@ -73,6 +75,7 @@ func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.Creat
 }
 
 func (r *masterRepo) GetStudentManager(ctx context.Context, req *entity.GetStudentManagerReq) (*entity.GetStudentManagerResp, error) {
+	fnName := "repo::GetStudentManager"
 	var (
 		resp = new(entity.GetStudentManagerResp)
 		data = new(entity.StudentManager)
@@ -91,10 +94,10 @@ func (r *masterRepo) GetStudentManager(ctx context.Context, req *entity.GetStude
 
 	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msg("repo::GetStudentManager - student manager not found")
+			log.Warn().Any("req", req).Msgf("%s - student manager not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Pengelola Santri tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetStudentManager - failed to get student manager")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get student manager", fnName)
 		return nil, err
 	}
 
@@ -104,6 +107,7 @@ func (r *masterRepo) GetStudentManager(ctx context.Context, req *entity.GetStude
 }
 
 func (r *masterRepo) UpdateStudentManager(ctx context.Context, req *entity.UpdateStudentManagerReq) error {
+	fnName := "repo::UpdateStudentManager"
 	query := `
 		UPDATE student_managers
 		SET
@@ -115,7 +119,7 @@ func (r *masterRepo) UpdateStudentManager(ctx context.Context, req *entity.Updat
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateStudentManager - failed to update student manager")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update student manager", fnName)
 		return err
 	}
 
@@ -123,6 +127,7 @@ func (r *masterRepo) UpdateStudentManager(ctx context.Context, req *entity.Updat
 }
 
 func (r *masterRepo) DeleteStudentManager(ctx context.Context, req *entity.DeleteStudentManagerReq) error {
+	fnName := "repo::DeleteStudentManager"
 	query := `
 		UPDATE student_managers
 		SET
@@ -133,7 +138,7 @@ func (r *masterRepo) DeleteStudentManager(ctx context.Context, req *entity.Delet
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteStudentManager - failed to delete student manager")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete student manager", fnName)
 		return err
 	}
 

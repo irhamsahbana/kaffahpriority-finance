@@ -8,6 +8,7 @@ import (
 )
 
 func (r *reportRepo) UpdateRegistrationIsPaid(ctx context.Context, req *entity.UpdateRegistrationIsPaidReq) (*entity.UpdateRegistrationIsPaidResp, error) {
+	fnName := "repo::UpdateRegistrationIsPaid"
 	var (
 		resp = new(entity.UpdateRegistrationIsPaidResp)
 	)
@@ -24,7 +25,7 @@ func (r *reportRepo) UpdateRegistrationIsPaid(ctx context.Context, req *entity.U
 
 	err := r.db.QueryRowxContext(ctx, query, req.IsPaid, req.ID).Scan(&resp.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistrationIsPaid - error updating registration is paid")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
 		return nil, err
 	}
 

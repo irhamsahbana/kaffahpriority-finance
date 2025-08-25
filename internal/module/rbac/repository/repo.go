@@ -25,6 +25,7 @@ func NewRBACRepository() *rbacRepo {
 }
 
 func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission string) error {
+	fnName := "repo::IsHasPermission"
 	query := `
 		SELECT EXISTS (
 			SELECT 1
@@ -41,12 +42,12 @@ func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission strin
 	var isHasPermission bool
 	err := r.db.GetContext(ctx, &isHasPermission, query, userId, permission)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::IsHasPermission - failed to get permission")
+		log.Error().Err(err).Msgf("%s - failed to get permission", fnName)
 		return err
 	}
 
 	if !isHasPermission {
-		log.Warn().Msg("repo::IsHasPermission - user does not have permission")
+		log.Warn().Msgf("%s - user does not have permission", fnName)
 		return errmsg.NewCustomErrors(403).SetMessage("Anda tidak memiliki hak akses" + permission + "!")
 	}
 
@@ -54,6 +55,7 @@ func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission strin
 }
 
 func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRoleAndPermissionsReq) (*entity.GetRoleAndPermissionsResp, error) {
+	fnName := "repo::GetRoleAndPermissions"
 	var (
 		resp entity.GetRoleAndPermissionsResp
 	)
@@ -84,7 +86,7 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 	data := make([]RolePermission, 0)
 	err := r.db.SelectContext(ctx, &data, query)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRoleAndPermissions - failed to get role and permissions")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role and permissions", fnName)
 		return nil, err
 	}
 
@@ -115,12 +117,13 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 }
 
 func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error) {
+	fnName := "repo::CreateRole"
 	var resp entity.CreateRoleResp
 	resp.ID = ulid.Make().String()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -132,14 +135,14 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 
 	_, err = tx.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.Name)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to create role")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create role", fnName)
 		return nil, err
 	}
 
 	if len(req.Permissions) == 0 {
 		err = tx.Commit()
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to commit transaction")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 			return nil, err
 		}
 
@@ -155,14 +158,14 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 	for _, v := range req.Permissions {
 		_, err = tx.ExecContext(ctx, query, resp.ID, v)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to insert role permissions")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
 			return nil, err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateRole - failed to commit transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return nil, err
 	}
 
@@ -170,12 +173,13 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 }
 
 func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error) {
+	fnName := "repo::UpdateRole"
 	var resp entity.UpdateRoleResp
 	resp.ID = req.ID
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -190,7 +194,7 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 
 	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to update role")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update role", fnName)
 		return nil, err
 	}
 
@@ -201,14 +205,14 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to delete role permissions")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete role permissions", fnName)
 		return nil, err
 	}
 
 	if len(req.Permissions) == 0 {
 		err = tx.Commit()
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to commit transaction")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 			return nil, err
 		}
 
@@ -224,14 +228,14 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 	for _, v := range req.Permissions {
 		_, err = tx.ExecContext(ctx, query, req.ID, v)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to insert role permissions")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
 			return nil, err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRole - failed to commit transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return nil, err
 	}
 
@@ -239,6 +243,7 @@ func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*
 }
 
 func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error {
+	fnName := "repo::DeleteRole"
 	query := `
 		UPDATE roles
 		SET deleted_at = NOW()
@@ -248,7 +253,7 @@ func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) er
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteRole - failed to delete role")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete role", fnName)
 		return err
 	}
 
@@ -256,6 +261,7 @@ func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) er
 }
 
 func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error) {
+	fnName := "repo::GetPermissions"
 	var (
 		resp entity.GetPermissionsResp
 	)
@@ -273,7 +279,7 @@ func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermission
 
 	err := r.db.SelectContext(ctx, &resp.Items, query)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetPermissions - failed to get permissions")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get permissions", fnName)
 		return nil, err
 	}
 
@@ -281,12 +287,13 @@ func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermission
 }
 
 func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.UpdateRolePermissionsReq) (*entity.UpdateRolePermissionsResp, error) {
+	fnName := "repo::UpdateRolePermissions"
 	var resp entity.UpdateRolePermissionsResp
 	resp.ID = req.RoleID
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -303,7 +310,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 		err = tx.GetContext(ctx, &roleThatHasAllAccess, tx.Rebind(query))
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to get role that has all_access permission")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role that has all_access permission", fnName)
 			return nil, err
 		}
 
@@ -317,7 +324,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 		var roleID string
 		err = tx.GetContext(ctx, &roleID, tx.Rebind(query), req.UserID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to get role id")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role id", fnName)
 			return nil, err
 		}
 
@@ -337,7 +344,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.RoleID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to delete role permissions")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete role permissions", fnName)
 		return nil, err
 	}
 
@@ -350,14 +357,14 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 	for _, v := range req.Permissions {
 		_, err = tx.ExecContext(ctx, query, req.RoleID, v)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to insert role permissions")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
 			return nil, err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRolePermissions - failed to commit transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return nil, err
 	}
 
@@ -365,6 +372,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 }
 
 func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailReq) (*entity.GetRoleDetailResp, error) {
+	fnName := "repo::GetRoleDetail"
 	var (
 		resp entity.GetRoleDetailResp
 	)
@@ -396,7 +404,7 @@ func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailR
 	data := make([]RolePermission, 0)
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.RoleID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetRoleDetail - failed to get role detail")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role detail", fnName)
 		return nil, err
 	}
 

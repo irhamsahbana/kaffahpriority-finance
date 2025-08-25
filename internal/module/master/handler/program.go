@@ -13,22 +13,23 @@ import (
 
 func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetProgramsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getPrograms"
+		req    = new(entity.GetProgramsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getPrograms - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getPrograms - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -44,16 +45,17 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 
 func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetProgramReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getProgram"
+		req    = new(entity.GetProgramReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getProgram - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -69,20 +71,21 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateProgramReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createProgram"
+		req    = new(entity.CreateProgramReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createProgram - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createProgram - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -98,21 +101,22 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateProgramReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateProgram"
+		req    = new(entity.UpdateProgramReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateProgram - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateProgram - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -128,16 +132,17 @@ func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteProgram(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteProgramReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteProgram"
+		req    = new(entity.DeleteProgramReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteProgram - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

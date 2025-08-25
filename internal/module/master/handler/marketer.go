@@ -13,22 +13,23 @@ import (
 
 func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetMarketersReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getMarketers"
+		req    = new(entity.GetMarketersReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getMarketers - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getMarketers - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -44,16 +45,17 @@ func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetMarketerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getMarketer"
+		req    = new(entity.GetMarketerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getMarketer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -69,20 +71,21 @@ func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateMarketerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createMarketer"
+		req    = new(entity.CreateMarketerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createMarketer - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createMarketer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -98,21 +101,22 @@ func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateMarketerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateMarketer"
+		req    = new(entity.UpdateMarketerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateMarketer - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateMarketer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -128,16 +132,17 @@ func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteMarketer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteMarketerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteMarketer"
+		req    = new(entity.DeleteMarketerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteMarketer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

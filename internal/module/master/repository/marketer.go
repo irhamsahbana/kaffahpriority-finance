@@ -11,6 +11,7 @@ import (
 )
 
 func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error) {
+	fnName := "repo::GetMarketers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.Marketer
@@ -54,7 +55,7 @@ func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersR
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetMarketers - failed to query marketers")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query marketers", fnName)
 		return nil, err
 	}
 
@@ -69,6 +70,7 @@ func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersR
 }
 
 func (r *masterRepo) GetMarketer(ctx context.Context, req *entity.GetMarketerReq) (*entity.GetMarketerResp, error) {
+	fnName := "repo::GetMarketer"
 	var (
 		resp = new(entity.GetMarketerResp)
 		data = new(entity.Marketer)
@@ -94,10 +96,10 @@ func (r *masterRepo) GetMarketer(ctx context.Context, req *entity.GetMarketerReq
 
 	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msg("repo::GetMarketer - marketer not found")
+			log.Warn().Any("req", req).Msgf("%s - marketer not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Pemasar tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetMarketer - failed to get marketer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get marketer", fnName)
 		return nil, err
 	}
 
@@ -107,6 +109,7 @@ func (r *masterRepo) GetMarketer(ctx context.Context, req *entity.GetMarketerReq
 }
 
 func (r *masterRepo) CreateMarketer(ctx context.Context, req *entity.CreateMarketerReq) (*entity.CreateMarketerResp, error) {
+	fnName := "repo::CreateMarketer"
 	query := `
 		INSERT INTO marketers (
 			id,
@@ -123,7 +126,7 @@ func (r *masterRepo) CreateMarketer(ctx context.Context, req *entity.CreateMarke
 	)
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), Id, req.StudentManagerID, req.Name, req.Email, req.Phone); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateMarketer - failed to create marketer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create marketer", fnName)
 		return nil, err
 	}
 
@@ -133,6 +136,7 @@ func (r *masterRepo) CreateMarketer(ctx context.Context, req *entity.CreateMarke
 }
 
 func (r *masterRepo) UpdateMarketer(ctx context.Context, req *entity.UpdateMarketerReq) error {
+	fnName := "repo::UpdateMarketer"
 	query := `
 		UPDATE marketers
 		SET
@@ -147,7 +151,7 @@ func (r *masterRepo) UpdateMarketer(ctx context.Context, req *entity.UpdateMarke
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.StudentManagerID, req.Name, req.Email, req.Phone, req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateMarketer - failed to update marketer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update marketer", fnName)
 		return err
 	}
 
@@ -155,6 +159,7 @@ func (r *masterRepo) UpdateMarketer(ctx context.Context, req *entity.UpdateMarke
 }
 
 func (r *masterRepo) DeleteMarketer(ctx context.Context, req *entity.DeleteMarketerReq) error {
+	fnName := "repo::DeleteMarketer"
 	query := `
 		UPDATE marketers
 		SET
@@ -165,7 +170,7 @@ func (r *masterRepo) DeleteMarketer(ctx context.Context, req *entity.DeleteMarke
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteMarketer - failed to delete marketer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete marketer", fnName)
 		return err
 	}
 

@@ -13,6 +13,7 @@ import (
 )
 
 func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error) {
+	fnName := "repo::GetPrograms"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.Program
@@ -57,7 +58,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetPrograms - failed to query programs")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query programs", fnName)
 		return nil, err
 	}
 
@@ -72,6 +73,7 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 }
 
 func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error) {
+	fnName := "repo::GetProgram"
 	var (
 		resp = new(entity.GetProgramResp)
 	)
@@ -97,10 +99,10 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 
 	if err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetProgram - program not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - program not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Program tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetProgram - failed to query program")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query program", fnName)
 		return nil, err
 	}
 
@@ -108,6 +110,7 @@ func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) 
 }
 
 func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgramReq) (*entity.CreateProgramResp, error) {
+	fnName := "repo::CreateProgram"
 	var (
 		resp    = new(entity.CreateProgramResp)
 		id      = ulid.Make().String()
@@ -124,12 +127,12 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 	`
 
 	if err := r.db.GetContext(ctx, &isExist, r.db.Rebind(queryExist), req.Name); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateProgram - failed to check program exist")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check program exist", fnName)
 		return nil, err
 	}
 
 	if isExist {
-		log.Warn().Any("req", req).Msg("repo::CreateProgram - program already exist")
+		log.Warn().Any("req", req).Msgf("%s - program already exist", fnName)
 		return nil, errmsg.NewCustomErrors(http.StatusConflict).SetMessage("Nama program sudah ada")
 	}
 
@@ -161,7 +164,7 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 		req.CommissionFee,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateProgram - failed to insert program")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert program", fnName)
 		return nil, err
 	}
 
@@ -171,6 +174,7 @@ func (r *masterRepo) CreateProgram(ctx context.Context, req *entity.CreateProgra
 }
 
 func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgramReq) (*entity.UpdateProgramResp, error) {
+	fnName := "repo::UpdateProgram"
 	var (
 		resp    = new(entity.UpdateProgramResp)
 		isExist bool
@@ -186,12 +190,12 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 	`
 
 	if err := r.db.GetContext(ctx, &isExist, r.db.Rebind(queryExist), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to check program exist")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check program exist", fnName)
 		return nil, err
 	}
 
 	if !isExist {
-		log.Warn().Any("req", req).Msg("repo::UpdateProgram - program not found")
+		log.Warn().Any("req", req).Msgf("%s - program not found", fnName)
 		return nil, errmsg.NewCustomErrors(404).SetMessage("Program tidak ditemukan")
 	}
 
@@ -224,7 +228,7 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 		req.ID,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateProgram - failed to update program")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update program", fnName)
 		return nil, err
 	}
 
@@ -234,6 +238,7 @@ func (r *masterRepo) UpdateProgram(ctx context.Context, req *entity.UpdateProgra
 }
 
 func (r *masterRepo) DeleteProgram(ctx context.Context, req *entity.DeleteProgramReq) error {
+	fnName := "repo::DeleteProgram"
 	query := `
 		UPDATE programs
 		SET
@@ -245,7 +250,7 @@ func (r *masterRepo) DeleteProgram(ctx context.Context, req *entity.DeleteProgra
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteProgram - failed to delete program")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete program", fnName)
 		return err
 	}
 

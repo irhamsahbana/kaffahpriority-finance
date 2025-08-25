@@ -43,15 +43,16 @@ func (h *rbacHandler) Register(router fiber.Router) {
 
 func (h *rbacHandler) GetRoleAndPermissions(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetRoleAndPermissionsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::GetRoleAndPermissions"
+		req    = new(entity.GetRoleAndPermissionsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::GetRoleAndPermissions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -67,20 +68,21 @@ func (h *rbacHandler) GetRoleAndPermissions(c *fiber.Ctx) error {
 
 func (h *rbacHandler) CreateRole(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateRoleReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::CreateRole"
+		req    = new(entity.CreateRoleReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::CreateRole - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::CreateRole - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -96,21 +98,22 @@ func (h *rbacHandler) CreateRole(c *fiber.Ctx) error {
 
 func (h *rbacHandler) UpdateRole(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateRoleReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::UpdateRole"
+		req    = new(entity.UpdateRoleReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRole - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRole - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -126,16 +129,17 @@ func (h *rbacHandler) UpdateRole(c *fiber.Ctx) error {
 
 func (h *rbacHandler) GetRoleDetail(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetRoleDetailReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::GetRoleDetail"
+		req    = new(entity.GetRoleDetailReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.RoleID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::GetRoleDetail - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -151,16 +155,17 @@ func (h *rbacHandler) GetRoleDetail(c *fiber.Ctx) error {
 
 func (h *rbacHandler) DeleteRole(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteRoleReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::DeleteRole"
+		req    = new(entity.DeleteRoleReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::DeleteRole - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -175,15 +180,16 @@ func (h *rbacHandler) DeleteRole(c *fiber.Ctx) error {
 
 func (h *rbacHandler) GetPermissions(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetPermissionsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::GetPermissions"
+		req    = new(entity.GetPermissionsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::GetPermissions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -199,21 +205,22 @@ func (h *rbacHandler) GetPermissions(c *fiber.Ctx) error {
 
 func (h *rbacHandler) UpdateRolePermissions(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateRolePermissionsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::UpdateRolePermissions"
+		req    = new(entity.UpdateRolePermissionsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.RoleID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRolePermissions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::UpdateRolePermissions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

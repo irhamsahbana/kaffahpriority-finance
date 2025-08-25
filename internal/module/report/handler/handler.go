@@ -77,28 +77,29 @@ func (h *reportHandler) Register(router fiber.Router) {
 
 func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetSummariesReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getSummaries"
+		req    = new(entity.GetSummariesReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getSummaries - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getSummaries - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getSummaries - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -114,22 +115,23 @@ func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 
 func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetSummariesReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getSummariesForCFO2"
+		req    = new(entity.GetSummariesReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getSummariesForCFO2 - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getSummariesForCFO2 - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -145,20 +147,21 @@ func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateRegisPaidAtReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateRegistrationsPaidAt"
+		req    = new(entity.UpdateRegisPaidAtReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateRegistrationsPaidAt - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateRegistrationsPaidAt - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -174,13 +177,14 @@ func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
 
 func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetExportedRegistrationsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getExportedRegistrations"
+		req    = new(entity.GetExportedRegistrationsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrations - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -188,7 +192,7 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrations - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -202,13 +206,13 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	defer func() {
 		// delete file manually
 		if err := os.Remove(resp.FilePath); err != nil {
-			log.Warn().Err(err).Msg("handler::getExportedRegistrations - delete file error")
+			log.Warn().Err(err).Msgf("%s - delete file error", fnName)
 		}
 	}()
 
 	// download file
 	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrations - download file error")
+		log.Warn().Err(err).Msgf("%s - download file error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -217,13 +221,14 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetExportedRegistrationsForCFO2MonthlyReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getExportedRegistrationsForCFO2Monthly"
+		req    = new(entity.GetExportedRegistrationsForCFO2MonthlyReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -231,7 +236,7 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 	// req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForCFO2Monthly - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -245,13 +250,13 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 	// delete file manually
 	defer func() {
 		if err := os.Remove(resp.FilePath); err != nil {
-			log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - delete file error")
+			log.Warn().Err(err).Msgf("%s - delete file error", fnName)
 		}
 	}()
 
 	// download file
 	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Monthly - download file error")
+		log.Warn().Err(err).Msgf("%s - download file error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -260,20 +265,21 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 
 func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetExportedRegistrationsForCFO2YearlyReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getExportedRegistrationsForCFO2Yearly"
+		req    = new(entity.GetExportedRegistrationsForCFO2YearlyReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Yearly - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForCFO2Yearly - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -286,12 +292,12 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) erro
 
 	defer func() {
 		if err := os.Remove(resp.FilePath); err != nil {
-			log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Yearly - delete file error")
+			log.Warn().Err(err).Msgf("%s - delete file error", fnName)
 		}
 	}()
 
 	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForCFO2Yearly - download file error")
+		log.Warn().Err(err).Msgf("%s - download file error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -300,13 +306,14 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) erro
 
 func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetExportedRegistrationsForWageRecapMonthlyReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getExportedRegistrationsForWageRecapMonthly"
+		req    = new(entity.GetExportedRegistrationsForWageRecapMonthlyReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -314,7 +321,7 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getExportedRegistrationsForX - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -327,12 +334,12 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 
 	defer func() {
 		if err := os.Remove(resp.FilePath); err != nil {
-			log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - delete file error")
+			log.Warn().Err(err).Msgf("%s - delete file error", fnName)
 		}
 	}()
 
 	if err := c.Download(resp.FilePath, resp.FileName); err != nil {
-		log.Warn().Err(err).Msg("handler::getExportedRegistrationsForX - download file error")
+		log.Warn().Err(err).Msgf("%s - download file error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -342,16 +349,17 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 
 func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetRegistrationReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getRegistration"
+		req    = new(entity.GetRegistrationReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistration - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -367,16 +375,17 @@ func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetRegistrationReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteRegistration"
+		req    = new(entity.GetRegistrationReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteRegistration - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -392,13 +401,14 @@ func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturerProgramsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getLecturerPrograms"
+		req    = new(entity.GetLecturerProgramsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getLecturerPrograms - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -406,7 +416,7 @@ func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerPrograms - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -422,13 +432,14 @@ func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 
 func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 	var (
-		req = new(entity.HRDistributionReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::hrDistributions"
+		req    = new(entity.HRDistributionReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::hrDistributions - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -436,7 +447,7 @@ func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::hrDistributions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -452,13 +463,14 @@ func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 
 func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UseHRfeeForLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::lecturerDistributions"
+		req    = new(entity.UseHRfeeForLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::lecturerDistributions - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -466,13 +478,13 @@ func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::lecturerDistributions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::lecturerDistributions - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -488,13 +500,14 @@ func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 
 func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetRegistrationListPerLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getRegistrationListPerLecturer"
+		req    = new(entity.GetRegistrationListPerLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getRegistrationListPerLecturer - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -502,7 +515,7 @@ func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getRegistrationListPerLecturer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -518,13 +531,14 @@ func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturersWagesReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getLecturerWages"
+		req    = new(entity.GetLecturersWagesReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getLecturerWages - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -532,7 +546,7 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerWages - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -620,13 +634,14 @@ func (h *reportHandler) importLecturersWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturersWagesAggregateReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getLecturerWagesAggregate"
+		req    = new(entity.GetLecturersWagesAggregateReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getLecturerWagesAggregate - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -634,7 +649,7 @@ func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturerWagesAggregate - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -650,13 +665,14 @@ func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 
 func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetAcquisitionRightsAggregateReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getAcquisitionRightsAggregate"
+		req    = new(entity.GetAcquisitionRightsAggregateReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getAcquisitionRightsAggregate - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -664,7 +680,7 @@ func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getAcquisitionRightsAggregate - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -680,13 +696,14 @@ func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateLecturersWageReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateLecturerWages"
+		req    = new(entity.UpdateLecturersWageReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateLecturerWages - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -694,13 +711,13 @@ func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 	req.RegistrationID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateLecturerWages - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateLecturerWages - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -716,13 +733,14 @@ func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GenerateRegistrationsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::generateRegistrationReports"
+		req    = new(entity.GenerateRegistrationsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::generateRegistrationReports - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -730,7 +748,7 @@ func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::generateRegistrationReports - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -746,13 +764,14 @@ func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 
 func (h *reportHandler) registrationMultiAllocation(c *fiber.Ctx) error {
 	var (
-		req = new(entity.RegistrationMuliAllocationReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::registrationMultiAllocation"
+		req    = new(entity.RegistrationMuliAllocationReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::registrationMultiAllocation - invalid request")
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -760,7 +779,7 @@ func (h *reportHandler) registrationMultiAllocation(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::registrationMultiAllocation - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

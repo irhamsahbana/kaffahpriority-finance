@@ -8,6 +8,7 @@ import (
 )
 
 func (r *reportRepo) UpdateRegistrationLecturer(ctx context.Context, req *entity.UpdateRegistrationLecturerReq) (*entity.UpdateRegistrationLecturerResp, error) {
+	fnName := "repo::UpdateRegistrationLecturer"
 	var (
 		resp = new(entity.UpdateRegistrationLecturerResp)
 	)
@@ -22,7 +23,8 @@ func (r *reportRepo) UpdateRegistrationLecturer(ctx context.Context, req *entity
 
 	err := r.db.QueryRowxContext(ctx, query, req.LecturerId, req.ID).Scan(&resp.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateRegistrationLecturer - error updating registration lecturer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration lecturer", fnName)
+		return nil, err
 	}
 
 	return resp, nil

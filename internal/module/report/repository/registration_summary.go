@@ -9,6 +9,7 @@ import (
 )
 
 func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
+	fnName := "repo::GetSummaries"
 	var (
 		resp = new(entity.GetSummariesResp)
 		args = make([]any, 0, 3)
@@ -56,7 +57,7 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 		&resp.TotalProfit,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetSummaries - failed to get summaries")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
 		return nil, err
 	}
 
@@ -67,6 +68,7 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 }
 
 func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesForCFO2Resp, error) {
+	fnName := "repo::GetSummariesForCFO2"
 	var (
 		resp = new(entity.GetSummariesForCFO2Resp)
 		args = make([]any, 0, 3)
@@ -97,7 +99,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 		&resp.TotalCredit,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetSummariesForCFO2 - failed to get summaries for CFO2")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries for CFO2", fnName)
 		return nil, err
 	}
 	resp.PaidAtFrom = req.PaidAtFrom
@@ -119,7 +121,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 	var totalBalance decimal.Decimal
 	err = r.db.QueryRowContext(ctx, r.db.Rebind(queryBalance), req.Timezone, req.PaidAtTo).Scan(&totalBalance)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetSummariesForCFO2 - failed to get total balance")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get total balance", fnName)
 		return nil, err
 	}
 

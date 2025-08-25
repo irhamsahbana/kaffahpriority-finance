@@ -13,22 +13,23 @@ import (
 
 func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetStudentManagersReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getStudentManagers"
+		req    = new(entity.GetStudentManagersReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getStudentManagers - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getStudentManagers - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -44,16 +45,17 @@ func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetStudentManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getStudentManager"
+		req    = new(entity.GetStudentManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getStudentManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -69,20 +71,21 @@ func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateStudentManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createStudentManager"
+		req    = new(entity.CreateStudentManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createStudentManager - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createStudentManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -98,21 +101,22 @@ func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateStudentManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateStudentManager"
+		req    = new(entity.UpdateStudentManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateStudentManager - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateStudentManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -128,16 +132,17 @@ func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteStudentManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteStudentManager"
+		req    = new(entity.DeleteStudentManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteStudentManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -153,22 +158,23 @@ func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetAcademicManagersReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getAcademicManagers"
+		req    = new(entity.GetAcademicManagersReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getAcademicManagers - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getAcademicManagers - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -184,16 +190,17 @@ func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetAcademicManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getAcademicManager"
+		req    = new(entity.GetAcademicManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getAcademicManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -209,20 +216,21 @@ func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateAcademicManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createAcademicManager"
+		req    = new(entity.CreateAcademicManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createAcademicManager - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createAcademicManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -238,21 +246,22 @@ func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateAcademicManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateAcademicManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateAcademicManager"
+		req    = new(entity.UpdateAcademicManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateAcademicManager - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateAcademicManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -268,16 +277,17 @@ func (h *masterHandler) updateAcademicManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteAcademicManager(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteAcademicManagerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteAcademicManager"
+		req    = new(entity.DeleteAcademicManagerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteAcademicManager - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

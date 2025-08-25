@@ -41,23 +41,24 @@ func (h *userHandler) Register(router fiber.Router) {
 
 func (h *userHandler) login(c *fiber.Ctx) error {
 	var (
-		req = new(entity.LoginReq)
-		v   = adapter.Adapters.Validator
+		fnName = "handler::login"
+		req    = new(entity.LoginReq)
+		v      = adapter.Adapters.Validator
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msg("handler::login - Invalid request")
+		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msg("handler::login - Invalid request")
+		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	resp, err := h.service.Login(c.Context(), req)
 	if err != nil {
-		log.Error().Err(err).Any("req", req.Log()).Msg("handler::login - Service error")
+		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Service error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -66,14 +67,15 @@ func (h *userHandler) login(c *fiber.Ctx) error {
 
 func (h *userHandler) me(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetMeReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::me"
+		req    = new(entity.GetMeReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::me - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -89,16 +91,17 @@ func (h *userHandler) me(c *fiber.Ctx) error {
 
 func (h *userHandler) getUsers(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetUsersReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::getUsers"
+		req    = new(entity.GetUsersReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getUsers - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -114,16 +117,17 @@ func (h *userHandler) getUsers(c *fiber.Ctx) error {
 
 func (h *userHandler) getUser(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetUserReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::getUser"
+		req    = new(entity.GetUserReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -139,21 +143,22 @@ func (h *userHandler) getUser(c *fiber.Ctx) error {
 
 func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateUserReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::updateUser"
+		req    = new(entity.UpdateUserReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -169,16 +174,17 @@ func (h *userHandler) updateUser(c *fiber.Ctx) error {
 
 func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteUserReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::deleteUser"
+		req    = new(entity.DeleteUserReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -194,20 +200,21 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 
 func (h *userHandler) createUser(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateUserReq)
-		v   = adapter.Adapters.Validator
-		l   = middleware.GetLocals(c)
+		fnName = "handler::createUser"
+		req    = new(entity.CreateUserReq)
+		v      = adapter.Adapters.Validator
+		l      = middleware.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createUser - Invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

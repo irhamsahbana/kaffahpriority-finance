@@ -13,19 +13,20 @@ import (
 
 func (h *masterHandler) getLecturers(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturersReq)
-		v   = adapter.Adapters.Validator
+		fnName = "handler::getLecturers"
+		req    = new(entity.GetLecturersReq)
+		v      = adapter.Adapters.Validator
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getLecturers - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturers - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -41,16 +42,17 @@ func (h *masterHandler) getLecturers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getLecturer"
+		req    = new(entity.GetLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getLecturer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -66,20 +68,21 @@ func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createLecturer"
+		req    = new(entity.CreateLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createLecturer - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createLecturer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -95,21 +98,22 @@ func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateLecturer"
+		req    = new(entity.UpdateLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateLecturer - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateLecturer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -125,16 +129,17 @@ func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteLecturer(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteLecturerReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteLecturer"
+		req    = new(entity.DeleteLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteLecturer - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

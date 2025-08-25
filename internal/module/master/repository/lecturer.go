@@ -11,6 +11,7 @@ import (
 )
 
 func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error) {
+	fnName := "repo::GetLecturers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.Lecturer
@@ -55,7 +56,7 @@ func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersR
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturers - failed to query lecturers")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers", fnName)
 		return nil, err
 	}
 
@@ -70,6 +71,7 @@ func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersR
 }
 
 func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLecturerReq) (*entity.CreateLecturerResp, error) {
+	fnName := "repo::CreateLecturer"
 	query := `
 		INSERT INTO lecturers (
 			id,
@@ -87,7 +89,7 @@ func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLectu
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
 		Id, req.AcademicManagerID, req.Name, req.Phone, req.RegisteredAt); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateLecturer - failed to create lecturer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create lecturer", fnName)
 		return nil, err
 	}
 
@@ -97,6 +99,7 @@ func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLectu
 }
 
 func (r *masterRepo) GetLecturer(ctx context.Context, req *entity.GetLecturerReq) (*entity.GetLecturerResp, error) {
+	fnName := "repo::GetLecturer"
 	var (
 		resp = new(entity.GetLecturerResp)
 		data = new(entity.Lecturer)
@@ -123,10 +126,10 @@ func (r *masterRepo) GetLecturer(ctx context.Context, req *entity.GetLecturerReq
 
 	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msg("repo::GetLecturer - lecturer not found")
+			log.Warn().Any("req", req).Msgf("%s - lecturer not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Mentor tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetLecturer - failed to get lecturer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get lecturer", fnName)
 		return nil, err
 	}
 
@@ -136,6 +139,7 @@ func (r *masterRepo) GetLecturer(ctx context.Context, req *entity.GetLecturerReq
 }
 
 func (r *masterRepo) UpdateLecturer(ctx context.Context, req *entity.UpdateLecturerReq) error {
+	fnName := "repo::UpdateLecturer"
 	query := `
 		UPDATE lecturers
 		SET
@@ -152,7 +156,7 @@ func (r *masterRepo) UpdateLecturer(ctx context.Context, req *entity.UpdateLectu
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
 		req.AcademicManagerID,
 		req.Name, req.Phone, req.RegisteredAt, req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateLecturer - failed to update lecturer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update lecturer", fnName)
 		return err
 	}
 
@@ -160,6 +164,7 @@ func (r *masterRepo) UpdateLecturer(ctx context.Context, req *entity.UpdateLectu
 }
 
 func (r *masterRepo) DeleteLecturer(ctx context.Context, req *entity.DeleteLecturerReq) error {
+	fnName := "repo::DeleteLecturer"
 	query := `
 		UPDATE lecturers
 		SET
@@ -170,7 +175,7 @@ func (r *masterRepo) DeleteLecturer(ctx context.Context, req *entity.DeleteLectu
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteLecturer - failed to delete lecturer")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete lecturer", fnName)
 		return err
 	}
 

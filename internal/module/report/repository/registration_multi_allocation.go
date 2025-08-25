@@ -15,7 +15,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("repo::RegistrationMultiAllocation - failed to begin transaction")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()

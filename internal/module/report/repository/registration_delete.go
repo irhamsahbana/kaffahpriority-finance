@@ -8,6 +8,7 @@ import (
 )
 
 func (r *reportRepo) DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error {
+	fnName := "repo::DeleteRegistration"
 	query := `
 		UPDATE program_registrations
 		SET deleted_at = NOW()
@@ -17,7 +18,7 @@ func (r *reportRepo) DeleteRegistration(ctx context.Context, req *entity.GetRegi
 
 	_, err := r.db.ExecContext(ctx, query, req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteRegistration - error deleting registration")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete registration", fnName)
 		return err
 	}
 

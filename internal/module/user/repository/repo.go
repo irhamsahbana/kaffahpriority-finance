@@ -31,6 +31,7 @@ func NewUserRepository() *userRepo {
 }
 
 func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error) {
+	fnName := "repo::Login"
 	type user struct {
 		Id       string `db:"id"`
 		Email    string `db:"email"`
@@ -60,15 +61,15 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 	err := r.db.GetContext(ctx, result, r.db.Rebind(query), req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req.Log()).Msg("repo::Login - User not found")
+			log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - User not found", fnName)
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 		}
-		log.Error().Err(err).Any("req", req.Log()).Msg("repo::Login - Failed to get user")
+		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to get user", fnName)
 		return nil, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(req.Password)); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msg("repo::Login - Password not match")
+		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Password not match", fnName)
 		return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 	}
 
@@ -82,7 +83,7 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 
 	token, err := jwthandler.GenerateTokenString(payload)
 	if err != nil {
-		log.Error().Err(err).Any("req", req.Log()).Msg("repo::Login - Failed to generate token")
+		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to generate token", fnName)
 		return nil, errmsg.NewCustomErrors(500).SetMessage("Gagal membuat token")
 	}
 
@@ -92,6 +93,7 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 }
 
 func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error) {
+	fnName := "repo::GetUsers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.UserItem
@@ -124,7 +126,7 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetUsers - failed to fetch data")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -139,6 +141,7 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 }
 
 func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error) {
+	fnName := "repo::GetUser"
 	var resp entity.GetUserResp
 
 	query := `
@@ -158,10 +161,10 @@ func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity
 	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetUser - user not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - user not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Data tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetUser - failed to fetch user")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch user", fnName)
 		return nil, err
 	}
 
@@ -169,6 +172,7 @@ func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity
 }
 
 func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
+	fnName := "repo::UpdateUser"
 	var (
 		resp       entity.UpdateUserResp
 		queryParts = []string{}
@@ -186,7 +190,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msg("repo::UpdateUser - failed to hash password")
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
 			return nil, err
 		}
 
@@ -209,7 +213,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::UpdateUser - failed to update user")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update user", fnName)
 		return nil, err
 	}
 
@@ -217,6 +221,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 }
 
 func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) error {
+	fnName := "repo::DeleteUser"
 	query := `
 		UPDATE
 			users
@@ -230,7 +235,7 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::DeleteUser - failed to delete user")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete user", fnName)
 		return err
 	}
 
@@ -238,12 +243,13 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 }
 
 func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserResp, error) {
+	fnName := "repo::CreateUser"
 	var resp entity.CreateUserResp
 	resp.ID = ulid.Make().String()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateUser - failed to hash password")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
 		return nil, err
 	}
 
@@ -263,7 +269,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*
 
 	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.RoleID, req.Name, req.Email, hashedPassword)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msg("repo::CreateUser - failed to create user")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create user", fnName)
 		return nil, err
 	}
 
@@ -271,6 +277,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*
 }
 
 func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.GetMeResp, error) {
+	fnName := "repo::GetMe"
 	var (
 		resp entity.GetMeResp
 	)
@@ -295,10 +302,10 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msg("repo::GetMe - user not found")
+			log.Warn().Err(err).Any("req", req).Msgf("%s - user not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Data tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msg("repo::GetMe - failed to fetch user")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch user", fnName)
 		return nil, err
 	}
 
@@ -323,12 +330,12 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 
 	err = r.db.SelectContext(ctx, &resp.Permissions, r.db.Rebind(query), req.UserID)
 	if err != nil && err != sql.ErrNoRows {
-		log.Error().Err(err).Any("req", req).Msg("repo::GetMe - failed to fetch permissions")
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch permissions", fnName)
 		return nil, err
 	}
 
 	if len(resp.Permissions) == 0 {
-		log.Warn().Err(err).Any("req", req).Msg("repo::GetMe - permissions not found")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - permissions not found", fnName)
 	}
 
 	return &resp, nil

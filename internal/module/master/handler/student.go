@@ -13,22 +13,23 @@ import (
 
 func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetStudentsReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getStudents"
+		req    = new(entity.GetStudentsReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::getStudents - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getStudents - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -44,20 +45,21 @@ func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 
 func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 	var (
-		req = new(entity.CreateStudentReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::createStudent"
+		req    = new(entity.CreateStudentReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::createStudent - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::createStudent - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -73,16 +75,17 @@ func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 	var (
-		req = new(entity.GetStudentReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::getStudent"
+		req    = new(entity.GetStudentReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::getStudent - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -98,21 +101,22 @@ func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 	var (
-		req = new(entity.UpdateStudentReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::updateStudent"
+		req    = new(entity.UpdateStudentReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msg("handler::updateStudent - failed to parse request")
+		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::updateStudent - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -128,16 +132,17 @@ func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteStudent(c *fiber.Ctx) error {
 	var (
-		req = new(entity.DeleteStudentReq)
-		v   = adapter.Adapters.Validator
-		l   = m.GetLocals(c)
+		fnName = "handler::deleteStudent"
+		req    = new(entity.DeleteStudentReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msg("handler::deleteStudent - invalid request")
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
