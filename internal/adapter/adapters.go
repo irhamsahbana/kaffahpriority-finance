@@ -8,7 +8,6 @@ import (
 	// import "codebase-app/internal/pkg/validator"
 	firebase "firebase.google.com/go"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/nats-io/nats.go/jetstream"
@@ -34,15 +33,16 @@ type Adapter struct {
 	EmailConsumerCtxNats jetstream.ConsumeContext
 
 	//Driven Adapters
-	Postgres              *sqlx.DB
-	Validator             Validator // *validator.Validator
+	Postgres                  *sqlx.DB
+	Validator                 Validator // *validator.Validator
 	EmailPublisher            jetstream.Publisher
 	ExcelProductPublisher     jetstream.Publisher
 	ReportGenerationPublisher jetstream.Publisher
-	Storage               *s3.Client
-	VenamonGolog          *tele.Bot
-	FirebaseSDK           *firebase.App
-	DropboxFiles          files.Client
+	Storage                   *s3.Client
+	VenamonGolog              *tele.Bot
+	FirebaseSDK               *firebase.App
+	DropboxFiles              *DynamicDropboxClient
+	DropboxTokenManager       *DropboxTokenManager
 }
 
 func (a *Adapter) Sync(opts ...Option) {

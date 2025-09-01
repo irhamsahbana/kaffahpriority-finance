@@ -3,19 +3,25 @@ package adapter
 import (
 	"codebase-app/internal/infrastructure/config"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
 	"github.com/rs/zerolog/log"
 )
 
 func WithDropboxSDK() Option {
 	return func(a *Adapter) {
-		cfg := dropbox.Config{
-			Token: config.Envs.Dropbox.AccessToken,
-		}
+		// Initialize token manager
+		tokenManager := NewDropboxTokenManager(
+			config.Envs.Dropbox.AccessToken,
+			config.Envs.Dropbox.RefreshToken,
+			config.Envs.Dropbox.AppKey,
+			config.Envs.Dropbox.AppSecret,
+		)
 
-		a.DropboxFiles = files.New(cfg)
+		// Create dynamic client with automatic token refresh
+		dynamicClient := NewDynamicDropboxClient(tokenManager)
 
-		log.Info().Msg("Dropbox SDK initialized")
+		a.DropboxFiles = dynamicClient
+		a.DropboxTokenManager = tokenManager
+
+		log.Info().Msg("Dropbox SDK initialized with OAuth2 token manager and dynamic client")
 	}
 }

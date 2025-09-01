@@ -79,7 +79,11 @@ type Config struct {
 		}
 	}
 	Dropbox struct {
-		AccessToken string `env:"DROPBOX_ACCESS_TOKEN"`
+		AccessToken  string `env:"DROPBOX_ACCESS_TOKEN"`
+		RefreshToken string `env:"DROPBOX_REFRESH_TOKEN"`
+		AppKey       string `env:"DROPBOX_APP_KEY"`
+		AppSecret    string `env:"DROPBOX_APP_SECRET"`
+		RedirectURL  string `env:"DROPBOX_REDIRECT_URL" env-default:"http://localhost:8080/auth/dropbox/callback"`
 	}
 	VenamonGolog struct {
 		Token    string `env:"VENAMON_GOLOG_TOKEN" env-default:"6418397550:AAEUTeuJUwBcR1j0fUNRGwzztfSyuuzmLKI"`
