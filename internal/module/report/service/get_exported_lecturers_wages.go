@@ -90,7 +90,6 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 
 		ProgramFeePerMeeting, _ := item.ProgramFeePerMeeting.Float64()
 		FullFee, _ := item.FullFee.Float64()
-		InitialFee, _ := item.InitialFee.Float64()
 		RealFee, _ := item.RealFee.Float64()
 
 		f.SetCellValue(sheetName, fmt.Sprintf("R%v", row), item.RegistrationID)
@@ -107,7 +106,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		f.SetCellValue(sheetName, fmt.Sprintf("F%v", row), item.ProgramMeetings)
 		f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), ProgramFeePerMeeting)
 		f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), FullFee)
-		f.SetCellValue(sheetName, fmt.Sprintf("I%v", row), InitialFee)
+		f.SetCellFormula(sheetName, fmt.Sprintf("I%v", row), fmt.Sprintf("=F%v*G%v", row, row))
 		if item.IsFullFee {
 			f.SetCellValue(sheetName, fmt.Sprintf("J%v", row), "full")
 		} else {
