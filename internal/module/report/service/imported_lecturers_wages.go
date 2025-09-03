@@ -88,24 +88,24 @@ func (s *reportService) ImportLecturersWages(
 		// field RegistrationId
 		_, err := ulid.Parse(registrationId)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "id tidak valid")
+			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("registration_id bukan ULID yang valid: %s", registrationId))
 		}
 		data.RegistrationID = registrationId
 
 		// field ProgramMeetings
 		programMeetings, err := strconv.Atoi(jumlahStr)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "jumlah bukan angka yang valid")
+			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("jumlah bukan angka yang valid: %s", jumlahStr))
 		}
 		data.ProgramMeetings = programMeetings
 
 		// field InitialFee
 		initialFee, err := decimal.NewFromString(awalStr)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "ujroh awal bukan angka yang valid")
+			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal bukan angka yang valid: %s", awalStr))
 		}
 		if initialFee.LessThan(decimal.Zero) {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "ujroh awal tidak boleh negatif")
+			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal tidak boleh negatif: %s", awalStr))
 		}
 		data.InitialFee = initialFee
 
@@ -124,10 +124,10 @@ func (s *reportService) ImportLecturersWages(
 		if flStr != "" {
 			fl, err := decimal.NewFromString(flStr)
 			if err != nil {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "FL bukan angka yang valid")
+				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL bukan angka yang valid: %s", flStr))
 			}
 			if fl.LessThan(decimal.Zero) {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "FL tidak boleh negatif")
+				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL tidak boleh negatif: %s", flStr))
 			}
 			data.FL = &fl
 		}
@@ -136,10 +136,10 @@ func (s *reportService) ImportLecturersWages(
 		if nlStr != "" {
 			nl, err := decimal.NewFromString(nlStr)
 			if err != nil {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "NL bukan angka yang valid")
+				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL bukan angka yang valid: %s", nlStr))
 			}
 			if nl.LessThan(decimal.Zero) {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "NL tidak boleh negatif")
+				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL tidak boleh negatif: %s", nlStr))
 			}
 			data.NL = &nl
 		}
@@ -156,7 +156,7 @@ func (s *reportService) ImportLecturersWages(
 	}
 
 	if errs.HasErrors() {
-		log.Warn().Err(errs).Msgf("%s - invalid request", fnName)
+		log.Warn().Err(errs).Any("errors", errs).Msgf("%s - invalid request", fnName)
 		return errs
 	}
 
