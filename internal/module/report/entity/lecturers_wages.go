@@ -70,7 +70,7 @@ type GetLecturersWagesAggregateReq struct {
 
 	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
 	LecturerID        string `query:"lecturer_id" validate:"omitempty,ulid"`
-	Month             string `query:"month" validate:"omitempty,datetime=2006-01"`
+	Month             string `query:"month" validate:"required,datetime=2006-01"`
 	Timezone          string `query:"timezone" validate:"required,timezone"`
 }
 
@@ -79,6 +79,11 @@ func (r *GetLecturersWagesAggregateReq) SetDefault() {
 
 	if r.Timezone == "" {
 		r.Timezone = "Asia/Makassar"
+	}
+
+	if r.Month == "" {
+		loc, _ := time.LoadLocation(r.Timezone)
+		r.Month = time.Now().In(loc).Format("2006-01")
 	}
 }
 
