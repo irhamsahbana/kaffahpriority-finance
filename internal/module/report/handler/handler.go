@@ -39,7 +39,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Get("/templates/:id", h.getTemplate)
 	protected.Delete("/templates/:id", h.deleteTemplate)
 
-	protected.Post("/registrations", h.createRegistrations)
+	// protected.Post("/registrations", h.createRegistrations)
 	protected.Post("/copy-registrations", h.copyRegistrations)
 	protected.Get("/registration-summaries", h.getSummaries)
 	protected.Get("/registration-summaries-for-cfo2", h.getSummariesForCFO2)
