@@ -117,6 +117,15 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			AND pr.mentor_detail_fee_used IS NULL
 	`
 
+	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
+		query += `
+			AND pr.paid_at AT TIME ZONE ? BETWEEN
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+		`
+		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+	}
+
 	if req.ExcludeAllocatedMonth != "" {
 		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') != ?`
 		args = append(args, req.Timezone, req.ExcludeAllocatedMonth)
