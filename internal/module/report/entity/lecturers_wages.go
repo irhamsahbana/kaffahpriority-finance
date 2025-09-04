@@ -77,9 +77,7 @@ type GetLecturersWagesAggregateReq struct {
 func (r *GetLecturersWagesAggregateReq) SetDefault() {
 	r.MetaQuery.SetDefault()
 
-	if r.Timezone == "" {
-		r.Timezone = "Asia/Makassar"
-	}
+	r.Timezone = "Asia/Makassar"
 
 	if r.Month == "" {
 		loc, _ := time.LoadLocation(r.Timezone)
