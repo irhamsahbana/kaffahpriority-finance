@@ -68,14 +68,18 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		return nil, err
 	}
 
+	// Combine date and time strings, then parse as timestamp
+	paidAtDateTime := req.PaidAt + " " + req.PaidAtTime
+	allocatedAtDateTime := req.AllocatedAt + " " + req.AllocatedAtTime
+
 	// parse date
-	parsedPaidAt, err := time.ParseInLocation("2006-01-02", req.PaidAt, loc)
+	parsedPaidAt, err := time.ParseInLocation("2006-01-02 15:04:05", paidAtDateTime, loc)
 	if err != nil {
 		log.Error().Err(err).Msgf("%s - failed to parse paid_at", fnName)
 		return nil, err
 	}
 
-	parsedAllocatedAt, err := time.ParseInLocation("2006-01-02", req.AllocatedAt, loc)
+	parsedAllocatedAt, err := time.ParseInLocation("2006-01-02 15:04:05", allocatedAtDateTime, loc)
 	if err != nil {
 		log.Error().Err(err).Msgf("%s - failed to parse allocated_at", fnName)
 		return nil, err
