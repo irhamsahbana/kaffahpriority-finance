@@ -64,7 +64,7 @@ func (s *reportService) ImportLecturersWages(
 		no, _ := f.GetCellValue(sheetName, cell(colNo, rowIdx))
 		registrationId, _ := f.GetCellValue(sheetName, cell(colID, rowIdx))
 		jumlahStr, _ := f.GetCellValue(sheetName, cell(colJumlah, rowIdx))   // F
-		awalStr, _ := f.GetCellValue(sheetName, cell(colUjrohAwal, rowIdx))  // I
+		awalStr, _ := f.CalcCellValue(sheetName, cell(colUjrohAwal, rowIdx)) // I
 		tfFlag, _ := f.GetCellValue(sheetName, cell(colTFF, rowIdx))         // J
 		flStr, _ := f.GetCellValue(sheetName, cell(colFL, rowIdx), rawValue) // K
 		nlStr, _ := f.GetCellValue(sheetName, cell(colNL, rowIdx), rawValue) // L
