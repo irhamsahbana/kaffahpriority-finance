@@ -126,6 +126,14 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	}
 
+	if req.IsStarted != "" {
+		if req.IsStarted == "true" {
+			query += ` AND pr.program_meetings > 0`
+		} else {
+			query += ` AND pr.program_meetings = 0`
+		}
+	}
+
 	if req.ExcludeAllocatedMonth != "" {
 		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') != ?`
 		args = append(args, req.Timezone, req.ExcludeAllocatedMonth)

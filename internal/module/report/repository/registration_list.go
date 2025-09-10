@@ -129,6 +129,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	}
 
+	if req.IsStarted != "" {
+		if req.IsStarted == "true" {
+			query += ` AND pr.program_meetings > 0`
+		} else {
+			query += ` AND pr.program_meetings = 0`
+		}
+	}
+
 	if req.Q != "" {
 		query += ` AND (
 			pr.program_name ILIKE '%' || ? || '%' OR
