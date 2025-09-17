@@ -300,7 +300,8 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
 	fnName := "repo::GetLecturersWagesAggregateYearly"
 	type dao struct {
-		TotalData int `db:"total_data"`
+		TotalData         int    `db:"total_data"`
+		AcademicManagerID string `db:"academic_manager_id"`
 		entity.LecturersWageAggregateYearlyItem
 	}
 	type monthData struct {
@@ -322,6 +323,7 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 			COUNT (*) OVER() AS total_data,
 			l.id AS lecturer_id,
 			l.name AS lecturer_name,
+			am.id AS academic_manager_id,
 			am.name AS academic_manager_name,
 			EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) AS year
 		FROM
@@ -350,9 +352,11 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 		GROUP BY
 			l.id,
 			l.name,
+			am.id,
 			am.name,
 			year
 		ORDER BY
+			am.id ASC,
 			l.id ASC
 		LIMIT ? OFFSET ?
 	`
