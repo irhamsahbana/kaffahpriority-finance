@@ -94,9 +94,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 
 	args = append(args, req.Timezone, req.Month)
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	if req.LecturerID != "" {
@@ -201,11 +201,6 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 		TotalData int `db:"total_data"`
 		entity.LecturersWageAggregateItem
 	}
-	type monthData struct {
-		Month                  int             `db:"month"`
-		UsedAmount             decimal.Decimal `db:"used_amount"`
-		TotalAcquisitionRights int             `db:"total_acquisition_rights"`
-	}
 	var (
 		resp = new(entity.LecturersWageAggregateResp)
 		data = make([]dao, 0)
@@ -213,6 +208,113 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 	)
 
 	resp.Items = make([]entity.LecturersWageAggregateItem, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			l.id AS lecturer_id,
+			l.name AS lecturer_name,
+			am.id AS academic_manager_id,
+			am.name AS academic_manager_name,
+			TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') AS month,
+			COALESCE(
+				SUM(
+					(
+						COALESCE(pr.night_learning_fee, 0) +
+						COALESCE(pr.foreign_learning_fee, 0) +
+						COALESCE(pr.initial_fee,
+							CASE
+								WHEN pr.is_full_fee THEN pr.full_fee
+								ELSE pr.program_fee_per_meeting * pr.program_meetings
+							END
+						)
+					)
+				),
+				0
+			) AS total_real_fee,
+			COALESCE(
+				SUM(
+					CASE
+						WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+						ELSE pr.program_acquisition_rights
+					END
+				),
+				0
+			) AS total_acquisition_rights
+		FROM
+			program_registrations pr
+		JOIN
+			lecturers l ON pr.lecturer_id = l.id
+		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE
+			pr.deleted_at IS NULL
+	`
+	args = append(args, req.Timezone)
+
+	if req.Month != "" {
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		args = append(args, req.Timezone, req.Month)
+	}
+
+	if req.AcademicManagerID != "" {
+		query += ` AND am.id = ?`
+		args = append(args, req.AcademicManagerID)
+	}
+
+	if req.LecturerID != "" {
+		query += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerID)
+	}
+
+	query += `
+		GROUP BY
+			l.id,
+			l.name,
+			am.id,
+			am.name,
+			month
+		ORDER BY
+			l.id ASC,
+			month ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.LecturersWageAggregateItem)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
+	fnName := "repo::GetLecturersWagesAggregateYearly"
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.LecturersWageAggregateYearlyItem
+	}
+	type monthData struct {
+		Month                  int             `db:"month"`
+		UsedAmount             decimal.Decimal `db:"used_amount"`
+		TotalAcquisitionRights int             `db:"total_acquisition_rights"`
+	}
+	var (
+		resp = new(entity.LecturersWageAggregateYearlyResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+
+	resp.Items = make([]entity.LecturersWageAggregateYearlyItem, 0)
 
 	// First, get all lecturers for the year
 	lecturerQuery := `
@@ -234,9 +336,9 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 	`
 	args = append(args, req.Timezone, req.Timezone, req.Year)
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		lecturerQuery += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	if req.LecturerID != "" {
@@ -344,7 +446,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 
 	// Convert to response format
 	for _, d := range data {
-		resp.Items = append(resp.Items, d.LecturersWageAggregateItem)
+		resp.Items = append(resp.Items, d.LecturersWageAggregateYearlyItem)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
@@ -620,9 +722,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 		args = append(args, req.Timezone, req.Month)
 	}
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	query += `

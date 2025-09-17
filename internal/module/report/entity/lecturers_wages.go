@@ -13,7 +13,7 @@ type GetLecturersWagesReq struct {
 
 	Q string `query:"q" validate:"omitempty,min=3"`
 
-	AcademicManagerId          string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	AcademicManagerID          string `query:"academic_manager_id" validate:"omitempty,ulid"`
 	LecturerID                 string `query:"lecturer_id" validate:"omitempty,ulid"`
 	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
 	Month                      string `query:"month" validate:"omitempty,datetime=2006-01"`
@@ -68,13 +68,51 @@ type GetLecturersWagesAggregateReq struct {
 	UserID string `validate:"ulid"`
 	types.MetaQuery
 
-	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	AcademicManagerID string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	LecturerID        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	Month             string `query:"month" validate:"required,datetime=2006-01"`
+	Timezone          string `query:"timezone" validate:"required,timezone"`
+}
+
+func (r *GetLecturersWagesAggregateReq) SetDefault() {
+	r.MetaQuery.SetDefault()
+
+	r.Timezone = "Asia/Makassar"
+
+	if r.Month == "" {
+		loc, _ := time.LoadLocation(r.Timezone)
+		r.Month = time.Now().In(loc).Format("2006-01")
+	}
+}
+
+type LecturersWageAggregateResp struct {
+	Items []LecturersWageAggregateItem `json:"items"`
+	Meta  types.Meta                   `json:"meta"`
+}
+
+type LecturersWageAggregateItem struct {
+	Month                  string          `json:"month" db:"month"`
+	LecturerID             string          `json:"lecturer_id" db:"lecturer_id"`
+	AcademicManagerID      string          `json:"academic_manager_id" db:"academic_manager_id"`
+	LecturerName           string          `json:"lecturer_name" db:"lecturer_name"`
+	AcademicManagerName    string          `json:"academic_manager_name" db:"academic_manager_name"`
+	TotalRealFee           decimal.Decimal `json:"total_real_fee" db:"total_real_fee"`
+	TotalAcquisitionRights int             `json:"total_acquisition_rights" db:"total_acquisition_rights"`
+}
+
+// yearly aggregate version
+
+type GetLecturersWagesAggregateYearlyReq struct {
+	UserID string `validate:"ulid"`
+	types.MetaQuery
+
+	AcademicManagerID string `query:"academic_manager_id" validate:"omitempty,ulid"`
 	LecturerID        string `query:"lecturer_id" validate:"omitempty,ulid"`
 	Year              int    `query:"year" validate:"required,min=1900,max=2100"`
 	Timezone          string `query:"timezone" validate:"required,timezone"`
 }
 
-func (r *GetLecturersWagesAggregateReq) SetDefault() {
+func (r *GetLecturersWagesAggregateYearlyReq) SetDefault() {
 	r.MetaQuery.SetDefault()
 
 	r.Timezone = "Asia/Makassar"
@@ -85,12 +123,12 @@ func (r *GetLecturersWagesAggregateReq) SetDefault() {
 	}
 }
 
-type LecturersWageAggregateResp struct {
-	Items []LecturersWageAggregateItem `json:"items"`
-	Meta  types.Meta                   `json:"meta"`
+type LecturersWageAggregateYearlyResp struct {
+	Items []LecturersWageAggregateYearlyItem `json:"items"`
+	Meta  types.Meta                         `json:"meta"`
 }
 
-type LecturersWageAggregateItem struct {
+type LecturersWageAggregateYearlyItem struct {
 	LecturerID          string                   `json:"lecturer_id" db:"lecturer_id"`
 	LecturerName        string                   `json:"lecturer_name" db:"lecturer_name"`
 	AcademicManagerName string                   `json:"academic_manager_name" db:"academic_manager_name"`

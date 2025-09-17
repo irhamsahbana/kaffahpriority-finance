@@ -48,6 +48,7 @@ type FinancialRepository interface {
 	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
 	GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error)
 	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error)
+	GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
@@ -112,6 +113,7 @@ type FinancialService interface {
 	UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error
 	GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error)
 	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error)
+	GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
