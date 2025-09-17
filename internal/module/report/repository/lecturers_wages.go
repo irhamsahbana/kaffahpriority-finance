@@ -94,9 +94,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 
 	args = append(args, req.Timezone, req.Month)
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	if req.LecturerID != "" {
@@ -257,9 +257,9 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 		args = append(args, req.Timezone, req.Month)
 	}
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	if req.LecturerID != "" {
@@ -290,6 +290,163 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 	for _, d := range data {
 		resp.Items = append(resp.Items, d.LecturersWageAggregateItem)
 		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
+	fnName := "repo::GetLecturersWagesAggregateYearly"
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.LecturersWageAggregateYearlyItem
+	}
+	type monthData struct {
+		Month                  int             `db:"month"`
+		UsedAmount             decimal.Decimal `db:"used_amount"`
+		TotalAcquisitionRights int             `db:"total_acquisition_rights"`
+	}
+	var (
+		resp = new(entity.LecturersWageAggregateYearlyResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+
+	resp.Items = make([]entity.LecturersWageAggregateYearlyItem, 0)
+
+	// First, get all lecturers for the year
+	lecturerQuery := `
+		SELECT DISTINCT
+			COUNT (*) OVER() AS total_data,
+			l.id AS lecturer_id,
+			l.name AS lecturer_name,
+			am.name AS academic_manager_name,
+			EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) AS year
+		FROM
+			program_registrations pr
+		JOIN
+			lecturers l ON pr.lecturer_id = l.id
+		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		WHERE
+			pr.deleted_at IS NULL
+			AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = ?
+	`
+	args = append(args, req.Timezone, req.Timezone, req.Year)
+
+	if req.AcademicManagerID != "" {
+		lecturerQuery += ` AND am.id = ?`
+		args = append(args, req.AcademicManagerID)
+	}
+
+	if req.LecturerID != "" {
+		lecturerQuery += ` AND pr.lecturer_id = ?`
+		args = append(args, req.LecturerID)
+	}
+
+	lecturerQuery += `
+		GROUP BY
+			l.id,
+			l.name,
+			am.name,
+			year
+		ORDER BY
+			l.id ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(lecturerQuery), args...); err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers", fnName)
+		return nil, err
+	}
+
+	// For each lecturer, get monthly data
+	for i, lecturer := range data {
+		monthQuery := `
+			SELECT
+				EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) AS month,
+				COALESCE(
+					SUM(
+						(
+							COALESCE(pr.night_learning_fee, 0) +
+							COALESCE(pr.foreign_learning_fee, 0) +
+							COALESCE(pr.initial_fee,
+								CASE
+									WHEN pr.is_full_fee THEN pr.full_fee
+									ELSE pr.program_fee_per_meeting * pr.program_meetings
+								END
+							)
+						)
+					),
+					0
+				) AS used_amount,
+				COALESCE(
+					SUM(
+						CASE
+							WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+							ELSE pr.program_acquisition_rights
+						END
+					),
+					0
+				) AS total_acquisition_rights
+			FROM
+				program_registrations pr
+			WHERE
+				pr.deleted_at IS NULL
+				AND pr.lecturer_id = ?
+				AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = ?
+			GROUP BY
+				month
+			ORDER BY
+				month ASC
+		`
+
+		var monthDataList []monthData
+		if err := r.db.SelectContext(ctx, &monthDataList, r.db.Rebind(monthQuery), req.Timezone, lecturer.LecturerID, req.Timezone, req.Year); err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to query monthly data for lecturer %s", fnName, lecturer.LecturerID)
+			return nil, err
+		}
+
+		// Create month map for easy lookup
+		monthMap := make(map[int]monthData)
+		for _, month := range monthDataList {
+			monthMap[month.Month] = month
+		}
+
+		// Create months array with all 12 months
+		months := make([]entity.LecturersWageMonthItem, 12)
+		monthNames := []string{"Januari", "Februari", "Maret", "April", "Mei", "Juni",
+			"Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+
+		for j := 0; j < 12; j++ {
+			monthNum := j + 1
+			monthData, exists := monthMap[monthNum]
+
+			months[j] = entity.LecturersWageMonthItem{
+				Month:                  monthNames[j],
+				UsedAmount:             decimal.Zero,
+				Notes:                  nil,
+				TotalAcquisitionRights: 0,
+			}
+
+			if exists {
+				months[j].UsedAmount = monthData.UsedAmount
+				months[j].TotalAcquisitionRights = monthData.TotalAcquisitionRights
+			}
+		}
+
+		// Update the lecturer data with months
+		data[i].Months = months
+		resp.Meta.TotalData = lecturer.TotalData
+	}
+
+	// Convert to response format
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.LecturersWageAggregateYearlyItem)
 	}
 
 	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
@@ -565,9 +722,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 		args = append(args, req.Timezone, req.Month)
 	}
 
-	if req.AcademicManagerId != "" {
+	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
-		args = append(args, req.AcademicManagerId)
+		args = append(args, req.AcademicManagerID)
 	}
 
 	query += `

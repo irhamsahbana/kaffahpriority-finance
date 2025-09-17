@@ -91,7 +91,11 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			m.name AS marketer_name,
 			s.name AS student_name,
 			am.name AS academic_manager_name,
-			sm.name AS student_manager_name
+			sm.name AS student_manager_name,
+			CASE
+				WHEN pr.program_meetings > 0 THEN TRUE
+				ELSE FALSE
+			END AS is_started
 		FROM
 			program_registrations pr
 		LEFT JOIN

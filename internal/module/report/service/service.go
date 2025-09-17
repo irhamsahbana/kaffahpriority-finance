@@ -102,6 +102,10 @@ func (s *reportService) GetLecturersWagesAggregate(ctx context.Context, req *ent
 	return s.repo.GetLecturersWagesAggregate(ctx, req)
 }
 
+func (s *reportService) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
+	return s.repo.GetLecturersWagesAggregateYearly(ctx, req)
+}
+
 func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
 	return s.repo.UpdateLecturersWage(ctx, req)
 }

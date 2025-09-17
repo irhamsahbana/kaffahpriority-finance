@@ -81,7 +81,11 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			) AS profit,
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
-			s.name AS student_name
+			s.name AS student_name,
+			CASE
+				WHEN pr.program_meetings > 0 THEN TRUE
+				ELSE FALSE
+			END AS is_started
 		FROM
 			program_registrations pr
 		LEFT JOIN
