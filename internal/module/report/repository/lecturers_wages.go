@@ -350,9 +350,11 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 		GROUP BY
 			l.id,
 			l.name,
+			am.id,
 			am.name,
 			year
 		ORDER BY
+			am.id ASC,
 			l.id ASC
 		LIMIT ? OFFSET ?
 	`
