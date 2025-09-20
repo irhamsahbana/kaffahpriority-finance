@@ -41,7 +41,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			s.name AS student_name,
 			p.name AS program_name,
 			l.academic_manager_id,
-			am.name AS academic_manager_name
+			am.name AS academic_manager_name,
+			CASE
+				WHEN pr.program_meetings > 0 THEN TRUE
+				ELSE FALSE
+			END AS is_started
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -52,6 +56,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			lecturers l ON prt.lecturer_id = l.id
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
+		LEFT JOIN
+			program_registrations pr ON prt.program_id = pr.program_id 
+			AND prt.lecturer_id = pr.lecturer_id 
+			AND prt.student_id = pr.student_id
+			AND pr.deleted_at IS NULL
 		WHERE prt.deleted_at IS NULL
 	`
 
@@ -73,6 +82,14 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	if req.AcademicManagerID != "" {
 		query += ` AND l.academic_manager_id = ?`
 		args = append(args, req.AcademicManagerID)
+	}
+
+	if req.IsStarted != "" {
+		if req.IsStarted == "true" {
+			query += ` AND pr.program_meetings > 0`
+		} else {
+			query += ` AND (pr.program_meetings = 0 OR pr.program_meetings IS NULL)`
+		}
 	}
 
 	query += `
@@ -154,7 +171,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.student_id,
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
-			pr.is_itp
+			pr.is_itp,
+			CASE
+				WHEN pr.program_meetings > 0 THEN TRUE
+				ELSE FALSE
+			END AS is_started
 		FROM
 			program_registrations pr
 		LEFT JOIN
@@ -274,7 +295,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 				// Jika bulan sudah ada dalam data, tambahkan ke Registrations
 				resp.Items[i].Registrations = append(resp.Items[i].Registrations, monthMap[m.Num])
 
-				// tambahkan keterangan FL, NL dan ITP pada bulan terakhir
+				// tambahkan keterangan FL, NL, ITP dan IsStarted pada bulan terakhir
 				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].FL != nil {
 					resp.Items[i].IsFL = true
 				}
@@ -283,6 +304,9 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 				}
 				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].IsITP {
 					resp.Items[i].IsITP = true
+				}
+				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].IsStarted {
+					resp.Items[i].IsStarted = true
 				}
 
 				// Simpan data registrasi terakhir
