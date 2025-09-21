@@ -17,6 +17,7 @@ type GetRegistrationListPerLecturerReq struct {
 	AcademicManagerID string `query:"academic_manager_id"`
 	Year              int    `query:"year"`
 	Tz                string `query:"timezone"`
+	IsStarted         string `query:"is_started"`
 }
 
 func (r *GetRegistrationListPerLecturerReq) SetDefault() {
@@ -51,6 +52,7 @@ type RegistrationListPerLecturer struct {
 	IsFL                bool                                  `json:"is_fl" db:"is_fl"`
 	IsNL                bool                                  `json:"is_nl" db:"is_nl"`
 	IsITP               bool                                  `json:"is_itp" db:"is_itp"`
+	IsStarted           bool                                  `json:"is_started" db:"is_started"`
 	Registrations       []RegistrationListPerLecturerPerMonth `json:"registrations"`
 }
 
@@ -69,4 +71,5 @@ type RegistrationListPerLecturerPerMonth struct {
 	FL         *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NL         *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP      bool             `json:"is_itp" db:"is_itp"`
+	IsStarted  bool             `json:"is_started" db:"is_started"`
 }
