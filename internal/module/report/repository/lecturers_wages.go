@@ -42,6 +42,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.is_itp,
 			CASE
 				WHEN pr.program_acquisition_rights > 10 THEN 0
+				WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 				ELSE pr.program_acquisition_rights
 			END AS acquisition_rights,
@@ -67,7 +68,6 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			) AS real_fee,
 			pr.is_full_fee,
 			pr.full_fee,
-			-- pr.mentor_detail_fee_used,
 			CASE
 				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
 				ELSE 0
@@ -237,6 +237,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 				SUM(
 					CASE
 						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 						WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 						ELSE pr.program_acquisition_rights
 					END
@@ -394,6 +395,7 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 					SUM(
 						CASE
 							WHEN pr.program_acquisition_rights > 10 THEN 0
+							WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 							WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 							ELSE pr.program_acquisition_rights
 						END
@@ -633,6 +635,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 			SUM(
 				CASE
 					WHEN pr.program_acquisition_rights > 10 THEN 0
+					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 					ELSE pr.program_acquisition_rights
 				END
@@ -712,6 +715,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 			SUM(
 				CASE
 					WHEN pr.program_acquisition_rights > 10 THEN 0
+					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 					ELSE pr.program_acquisition_rights
 				END
