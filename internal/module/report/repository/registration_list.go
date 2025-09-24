@@ -791,10 +791,13 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 							)
 						) AS real_fee, -- ujroh real
 						CASE
+							WHEN pr.program_meetings < 1 THEN 0
 							WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
 							ELSE 0
 						END AS mentor_detail_fee_used, -- keep gaji
 						CASE
+							WHEN pr.program_acquisition_rights > 10 THEN 0
+							WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
 							WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 							ELSE pr.program_acquisition_rights
 						END AS acquisition_rights, -- angka
