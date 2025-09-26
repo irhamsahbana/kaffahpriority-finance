@@ -29,8 +29,8 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 
 	for _, registrationId := range req.RegistrationIds {
 		if _, err := tx.ExecContext(ctx, query,
-			(req.PaidAt + " 01:00:00"),
-			(req.AllocatedAt + " 01:00:00"),
+			req.PaidAt+" "+req.PaidAtTime,
+			req.AllocatedAt+" "+req.AllocatedAtTime,
 			registrationId,
 		); err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration paid_at for id %s", fnName, registrationId)
