@@ -41,11 +41,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			s.name AS student_name,
 			p.name AS program_name,
 			l.academic_manager_id,
-			am.name AS academic_manager_name,
-			CASE
-				WHEN pr.program_meetings > 0 THEN TRUE
-				ELSE FALSE
-			END AS is_started
+			am.name AS academic_manager_name
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -84,29 +80,20 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		args = append(args, req.AcademicManagerID)
 	}
 
-	if req.IsStarted != "" {
-		if req.IsStarted == "true" {
-			query += ` AND pr.program_meetings > 0`
-		} else {
-			query += ` AND (pr.program_meetings = 0 OR pr.program_meetings IS NULL)`
-		}
-	}
-
 	query += `
-	/*
 		GROUP BY
-			pr.program_id,
-			pr.lecturer_id,
-			pr.student_id,
+			prt.program_id,
+			prt.lecturer_id,
+			prt.student_id,
 			l.name,
 			s.name,
 			p.name,
-			l.academic_manager_id
-	*/
+			l.academic_manager_id,
+			am.name
 		ORDER BY
 			l.academic_manager_id ASC,
 			prt.lecturer_id ASC,
-			prt.id ASC
+			MIN(prt.id) ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
