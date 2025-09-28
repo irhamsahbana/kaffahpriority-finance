@@ -64,7 +64,8 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			l.name AS lecturer_name,
 			m.name AS marketer_name,
 			s.name AS student_name,
-			p.name AS program_name
+			p.name AS program_name,
+			pr.program_acquisition_rights
 		FROM
 			program_registrations pr
 		LEFT JOIN

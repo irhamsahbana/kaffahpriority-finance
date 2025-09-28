@@ -41,6 +41,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 			prt.created_at,
 			prt.updated_at,
 			prt.deleted_at,
+			p.acquisition_rights AS program_acquisition_rights,
 
 			m.student_manager_id,
 			l.name AS lecturer_name,
