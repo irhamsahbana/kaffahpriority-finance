@@ -126,11 +126,22 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
 		query += `
-			AND pr.paid_at AT TIME ZONE ? BETWEEN
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+			AND pr.paid_at AT TIME ZONE ? >=
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
+			AND pr.paid_at AT TIME ZONE ? <
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 day')
 		`
-		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+		args = append(args, req.Timezone, req.PaidAtFrom, req.Timezone, req.PaidAtTo)
+	}
+
+	if req.AllocatedMonth != "" {
+		query += `
+			AND pr.allocated_at AT TIME ZONE ? >=
+			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+			AND pr.allocated_at AT TIME ZONE ? <
+			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+		`
+		args = append(args, req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth)
 	}
 
 	if req.IsStarted != "" {

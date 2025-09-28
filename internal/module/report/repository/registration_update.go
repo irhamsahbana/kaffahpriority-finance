@@ -47,6 +47,25 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
+            mentor_detail_fee = (
+                ? - (
+                    40000 *
+                    CASE
+                        WHEN ? THEN 2
+                        ELSE 1
+                    END *
+                    program_acquisition_rights
+                )
+            ),
+			mentor_detail_fee_used = NULL,
+			hr_detail_fee = (
+				40000 *
+				CASE
+					WHEN ? THEN 2
+					ELSE 1
+				END *
+				program_acquisition_rights
+			),
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
@@ -88,7 +107,11 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
-		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
+		req.MarketerCommissionFee, req.OverpaymentFee,
+		req.HRFee,
+		req.HRFee, req.IsITP, // calculate mentor_detail_fee
+		req.IsITP, // calculate hr_detail_fee
+		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
 		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),

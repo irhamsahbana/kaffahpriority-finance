@@ -8,12 +8,13 @@ import (
 type GetRegistrationsReq struct {
 	UserID string `validate:"required,ulid"`
 
-	Q          string `query:"q" validate:"omitempty,min=3"` // search by student name
-	PaidAtFrom string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
-	PaidAtTo   string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
-	Timezone   string `query:"timezone" validate:"required,timezone"`
-	IsPaid     string `query:"is_paid" validate:"omitempty,oneof=true false"`
-	IsStarted  string `query:"is_started" validate:"omitempty,oneof=true false"`
+	Q              string `query:"q" validate:"omitempty,min=3"` // search by student name
+	PaidAtFrom     string `query:"paid_at_from" validate:"omitempty,datetime=2006-01-02"`
+	PaidAtTo       string `query:"paid_at_to" validate:"omitempty,datetime=2006-01-02"`
+	AllocatedMonth string `query:"allocated_month" validate:"omitempty,datetime=2006-01"`
+	Timezone       string `query:"timezone" validate:"required,timezone"`
+	IsPaid         string `query:"is_paid" validate:"omitempty,oneof=true false"`
+	IsStarted      string `query:"is_started" validate:"omitempty,oneof=true false"`
 
 	MarketerID string `query:"marketer_id" validate:"omitempty,ulid"`
 	LecturerID string `query:"lecturer_id" validate:"omitempty,ulid"`
