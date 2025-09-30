@@ -234,7 +234,7 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 	}
 
 	req.UserID = l.GetUserId()
-	// req.SetDefault()
+	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
 		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)

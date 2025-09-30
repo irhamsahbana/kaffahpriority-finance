@@ -57,7 +57,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 
 	f.SetCellValue(sheetName, "A3", "TANGGAL")
 	f.MergeCell(sheetName, "A3", "A4")
-	f.SetCellValue(sheetName, "B3", "S")
+	f.SetCellValue(sheetName, "B3", "HAK")
 	f.MergeCell(sheetName, "B3", "B4")
 	f.SetCellValue(sheetName, "C3", "NAMA")
 	f.MergeCell(sheetName, "C3", "C4")
@@ -127,13 +127,14 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 			lastHariTanggal = hariTanggal
 		}
 
-		studentParticipant := 1
-		totalStudentParticipant++
-		for range item.Students {
-			studentParticipant++
-			totalStudentParticipant++
-		}
-		f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), studentParticipant)
+		// studentParticipant := 1
+		// totalStudentParticipant++
+		// for range item.Students {
+		// 	studentParticipant++
+		// 	totalStudentParticipant++
+		// }
+		// f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), studentParticipant)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), item.AcquisitionRights)
 
 		// NAMA
 		// allocatedAt is pointer to string, so we need to check if it is nil then only get year and month, not the day
