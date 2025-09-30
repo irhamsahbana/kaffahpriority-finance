@@ -101,6 +101,7 @@ type RegisItem struct {
 	FLFee                      *float64     `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NLFee                      *float64     `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP                      bool         `json:"is_itp" db:"is_itp"`
+	AcquisitionRights          int          `json:"acquisition_rights" db:"acquisition_rights"`
 	MarketerCommissionFee      float64      `json:"marketer_commission_fee" db:"marketer_commission_fee"`
 	OverpaymentFee             *float64     `json:"overpayment_fee" db:"overpayment_fee"`
 	HRFee                      float64      `json:"hr_fee" db:"hr_fee"`
@@ -196,6 +197,24 @@ type GetExportedRegistrationsForCFO2MonthlyReq struct {
 	PaidAtFrom string `query:"paid_at_from" validate:"datetime=2006-01-02"`
 	PaidAtTo   string `query:"paid_at_to" validate:"datetime=2006-01-02"`
 	Timezone   string `query:"timezone" validate:"required,timezone"`
+}
+
+func (r *GetExportedRegistrationsForCFO2MonthlyReq) SetDefault() {
+	r.Timezone = "Asia/Makassar"
+}
+
+func (r *GetExportedRegistrationsForCFO2MonthlyReq) Validate() error {
+	err := errmsg.NewCustomErrors(400)
+	if r.PaidAtFrom == "" || r.PaidAtTo == "" { // if one of them is empty
+		err.Add("paid_at_from", "batas bawah tanggal pembayaran harus diisi")
+		err.Add("paid_at_to", "batas atas tanggal pembayaran harus diisi")
+	}
+
+	if err.HasErrors() {
+		return err
+	}
+
+	return nil
 }
 
 type GetExportedRegistrationsForCFO2MonthlyResp struct {

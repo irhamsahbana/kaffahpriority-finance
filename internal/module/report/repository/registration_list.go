@@ -327,6 +327,10 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			CASE
+				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+				ELSE pr.program_acquisition_rights
+			END AS acquisition_rights,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
@@ -436,52 +440,52 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 		registrationIds = append(registrationIds, resp.Items[i].ID)
 	}
 
-	type daos struct {
-		PrId string `db:"pr_id"`
-		entity.AddStudent
-	}
+	// type daos struct {
+	// 	PrId string `db:"pr_id"`
+	// 	entity.AddStudent
+	// }
 
-	var (
-		daosData = make([]daos, 0)
-	)
+	// var (
+	// 	daosData = make([]daos, 0)
+	// )
 
-	query = `
-			SELECT
-				prs.pr_id,
-				prs.student_id,
-				CASE
-					WHEN s.id IS NULL THEN prs.name
-					ELSE s.name
-				END AS name
-			FROM
-				pr_additional_students prs
-			LEFT JOIN
-				students s
-				ON prs.student_id = s.id
-			WHERE prs.pr_id IN (?)
-		`
+	// query = `
+	// 		SELECT
+	// 			prs.pr_id,
+	// 			prs.student_id,
+	// 			CASE
+	// 				WHEN s.id IS NULL THEN prs.name
+	// 				ELSE s.name
+	// 			END AS name
+	// 		FROM
+	// 			pr_additional_students prs
+	// 		LEFT JOIN
+	// 			students s
+	// 			ON prs.student_id = s.id
+	// 		WHERE prs.pr_id IN (?)
+	// 	`
 
-	query, args, err := sqlx.In(query, registrationIds)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
-		return nil, err
-	}
+	// query, args, err := sqlx.In(query, registrationIds)
+	// if err != nil {
+	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+	// 	return nil, err
+	// }
 
-	query = r.db.Rebind(query)
-	err = r.db.SelectContext(ctx, &daosData, query, args...)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
-		return nil, err
-	}
+	// query = r.db.Rebind(query)
+	// err = r.db.SelectContext(ctx, &daosData, query, args...)
+	// if err != nil {
+	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+	// 	return nil, err
+	// }
 
-	for i, item := range resp.Items {
-		for _, data := range daosData {
-			if item.ID == data.PrId {
-				resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
-				resp.Items[i].StudentName += ", " + *data.AddStudent.Name
-			}
-		}
-	}
+	// for i, item := range resp.Items {
+	// 	for _, data := range daosData {
+	// 		if item.ID == data.PrId {
+	// 			resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
+	// 			resp.Items[i].StudentName += ", " + *data.AddStudent.Name
+	// 		}
+	// 	}
+	// }
 
 	return resp, err
 }
