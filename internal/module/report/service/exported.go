@@ -81,7 +81,8 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	lastRow := 4
 	lastHariTanggal := ""
 	location, _ = time.LoadLocation(req.Timezone)
-	totalStudentParticipant := 0
+	// totalStudentParticipant := 0
+	totalAcquisitionRights := 0
 	totalMentorFee := decimal.NewFromFloat(0)
 	totalHRFee := decimal.NewFromFloat(0)
 	totalOverpaymentFee := decimal.NewFromFloat(0)
@@ -134,6 +135,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 		// 	totalStudentParticipant++
 		// }
 		// f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), studentParticipant)
+		totalAcquisitionRights += item.AcquisitionRights
 		f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), item.AcquisitionRights)
 
 		// NAMA
@@ -243,7 +245,7 @@ func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow+3), resp.TotalITP)
 	f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow+3), "ITP")
 
-	f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow+2), totalStudentParticipant)
+	f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow+2), totalAcquisitionRights)
 	f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow+2), totalMentorFeeFloat)
 	f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow+2), totalHRFeeFloat)
 	f.SetCellValue(sheetName, fmt.Sprintf("G%v", lastRow+2), totalOverpaymentFeeFloat)
