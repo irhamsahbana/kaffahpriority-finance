@@ -85,7 +85,6 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			registrationId, // New registration ID
 			req.UserID,     // User ID
 
-			allocation, // Allocation month
 			req.PaidAt, // Paid at date
 			allocation, // Allocation date
 		); err != nil {
