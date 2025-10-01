@@ -59,7 +59,8 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				UPDATE program_registrations
 				SET
 					is_paid = TRUE,
-					paid_at = NOW()
+					paid_at = NOW(),
+					updated_at = NOW()
 				WHERE id = ?
 				`),
 				existing.ID, // Registration ID
