@@ -34,8 +34,12 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 	for _, allocation := range req.Allocations {
 		// check if registration already exists
-		var existingId string
-		err := tx.GetContext(ctx, &existingId,
+		type existingData struct {
+			ID     string `db:"id"`
+			IsPaid bool   `db:"is_paid"`
+		}
+		var existing existingData
+		err := tx.GetContext(ctx, &existing,
 			tx.Rebind(queryCheckMultiAllocation),
 			allocation,
 			programId,
@@ -45,6 +49,28 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 		// if registration already exists, skip to the next allocation
 		if err == nil {
+			// if registration is already paid, skip to the next allocation
+			if existing.IsPaid {
+				continue
+			}
+
+			// if registration is not paid, update the registration is_paid to TRUE and set paid_at to NOW()
+			if _, err := tx.ExecContext(ctx, tx.Rebind(`
+				UPDATE program_registrations
+				SET
+					is_paid = TRUE,
+					paid_at = (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
+					updated_at = NOW()
+				WHERE id = ?
+				`),
+				req.PaidAt,     // Paid at date
+				req.PaidAtTime, // Paid at time
+				existing.ID,    // Registration ID
+			); err != nil {
+				log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
+				return err
+			}
+
 			continue
 		} else if err != sql.ErrNoRows {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to check existing registration", fnName)
@@ -61,9 +87,9 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			registrationId, // New registration ID
 			req.UserID,     // User ID
 
-			allocation, // Allocation month
-			req.PaidAt, // Paid at date
-			allocation, // Allocation date
+			req.PaidAt,     // Paid at date
+			req.PaidAtTime, // Paid at time
+			allocation,     // Allocation date
 		); err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert registration", fnName)
 			return err
@@ -186,14 +212,11 @@ SELECT
 	(SELECT marketer_commission_fee FROM template),
 	(SELECT overpayment_fee FROM template),
 	(SELECT hr_fee FROM template),
-	(SELECT hr_fee - (40000 * CASE WHEN is_itp THEN 2 ELSE 1 END * acquisition_rights) FROM template),
-	(SELECT hr_fee - (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)) FROM template),
-	CASE
-		WHEN
-		? >= TO_CHAR(NOW() AT TIME ZONE 'Asia/Makassar', 'YYYY-MM')
-		THEN NULL
-		ELSE (SELECT hr_fee - (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)) FROM template)
-	END,
+	(
+		(SELECT hr_fee FROM template)
+		- (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template))
+	),
+	NULL,
 	(40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)),
 	(SELECT marketer_gifts_fee FROM template),
 	(SELECT closing_fee_for_office FROM template),
@@ -201,7 +224,7 @@ SELECT
 	(SELECT days FROM template),
 	(SELECT notes FROM template),
 	TRUE,
-	(? || ' 00:00:00')::timestamp AT TIME ZONE 'Asia/Makassar',
+	(? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
 	(? || '-10 00:00:00')::timestamp AT TIME ZONE 'Asia/Makassar'
 `
 
