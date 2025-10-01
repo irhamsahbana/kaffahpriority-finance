@@ -34,8 +34,12 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 	for _, allocation := range req.Allocations {
 		// check if registration already exists
-		var existingId string
-		err := tx.GetContext(ctx, &existingId,
+		type existingData struct {
+			ID     string `db:"id"`
+			IsPaid bool   `db:"is_paid"`
+		}
+		var existing existingData
+		err := tx.GetContext(ctx, &existing,
 			tx.Rebind(queryCheckMultiAllocation),
 			allocation,
 			programId,
@@ -45,6 +49,25 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 		// if registration already exists, skip to the next allocation
 		if err == nil {
+			// if registration is already paid, skip to the next allocation
+			if existing.IsPaid {
+				continue
+			}
+
+			// if registration is not paid, update the registration is_paid to TRUE and set paid_at to NOW()
+			if _, err := tx.ExecContext(ctx, tx.Rebind(`
+				UPDATE program_registrations
+				SET
+					is_paid = TRUE,
+					paid_at = NOW()
+				WHERE id = ?
+				`),
+				existing.ID, // Registration ID
+			); err != nil {
+				log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
+				return err
+			}
+
 			continue
 		} else if err != sql.ErrNoRows {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to check existing registration", fnName)
