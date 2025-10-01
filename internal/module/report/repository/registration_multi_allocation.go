@@ -59,11 +59,13 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				UPDATE program_registrations
 				SET
 					is_paid = TRUE,
-					paid_at = NOW(),
+					paid_at = (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
 					updated_at = NOW()
 				WHERE id = ?
 				`),
-				existing.ID, // Registration ID
+				req.PaidAt,     // Paid at date
+				req.PaidAtTime, // Paid at time
+				existing.ID,    // Registration ID
 			); err != nil {
 				log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
 				return err
@@ -85,8 +87,9 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			registrationId, // New registration ID
 			req.UserID,     // User ID
 
-			req.PaidAt, // Paid at date
-			allocation, // Allocation date
+			req.PaidAt,     // Paid at date
+			req.PaidAtTime, // Paid at time
+			allocation,     // Allocation date
 		); err != nil {
 			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert registration", fnName)
 			return err
@@ -221,7 +224,7 @@ SELECT
 	(SELECT days FROM template),
 	(SELECT notes FROM template),
 	TRUE,
-	(? || ' 00:00:00')::timestamp AT TIME ZONE 'Asia/Makassar',
+	(? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
 	(? || '-10 00:00:00')::timestamp AT TIME ZONE 'Asia/Makassar'
 `
 
