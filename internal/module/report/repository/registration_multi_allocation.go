@@ -215,16 +215,10 @@ SELECT
 		- (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template))
 	),
 	NULL,
-	CASE
-		WHEN
-		? >= TO_CHAR(NOW() AT TIME ZONE 'Asia/Makassar', 'YYYY-MM')
-		THEN NULL
-		ELSE
-			(
-				(SELECT hr_fee FROM template)
-				- (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template))
-			)
-	END,
+	(
+		(SELECT hr_fee FROM template)
+		- (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template))
+	),
 	(SELECT marketer_gifts_fee FROM template),
 	(SELECT closing_fee_for_office FROM template),
 	(SELECT closing_fee_for_reward FROM template),
