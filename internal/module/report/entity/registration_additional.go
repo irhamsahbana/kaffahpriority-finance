@@ -9,12 +9,12 @@ type CreateAdditionalRegistrationReq struct {
 	PaidAt     string `json:"paid_at" validate:"required,datetime=2006-01-02"`
 	PaidAtTime string `json:"paid_at_time" validate:"required,datetime=15:04:05"`
 
-	HrFee                 float64 `json:"hr_fee" validate:"required,number,gte=0"`
-	MarketerCommissionFee float64 `json:"marketer_commission_fee" validate:"required,number,gte=0"`
-	MarketerGiftsFee      float64 `json:"marketer_gifts_fee" validate:"required,number,gte=0"`
+	HrFee                 float64 `json:"hr_fee" validate:"number,gte=0"`
+	MarketerCommissionFee float64 `json:"marketer_commission_fee" validate:"number,gte=0"`
+	MarketerGiftsFee      float64 `json:"marketer_gifts_fee" validate:"number,gte=0"`
 
-	ClosingFeeForOffice float64 `json:"closing_fee_for_office" validate:"required,number,gte=0"`
-	ClosingFeeForReward float64 `json:"closing_fee_for_reward" validate:"required,number,gte=0"`
+	ClosingFeeForOffice float64 `json:"closing_fee_for_office" validate:"number,gte=0"`
+	ClosingFeeForReward float64 `json:"closing_fee_for_reward" validate:"number,gte=0"`
 }
 
 type CreateAdditionalRegistrationResp struct {
