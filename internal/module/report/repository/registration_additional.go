@@ -75,6 +75,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             closing_fee_for_office,
             closing_fee_for_reward,
             days,
+            is_paid,
             paid_at,
             created_at,
             updated_at
@@ -104,6 +105,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             ?,
 
             (SELECT days FROM parent),
+            TRUE,
             (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
             NOW(),
             NOW()
