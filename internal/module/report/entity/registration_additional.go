@@ -13,8 +13,8 @@ type CreateAdditionalRegistrationReq struct {
 	MarketerCommissionFee float64 `json:"marketer_commission_fee" validate:"number,gte=0"`
 	MarketerGiftsFee      float64 `json:"marketer_gifts_fee" validate:"number,gte=0"`
 
-	ClosingFeeForOffice float64 `json:"closing_fee_for_office" validate:"number,gte=0"`
-	ClosingFeeForReward float64 `json:"closing_fee_for_reward" validate:"number,gte=0"`
+	ClosingFeeForOffice *float64 `json:"closing_fee_for_office" validate:"omitempty,number,gte=0"`
+	ClosingFeeForReward *float64 `json:"closing_fee_for_reward" validate:"number,gte=0"`
 }
 
 type CreateAdditionalRegistrationResp struct {
