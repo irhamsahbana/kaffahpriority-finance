@@ -57,6 +57,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             category,
             notes_for_category,
             parent_id,
+            program_fee,
 
             id,
             template_id,
@@ -86,6 +87,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             updated_at
         )
         SELECT
+            ?,
             ?,
             ?,
             ?,
@@ -126,6 +128,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 		req.Category,
 		req.NotesForCategory,
 		req.ParentID,
+		req.ProgramFee,
 
 		newID,
 		req.UserID,

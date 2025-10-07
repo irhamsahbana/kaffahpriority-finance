@@ -9,6 +9,7 @@ type CreateAdditionalRegistrationReq struct {
 	PaidAt     string `json:"paid_at" validate:"required,datetime=2006-01-02"`
 	PaidAtTime string `json:"paid_at_time" validate:"required,datetime=15:04:05"`
 
+	ProgramFee            float64 `json:"program_fee" validate:"number,gte=0"`
 	HrFee                 float64 `json:"hr_fee" validate:"number,gte=0"`
 	MarketerCommissionFee float64 `json:"marketer_commission_fee" validate:"number,gte=0"`
 	MarketerGiftsFee      float64 `json:"marketer_gifts_fee" validate:"number,gte=0"`
