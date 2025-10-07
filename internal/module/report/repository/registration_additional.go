@@ -44,7 +44,6 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
                 program_meetings,
                 program_meetings_completed,
                 full_fee,
-                marketer_commission_fee,
                 marketer_gifts_fee,
                 days
             FROM
@@ -103,7 +102,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             (SELECT program_meetings_completed FROM parent),
             0,
             (SELECT full_fee FROM parent),
-            (SELECT marketer_commission_fee FROM parent),
+            ?,
             ?,
             0,
             0,
@@ -129,6 +128,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 
 		newID,
 		req.UserID,
+		req.MarketerCommissionFee,
 		req.HrFee,
 		req.MarketerGiftsFee,
 
