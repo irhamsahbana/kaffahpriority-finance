@@ -59,7 +59,7 @@ func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entit
 }
 
 func (s *reportService) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.UpdateRegisPaidAtReq) error {
-	return s.repo.UpdateRegistrationsPaidAt(ctx, req)
+    return s.repo.UpdateRegistrationsPaidAt(ctx, req)
 }
 
 func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
@@ -87,7 +87,7 @@ func (s *reportService) GetSummariesForCFO2(ctx context.Context, req *entity.Get
 }
 
 func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
-	return s.repo.GetLecturerPrograms(ctx, req)
+    return s.repo.GetLecturerPrograms(ctx, req)
 }
 
 func (s *reportService) GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error) {
@@ -127,5 +127,9 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 }
 
 func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
-	return s.repo.RegistrationMultiAllocation(ctx, req)
+    return s.repo.RegistrationMultiAllocation(ctx, req)
+}
+
+func (s *reportService) CreateAdditionalRegistration(ctx context.Context, req *entity.CreateAdditionalRegistrationReq) (*entity.CreateAdditionalRegistrationResp, error) {
+    return s.repo.CreateAdditionalRegistration(ctx, req)
 }
