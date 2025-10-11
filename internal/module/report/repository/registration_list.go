@@ -101,13 +101,28 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			am.name AS academic_manager_name,
 			sm.name AS student_manager_name,
 			CASE
-				WHEN pr.program_meetings > 0 THEN TRUE
-				ELSE FALSE
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					CASE
+						WHEN parent.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
+				ELSE
+					CASE
+						WHEN pr.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
 			END AS is_started,
 			CASE
-				WHEN pr.program_acquisition_rights > 10 THEN 0
-				WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
-				ELSE pr.program_acquisition_rights
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					FLOOR(pr.hr_fee / 40000)
+				ELSE
+					CASE
+						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
+						ELSE pr.program_acquisition_rights
+					END
 			END AS acquisition_rights
 		FROM
 			program_registrations pr
