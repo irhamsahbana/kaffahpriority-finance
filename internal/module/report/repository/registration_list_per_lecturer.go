@@ -493,62 +493,81 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			SELECT 11, 'November' UNION ALL
 			SELECT 12, 'Desember'
 		),
-		pr_with_root AS (
-			SELECT
-				pr.*,
-				COALESCE(pr.parent_id, pr.id) AS root_id,
-				EXTRACT(MONTH FROM (pr.allocated_at AT TIME ZONE ?)) AS month_num,
-				EXTRACT(YEAR FROM (pr.allocated_at AT TIME ZONE ?)) AS year_num
+		pr_base AS (
+			SELECT pr.*, COALESCE(pr.parent_id, pr.id) AS root_id
 			FROM program_registrations pr
+		),
+		root_info AS (
+			SELECT
+				p.id AS root_id,
+				EXTRACT(MONTH FROM (p.allocated_at AT TIME ZONE ?)) AS month_num,
+				EXTRACT(YEAR FROM (p.allocated_at AT TIME ZONE ?)) AS year_num,
+				l.academic_manager_id,
+				p.lecturer_id AS root_lecturer_id,
+				p.program_id AS root_program_id,
+				p.student_id AS root_student_id
+			FROM program_registrations p
+			LEFT JOIN lecturers l ON p.lecturer_id = l.id
+		),
+		combined AS (
+			SELECT b.*, ri.month_num, ri.year_num, ri.academic_manager_id,
+				ri.root_lecturer_id, ri.root_program_id, ri.root_student_id,
+				(
+					SELECT p.is_paid FROM program_registrations p WHERE p.id = ri.root_id
+				) AS root_is_paid,
+				(
+					SELECT p.deleted_at FROM program_registrations p WHERE p.id = ri.root_id
+				) AS root_deleted_at
+			FROM pr_base b
+			JOIN root_info ri ON b.root_id = ri.root_id
 		)
 		SELECT
 			m.month_name AS month,
 			m.month_num,
-			root.root_id AS registration_id,
-			SUM(root.mentor_detail_fee) AS hr_fee_for_lecturer,
-			SUM(root.mentor_detail_fee_used) AS used_amount,
+			c.root_id AS registration_id,
+			SUM(c.mentor_detail_fee) AS hr_fee_for_lecturer,
+			SUM(c.mentor_detail_fee_used) AS used_amount,
 			CASE
-				WHEN SUM(CASE WHEN root.mentor_detail_fee_used IS NOT NULL AND root.mentor_detail_fee_used > 0 THEN 1 ELSE 0 END) > 0 THEN TRUE
+				WHEN SUM(CASE WHEN c.mentor_detail_fee_used IS NOT NULL AND c.mentor_detail_fee_used > 0 THEN 1 ELSE 0 END) > 0 THEN TRUE
 				ELSE NULL
 			END AS is_used,
-			MAX(root.notes_for_fund_distributions) AS notes,
+			MAX(c.notes_for_fund_distributions) AS notes,
 
-			root.program_id,
-			root.lecturer_id,
-			root.student_id,
-			MAX(root.foreign_learning_fee) AS foreign_learning_fee,
-			MAX(root.night_learning_fee) AS night_learning_fee,
-			BOOL_OR(root.is_itp) AS is_itp,
+			c.root_program_id AS program_id,
+			c.root_lecturer_id AS lecturer_id,
+			c.root_student_id AS student_id,
+			MAX(c.foreign_learning_fee) AS foreign_learning_fee,
+			MAX(c.night_learning_fee) AS night_learning_fee,
+			BOOL_OR(c.is_itp) AS is_itp,
 			CASE
-				WHEN MAX(root.program_meetings) > 0 THEN TRUE
+				WHEN MAX(c.program_meetings) > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_started
 		FROM
-			pr_with_root root
-		LEFT JOIN
-			lecturers l ON root.lecturer_id = l.id
+			combined c
 		JOIN
-			months m ON root.month_num = m.month_num
+			months m ON c.month_num = m.month_num
 		WHERE
-			root.deleted_at IS NULL
-			AND root.is_paid = TRUE
-			AND root.year_num = ?
+			c.deleted_at IS NULL
+			AND c.root_deleted_at IS NULL
+			AND c.root_is_paid = TRUE
+			AND c.year_num = ?
 		`
 
 	args = append(args, req.Tz, req.Tz, req.Year)
 
 	if req.AcademicManagerID != "" {
-		query += ` AND l.academic_manager_id = ?`
+		query += ` AND c.academic_manager_id = ?`
 		args = append(args, req.AcademicManagerID)
 	}
 
 	if req.LecturerID != "" {
-		query += ` AND root.lecturer_id = ?`
+		query += ` AND c.root_lecturer_id = ?`
 		args = append(args, req.LecturerID)
 	}
 
 	if req.StudentID != "" {
-		query += ` AND root.student_id = ?`
+		query += ` AND c.root_student_id = ?`
 		args = append(args, req.StudentID)
 	}
 
@@ -561,10 +580,10 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			}
 
 			if item.LecturerID != nil {
-				query += ` (root.lecturer_id = ? AND root.student_id = ? AND root.program_id = ?) `
+				query += ` (c.root_lecturer_id = ? AND c.root_student_id = ? AND c.root_program_id = ?) `
 				args = append(args, *item.LecturerID, item.StudentID, item.ProgramID)
 			} else {
-				query += ` (root.student_id = ? AND root.program_id = ? AND root.lecturer_id IS NULL) `
+				query += ` (c.root_student_id = ? AND c.root_program_id = ? AND c.root_lecturer_id IS NULL) `
 				args = append(args, item.StudentID, item.ProgramID)
 			}
 		}
@@ -576,14 +595,14 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		GROUP BY
 			m.month_name,
 			m.month_num,
-			root.root_id,
-			root.program_id,
-			root.lecturer_id,
-			root.student_id,
-			l.academic_manager_id
+			c.root_id,
+			c.root_program_id,
+			c.root_lecturer_id,
+			c.root_student_id,
+			c.academic_manager_id
 		ORDER BY
-			l.academic_manager_id ASC,
-			root.lecturer_id ASC,
+			c.academic_manager_id ASC,
+			c.root_lecturer_id ASC,
 			m.month_num ASC
 	`
 
