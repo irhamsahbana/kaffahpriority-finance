@@ -30,6 +30,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			COUNT(*) OVER() AS total_data,
 			pr.batch,
 			pr.is_paid,
+			pr.category,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -111,9 +112,6 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		FROM
 			program_registrations pr
 		LEFT JOIN
-			program_registrations parent
-			ON pr.parent_id = parent.id
-		LEFT JOIN
 			lecturers l
 			ON pr.lecturer_id = l.id
 		LEFT JOIN
@@ -131,6 +129,13 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		JOIN
 			programs p
 			ON pr.program_id = p.id
+		-- join with parent
+		LEFT JOIN
+			program_registrations parent
+			ON pr.parent_id = parent.id
+		LEFT JOIN
+			students parent_student
+			ON parent.student_id = parent_student.id
 		WHERE
 			pr.deleted_at IS NULL
 			AND
@@ -149,12 +154,24 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	if req.AllocatedMonth != "" {
 		query += `
-			AND pr.allocated_at AT TIME ZONE ? >=
-			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
-			AND pr.allocated_at AT TIME ZONE ? <
-			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+			AND CASE
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					parent.allocated_at AT TIME ZONE ? >=
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+					AND parent.allocated_at AT TIME ZONE ? <
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+				ELSE
+					pr.allocated_at AT TIME ZONE ? >=
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+					AND pr.allocated_at AT TIME ZONE ? <
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+			END
 		`
-		args = append(args, req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth)
+		args = append(args,
+			req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth,
+			req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth,
+		)
 	}
 
 	if req.IsStarted != "" {
@@ -167,8 +184,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	if req.Q != "" {
 		query += ` AND (
-			pr.program_name ILIKE '%' || ? || '%' OR
-			s.name ILIKE '%' || ? || '%'
+			s.name ILIKE '%' || ? || '%' OR
+			parent_student.name ILIKE '%' || ? || '%'
 		)`
 		args = append(args, req.Q, req.Q)
 	}
