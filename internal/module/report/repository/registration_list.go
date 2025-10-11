@@ -116,7 +116,10 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			CASE
 				WHEN pr.parent_id IS NOT NULL
 				THEN
-					FLOOR(pr.hr_fee / 40000)
+					CASE
+						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+					END
 				ELSE
 					CASE
 						WHEN pr.program_acquisition_rights > 10 THEN 0
