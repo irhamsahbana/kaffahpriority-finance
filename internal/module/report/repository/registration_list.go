@@ -70,7 +70,10 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.paid_at,
 			pr.created_at,
 			pr.updated_at,
-			pr.allocated_at,
+			CASE
+				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				ELSE pr.allocated_at
+			END AS allocated_at,
 			pr.notes,
 			pr.program_fee +
 			COALESCE(pr.administration_fee, 0) +
@@ -130,6 +133,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			ON pr.program_id = p.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND
+			parent.deleted_at IS NULL
 	`
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
