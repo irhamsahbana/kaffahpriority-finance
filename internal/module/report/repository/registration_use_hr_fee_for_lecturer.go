@@ -22,15 +22,17 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	queryGetMentorDetailFee := `
 		SELECT
-			mentor_detail_fee
+			SUM(COALESCE(mentor_detail_fee, 0))
+			AS mentor_detail_fee
 		FROM
 			program_registrations
 		WHERE
-			id = ?
+			id = ? OR
+			parent_id = ?
 	`
 	var mentorDetailFee decimal.Decimal
 
-	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationID)
+	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationID, req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - mentor detail fee not found", fnName)
