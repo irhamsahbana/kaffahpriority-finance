@@ -71,7 +71,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			closing_fee_for_reward = ?,
 			days = ?,
 			notes = ?,
-			notes_for_category = ?,
 			is_itp = ?,
 			paid_at = ?,
 			allocated_at = ?,
@@ -113,7 +112,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.HRFee, req.IsITP, // calculate mentor_detail_fee
 		req.IsITP, // calculate hr_detail_fee
 		req.MarketerGiftsFee,
-		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes, req.NotesForCategory,
+		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
 		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),
 		req.ID,

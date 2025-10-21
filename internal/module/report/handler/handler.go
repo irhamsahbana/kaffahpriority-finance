@@ -63,8 +63,6 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Put("/registrations/:id/lecturers", h.updateRegistrationLecturer)
 	protected.Put("/registrations/:id/is-paid", h.updateRegistrationIsPaid)
 
-	protected.Post("/registrations/:id/additional", h.createAdditionalRegistration)
-
 	protected.Get("/registration-per-lecturers", h.getRegistrationListPerLecturer)
 	protected.Patch("/lecturers-wages/:id", h.updateLecturerWages)
 	protected.Get("/lecturers-wages", h.getLecturerWages)
@@ -220,37 +218,6 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	}
 
 	return nil
-}
-
-func (h *reportHandler) createAdditionalRegistration(c *fiber.Ctx) error {
-    var (
-        fnName = "handler::createAdditionalRegistration"
-        req    = new(entity.CreateAdditionalRegistrationReq)
-        v      = adapter.Adapters.Validator
-        l      = m.GetLocals(c)
-    )
-
-    if err := c.BodyParser(req); err != nil {
-        log.Warn().Err(err).Msgf("%s - invalid request", fnName)
-        return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
-    }
-
-    req.UserID = l.GetUserId()
-    req.ParentID = c.Params("id")
-
-    if err := v.Validate(req); err != nil {
-        log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
-        code, errs := errmsg.Errors(err, req)
-        return c.Status(code).JSON(response.Error(errs))
-    }
-
-    resp, err := h.service.CreateAdditionalRegistration(c.Context(), req)
-    if err != nil {
-        code, errs := errmsg.Errors[error](err)
-        return c.Status(code).JSON(response.Error(errs))
-    }
-
-    return c.Status(fiber.StatusCreated).JSON(response.Success(resp, ""))
 }
 
 func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) error {

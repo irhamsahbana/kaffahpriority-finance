@@ -91,8 +91,7 @@ func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.Get
 }
 
 func (s *reportService) GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error) {
-	// return s.repo.GetRegistrationsPerLecturer(ctx, req)
-	return s.repo.GetRegistrationsPerLecturerV2(ctx, req)
+	return s.repo.GetRegistrationsPerLecturer(ctx, req)
 }
 
 func (s *reportService) GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error) {
@@ -129,8 +128,4 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 
 func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
 	return s.repo.RegistrationMultiAllocation(ctx, req)
-}
-
-func (s *reportService) CreateAdditionalRegistration(ctx context.Context, req *entity.CreateAdditionalRegistrationReq) (*entity.CreateAdditionalRegistrationResp, error) {
-	return s.repo.CreateAdditionalRegistration(ctx, req)
 }

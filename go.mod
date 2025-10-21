@@ -7,7 +7,6 @@ toolchain go1.24.0
 require (
 	github.com/brianvoe/gofakeit/v7 v7.0.2
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
-	github.com/go-co-op/gocron/v2 v2.16.4
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/gofiber/fiber/v2 v2.52.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -37,6 +36,7 @@ require (
 	cloud.google.com/go/longrunning v0.5.9 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-co-op/gocron/v2 v2.16.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -68,6 +68,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 require (
