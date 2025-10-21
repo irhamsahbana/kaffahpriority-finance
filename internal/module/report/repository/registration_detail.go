@@ -46,7 +46,10 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.created_at,
 			pr.updated_at,
 			pr.paid_at,
-			pr.allocated_at,
+			CASE
+				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				ELSE pr.allocated_at
+			END AS allocated_at,
 			pr.notes,
 			(
 				COALESCE(pr.administration_fee, 0)
