@@ -86,6 +86,9 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 		JOIN
 			programs p
 			ON pr.program_id = p.id
+		LEFT JOIN
+			program_registrations parent
+			ON pr.parent_id = parent.id
 		WHERE
 			pr.id = ?
 			AND pr.deleted_at IS NULL
