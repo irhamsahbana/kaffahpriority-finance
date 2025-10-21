@@ -51,6 +51,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 				ELSE pr.allocated_at
 			END AS allocated_at,
 			pr.notes,
+			pr.notes_for_category,
 			(
 				COALESCE(pr.administration_fee, 0)
 				+ COALESCE(pr.program_fee, 0)
