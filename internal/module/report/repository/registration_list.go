@@ -30,6 +30,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			COUNT(*) OVER() AS total_data,
 			pr.batch,
 			pr.is_paid,
+			pr.category,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -70,8 +71,12 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.paid_at,
 			pr.created_at,
 			pr.updated_at,
-			pr.allocated_at,
+			CASE
+				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				ELSE pr.allocated_at
+			END AS allocated_at,
 			pr.notes,
+			pr.notes_for_category,
 			pr.program_fee +
 			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
@@ -97,13 +102,31 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			am.name AS academic_manager_name,
 			sm.name AS student_manager_name,
 			CASE
-				WHEN pr.program_meetings > 0 THEN TRUE
-				ELSE FALSE
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					CASE
+						WHEN parent.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
+				ELSE
+					CASE
+						WHEN pr.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
 			END AS is_started,
 			CASE
-				WHEN pr.program_acquisition_rights > 10 THEN 0
-				WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
-				ELSE pr.program_acquisition_rights
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					CASE
+						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+					END
+				ELSE
+					CASE
+						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
+						ELSE pr.program_acquisition_rights
+					END
 			END AS acquisition_rights
 		FROM
 			program_registrations pr
@@ -125,8 +148,17 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		JOIN
 			programs p
 			ON pr.program_id = p.id
+		-- join with parent
+		LEFT JOIN
+			program_registrations parent
+			ON pr.parent_id = parent.id
+		LEFT JOIN
+			students parent_student
+			ON parent.student_id = parent_student.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND
+			parent.deleted_at IS NULL
 	`
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
@@ -141,12 +173,24 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	if req.AllocatedMonth != "" {
 		query += `
-			AND pr.allocated_at AT TIME ZONE ? >=
-			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
-			AND pr.allocated_at AT TIME ZONE ? <
-			(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+			AND CASE
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					parent.allocated_at AT TIME ZONE ? >=
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+					AND parent.allocated_at AT TIME ZONE ? <
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+				ELSE
+					pr.allocated_at AT TIME ZONE ? >=
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+					AND pr.allocated_at AT TIME ZONE ? <
+					(TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+			END
 		`
-		args = append(args, req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth)
+		args = append(args,
+			req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth,
+			req.Timezone, req.AllocatedMonth, req.Timezone, req.AllocatedMonth,
+		)
 	}
 
 	if req.IsStarted != "" {
@@ -159,8 +203,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	if req.Q != "" {
 		query += ` AND (
-			pr.program_name ILIKE '%' || ? || '%' OR
-			s.name ILIKE '%' || ? || '%'
+			s.name ILIKE '%' || ? || '%' OR
+			parent_student.name ILIKE '%' || ? || '%'
 		)`
 		args = append(args, req.Q, req.Q)
 	}

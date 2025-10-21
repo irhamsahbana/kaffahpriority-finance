@@ -69,6 +69,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.updated_at,
 			pr.allocated_at,
 			pr.notes,
+			pr.notes_for_category,
 			pr.program_fee +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +

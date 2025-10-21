@@ -46,8 +46,12 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.created_at,
 			pr.updated_at,
 			pr.paid_at,
-			pr.allocated_at,
+			CASE
+				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				ELSE pr.allocated_at
+			END AS allocated_at,
 			pr.notes,
+			pr.notes_for_category,
 			(
 				COALESCE(pr.administration_fee, 0)
 				+ COALESCE(pr.program_fee, 0)
@@ -83,6 +87,9 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 		JOIN
 			programs p
 			ON pr.program_id = p.id
+		LEFT JOIN
+			program_registrations parent
+			ON pr.parent_id = parent.id
 		WHERE
 			pr.id = ?
 			AND pr.deleted_at IS NULL
