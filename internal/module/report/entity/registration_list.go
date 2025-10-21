@@ -117,6 +117,7 @@ type RegisItem struct {
 	Notes                      *string      `json:"notes" db:"notes"`
 	Batch                      *string      `json:"batch" db:"batch"`
 	Category                   string       `json:"category" db:"category"`
+	NotesForCategory           *string      `json:"notes_for_category" db:"notes_for_category"`
 	IsPaid                     bool         `json:"is_paid" db:"is_paid"`
 	IsStarted                  bool         `json:"is_started" db:"is_started"`
 	PaidAt                     string       `json:"paid_at" db:"paid_at"`
