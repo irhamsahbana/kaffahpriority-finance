@@ -2,16 +2,58 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
-	"codebase-app/pkg/errmsg"
 	"context"
-	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
 )
 
 func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
-	fnName := "repo::UseHRfeeForLecturer"
+	var (
+		fnName = "repo::UseHRfeeForLecturer"
+	)
+
+	// Ambil semua registrasi terkait (termasuk dirinya sendiri)
+	relatedResp, err := r.GetRelatedRegistrations(ctx, &entity.GetRelatedRegistrationsReq{
+		RegistrationID: req.RegistrationID,
+	})
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get related registrations", fnName)
+		return err
+	}
+
+	// Hitung ulang total fee & sisa fee tapi skip dirinya sendiri
+	var (
+		totalFee          decimal.Decimal
+		totalFeeUsed      decimal.Decimal
+		totalFeeRemaining decimal.Decimal
+	)
+
+	for _, item := range relatedResp.Items {
+		totalFee = totalFee.Add(item.MentorDetailFee)
+
+		// Skip diri sendiri agar validasi tidak mengacu ke dirinya
+		if item.ID == req.RegistrationID {
+			continue
+		}
+
+		var used decimal.Decimal
+		if item.MentorDetailFeeUsed != nil {
+			used = used.Add(*item.MentorDetailFeeUsed)
+		}
+
+		totalFeeUsed = totalFeeUsed.Add(used)
+		totalFeeRemaining = totalFeeRemaining.Add(item.MentorDetailFee).Sub(used)
+	}
+
+	// Validasi: jumlah yang digunakan tidak boleh melebihi total fee tersisa dari related items
+	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(totalFeeRemaining) {
+		errMsg := fmt.Sprintf("requested amount (%s) exceeds total remaining fee (%s)", req.UsedAmount.String(), totalFeeRemaining.String())
+		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
+		return errors.New(errMsg)
+	}
 
 	Tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -19,48 +61,6 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 		return err
 	}
 	defer Tx.Rollback()
-
-	queryGetMentorDetailFee := `
-		SELECT
-			SUM(COALESCE(mentor_detail_fee, 0))
-			AS mentor_detail_fee
-		FROM
-			program_registrations
-		WHERE
-			id = ? OR
-			parent_id = ?
-	`
-	var mentorDetailFee decimal.Decimal
-
-	err = Tx.GetContext(ctx, &mentorDetailFee, Tx.Rebind(queryGetMentorDetailFee), req.RegistrationID, req.RegistrationID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msgf("%s - mentor detail fee not found", fnName)
-			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
-		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get mentor detail fee", fnName)
-		return err
-	}
-
-	if req.UsedAmount == nil && req.Notes == nil {
-		log.Warn().Any("req", req).Msgf("%s - used amount and notes are nil", fnName)
-		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan atau catatan harus diisi")
-	}
-
-	if req.UsedAmount != nil && req.Notes != nil {
-		log.Warn().Any("req", req).Msgf("%s - used amount and notes are not nil", fnName)
-		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan dan catatan tidak boleh diisi bersamaan")
-	}
-
-	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(mentorDetailFee) {
-		log.Warn().Any("req", req).Msgf("%s - used amount greater than mentor detail fee", fnName)
-		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan melebihi jumlah yang tersedia")
-	}
-
-	if req.UsedAmount != nil && req.UsedAmount.LessThanOrEqual(decimal.Zero) {
-		log.Warn().Any("req", req).Msgf("%s - used amount less than or equal to 0", fnName)
-		return errmsg.NewCustomErrors(400).SetMessage("Jumlah yang digunakan harus lebih dari 0")
-	}
 
 	query := `
 		UPDATE
@@ -85,4 +85,67 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	}
 
 	return nil
+}
+
+func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.GetRelatedRegistrationsReq) (*entity.GetRelatedRegistrationsResp, error) {
+	var (
+		fnName = "repo::GetRelatedRegistrations"
+		resp   = new(entity.GetRelatedRegistrationsResp)
+	)
+	resp.Items = make([]entity.RelatedRegistration, 0)
+
+	query := `
+		WITH regis AS (
+			SELECT
+				pr.lecturer_id,
+				pr.student_id,
+				pr.program_id
+			FROM
+				program_registrations pr
+			WHERE
+				pr.deleted_at IS NULL
+				AND
+				pr.id = ?
+		)
+		SELECT
+			pr.id,
+			pr.lecturer_id,
+			pr.program_id,
+			pr.student_id,
+			pr.mentor_detail_fee,
+			pr.mentor_detail_fee_used,
+			pr.paid_at,
+			pr.allocated_at
+		FROM
+			program_registrations pr
+		WHERE
+			pr.deleted_at IS NULL
+			AND
+			pr.is_paid = TRUE
+			AND
+			pr.student_id = (SELECT student_id FROM regis)
+			AND
+			pr.program_id = (SELECT program_id FROM regis)
+		ORDER BY
+			pr.allocated_at ASC
+	`
+
+	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.RegistrationID)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query related registrations", fnName)
+		return nil, err
+	}
+
+	for _, item := range resp.Items {
+		resp.TotalFee = resp.TotalFee.Add(item.MentorDetailFee)
+		var feeUsed decimal.Decimal
+		if item.MentorDetailFeeUsed != nil {
+			feeUsed = feeUsed.Add(*item.MentorDetailFeeUsed)
+		}
+		resp.TotalFeeUsed = resp.TotalFeeUsed.Add(feeUsed)
+
+		resp.TotalFeeRemaining = resp.TotalFeeRemaining.Add(item.MentorDetailFee).Sub(feeUsed)
+	}
+
+	return resp, nil
 }
