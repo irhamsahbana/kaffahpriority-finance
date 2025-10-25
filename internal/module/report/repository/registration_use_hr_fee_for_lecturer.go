@@ -4,7 +4,6 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/pkg/errmsg"
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -52,11 +51,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	// Validasi: jumlah yang digunakan tidak boleh melebihi total fee tersisa dari related items
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(totalFeeRemaining) {
-		errMsg := fmt.Sprintf(
-			"jumlah yang diminta (%s) melebihi total sisa dana yang tersedia (%s)",
-			req.UsedAmount.String(),
-			totalFeeRemaining.String(),
-		)
+		errMsg := "jumlah yang diminta melebihi total sisa dana yang tersedia."
 		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
 		return errmsg.
 			NewCustomErrors(http.StatusUnprocessableEntity).
