@@ -2,9 +2,10 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
+	"codebase-app/pkg/errmsg"
 	"context"
-	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
@@ -33,6 +34,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	for _, item := range relatedResp.Items {
 		totalFee = totalFee.Add(item.MentorDetailFee)
+		totalFeeRemaining = totalFeeRemaining.Add(item.MentorDetailFee)
 
 		// Skip diri sendiri agar validasi tidak mengacu ke dirinya
 		if item.ID == req.RegistrationID {
@@ -45,14 +47,21 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 		}
 
 		totalFeeUsed = totalFeeUsed.Add(used)
-		totalFeeRemaining = totalFeeRemaining.Add(item.MentorDetailFee).Sub(used)
+		totalFeeRemaining = totalFeeRemaining.Sub(used)
 	}
 
 	// Validasi: jumlah yang digunakan tidak boleh melebihi total fee tersisa dari related items
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(totalFeeRemaining) {
-		errMsg := fmt.Sprintf("requested amount (%s) exceeds total remaining fee (%s)", req.UsedAmount.String(), totalFeeRemaining.String())
+		errMsg := fmt.Sprintf(
+			"jumlah yang diminta (%s) melebihi total sisa dana yang tersedia (%s)",
+			req.UsedAmount.String(),
+			totalFeeRemaining.String(),
+		)
 		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
-		return errors.New(errMsg)
+		return errmsg.
+			NewCustomErrors(http.StatusUnprocessableEntity).
+			Add("used_amount", errMsg).
+			SetMessage(errMsg)
 	}
 
 	Tx, err := r.db.BeginTxx(ctx, nil)
