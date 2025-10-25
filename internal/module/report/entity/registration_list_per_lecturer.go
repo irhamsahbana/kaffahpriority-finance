@@ -23,9 +23,7 @@ type GetRegistrationListPerLecturerReq struct {
 func (r *GetRegistrationListPerLecturerReq) SetDefault() {
 	r.MetaQuery.SetDefault()
 
-	if r.Tz == "" {
-		r.Tz = "Asia/Makassar"
-	}
+	r.Tz = "Asia/Makassar"
 
 	if r.Year < 1 {
 		year := time.Now().In(time.FixedZone(r.Tz, 0)).Year()
