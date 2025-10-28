@@ -40,12 +40,28 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
-			CASE
-				WHEN pr.program_acquisition_rights > 10 THEN 0
-				WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-				ELSE pr.program_acquisition_rights
-			END AS acquisition_rights,
+			(
+				CASE
+					WHEN pr.program_acquisition_rights > 10 THEN 0
+					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
+					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
+					ELSE pr.program_acquisition_rights
+				END
+				+
+				COALESCE((
+					SELECT
+						SUM(
+							CASE
+								WHEN COALESCE(child.hr_detail_fee, 0) <= 0 THEN 0
+								ELSE FLOOR(COALESCE(child.hr_detail_fee, 0) / 40000)
+							END
+						)
+					FROM program_registrations child
+					WHERE child.parent_id = pr.id
+					  AND child.category = 'additional'
+					  AND child.deleted_at IS NULL
+				), 0)
+			)::int AS acquisition_rights,
 			pr.program_meetings,
 			pr.program_fee_per_meeting,
 			COALESCE(pr.initial_fee, (
@@ -89,8 +105,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			marketers m ON pr.marketer_id = m.id
 		JOIN
 			student_managers sm ON m.student_manager_id = sm.id
-		WHERE
+	WHERE
 			pr.deleted_at IS NULL
+			AND pr.category = 'general'
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
