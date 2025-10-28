@@ -60,6 +60,7 @@ type LecturersWageItem struct {
 	MentorDetailFeeUsed  *decimal.Decimal `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"` // wage for mentor / keep gaji
 	AllocatedAt          *string          `json:"allocated_at" db:"allocated_at"`
 	Notes                *string          `json:"notes" db:"notes"`
+	TemplateId           string           `json:"template_id" db:"template_id"`
 }
 
 // aggregate version

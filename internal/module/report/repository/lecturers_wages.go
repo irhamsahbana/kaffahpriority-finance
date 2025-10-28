@@ -31,6 +31,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		SELECT
 			COUNT (*) OVER() AS total_data,
 			pr.id AS registration_id,
+			pr.template_id AS template_id,
 			pr.program_name,
 			s.name AS student_name,
 			am.name AS academic_manager_name,
