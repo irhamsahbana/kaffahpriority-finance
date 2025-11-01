@@ -78,6 +78,10 @@ func (s *reportService) DeleteRegistration(ctx context.Context, req *entity.GetR
 	return s.repo.DeleteRegistration(ctx, req)
 }
 
+func (s *reportService) RegistrationsMarkAsUsed(ctx context.Context, req *entity.RegistrationsMarkAsUsedReq) error {
+	return s.repo.RegistrationsMarkAsUsed(ctx, req)
+}
+
 func (s *reportService) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
 	return s.repo.GetSummaries(ctx, req)
 }
