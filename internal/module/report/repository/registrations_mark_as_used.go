@@ -12,7 +12,8 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
 
 	query := `
         UPDATE program_registrations
-            SET mentor_detail_fee_used = mentor_detail_fee
+            SET mentor_detail_fee_used = mentor_detail_fee,
+			updated_at = now()
         WHERE
             deleted_at IS NULL
 			AND mentor_detail_fee_used IS NULL
