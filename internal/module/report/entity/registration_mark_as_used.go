@@ -1,6 +1,6 @@
 package entity
 
 type RegistrationsMarkAsUsedReq struct {
-	UserID          string   `json:"user_id" validate:"required,ulid"`
-	RegistrationIds []string `json:"registration_ids" validate:"required,min=1,dive,ulid"`
+	UserID         string `json:"user_id" validate:"required,ulid"`
+	AllocatedMonth string `json:"allocated_month" validate:"required,date=2006-01"`
 }

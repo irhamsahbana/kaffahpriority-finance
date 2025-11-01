@@ -4,7 +4,6 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"context"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,20 +15,16 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
             SET mentor_detail_fee_used = mentor_detail_fee
         WHERE
             deleted_at IS NULL
+			AND
+			category = 'general'
+			AND
+			program_meetings > 0
             AND
-            mentor_detail_fee_used IS NOT NULL
-            AND
-            id IN (?)
+            allocated_at >= (TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'Asia/Makassar')
+            AND allocated_at < ((TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'Asia/Makassar') + INTERVAL '1 month')
     `
 
-	q, args, err := sqlx.In(query, req.RegistrationIds)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
-		return err
-	}
-
-	q = r.db.Rebind(q)
-	if _, err = r.db.ExecContext(ctx, q, args...); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth, req.AllocatedMonth); err != nil {
 		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err
 	}
