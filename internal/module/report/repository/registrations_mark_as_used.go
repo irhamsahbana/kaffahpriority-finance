@@ -16,6 +16,8 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
         WHERE
             deleted_at IS NULL
 			AND
+			mentor_detail_fee_used IS NULL
+			AND
 			category = 'general'
 			AND
 			program_meetings > 0
