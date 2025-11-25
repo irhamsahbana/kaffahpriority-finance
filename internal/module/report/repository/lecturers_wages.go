@@ -64,12 +64,12 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 				), 0)
 			)::int AS acquisition_rights,
 			pr.program_meetings,
-			pr.program_fee_per_meeting,
+			CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
 			COALESCE(pr.initial_fee, (
 				CASE
 					WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
-					WHEN pr.is_full_fee = TRUE THEN pr.full_fee
-					ELSE pr.program_fee_per_meeting * pr.program_meetings
+					WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+					ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 				END
 				)
 			) AS initial_fee,
@@ -78,13 +78,13 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 				COALESCE(pr.foreign_learning_fee, 0) +
 				COALESCE(pr.initial_fee,
 					CASE
-						WHEN pr.is_full_fee THEN pr.full_fee
-						ELSE pr.program_fee_per_meeting * pr.program_meetings
+						WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+						ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 					END
 				)
 			) AS real_fee,
 			pr.is_full_fee,
-			pr.full_fee,
+			CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee,
 			CASE
 				WHEN pr.program_meetings < 1 THEN 0
 				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
@@ -244,8 +244,8 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 						COALESCE(pr.foreign_learning_fee, 0) +
 						COALESCE(pr.initial_fee,
 							CASE
-								WHEN pr.is_full_fee THEN pr.full_fee
-								ELSE pr.program_fee_per_meeting * pr.program_meetings
+								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
 						)
 					)
@@ -569,8 +569,8 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.initial_fee,
 				CASE
-					WHEN pr.is_full_fee THEN pr.full_fee
-					ELSE pr.program_fee_per_meeting * pr.program_meetings
+					WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+					ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 				END
 			) AS real_fee
 		FROM
