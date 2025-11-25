@@ -20,8 +20,10 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
 			AND category = 'general'
 			AND is_paid = true
 			AND program_meetings > 0
-            AND allocated_at >= ((? || '-01 00:00:00+08')::timestamptz)
-            AND allocated_at < (((? || '-01 00:00:00+08')::timestamptz) + INTERVAL '1 month')
+            AND allocated_at AT TIME ZONE 'Asia/Makassar' >=
+            (TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
+            AND allocated_at AT TIME ZONE 'Asia/Makassar' <
+            (TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
     `
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth, req.AllocatedMonth); err != nil {
