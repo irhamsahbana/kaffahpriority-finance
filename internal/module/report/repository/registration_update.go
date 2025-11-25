@@ -40,6 +40,9 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			marketer_id = ?,
 			student_id = ?,
 			program_name = (SELECT name FROM programs WHERE id = ?),
+			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
+			full_fee = (SELECT full_fee FROM programs WHERE id = ?),
+			program_acquisition_rights = (SELECT acquisition_rights FROM programs WHERE id = ?),
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -54,7 +57,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
                         WHEN ? THEN 2
                         ELSE 1
                     END *
-                    program_acquisition_rights
+                    (SELECT acquisition_rights FROM programs WHERE id = ?)
                 )
             ),
 			mentor_detail_fee_used = NULL,
@@ -64,7 +67,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 					WHEN ? THEN 2
 					ELSE 1
 				END *
-				program_acquisition_rights
+				(SELECT acquisition_rights FROM programs WHERE id = ?)
 			),
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
@@ -107,11 +110,11 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramId, req.ProgramId, req.ProgramId, req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee,
 		req.HRFee,
-		req.HRFee, req.IsITP, // calculate mentor_detail_fee
-		req.IsITP, // calculate hr_detail_fee
+		req.HRFee, req.IsITP, req.ProgramId, // calculate mentor_detail_fee
+		req.IsITP, req.ProgramId, // calculate hr_detail_fee
 		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes, req.NotesForCategory,
 		req.IsITP,
@@ -185,6 +188,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			lecturer_id = ?,
 			marketer_id = ?,
 			student_id = ?,
+			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -206,7 +210,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
 		req.IsITP,
