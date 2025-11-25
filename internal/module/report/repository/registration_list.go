@@ -832,14 +832,14 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				query := `
 					SELECT
 						pr.program_meetings, -- jumlah
-						pr.program_fee_per_meeting, -- hitungan
-						pr.full_fee, -- ujroh full
+						CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting, -- hitungan
+						CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee, -- ujroh full
 						pr.is_full_fee,
 						COALESCE(pr.initial_fee, (
 							CASE
 								WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
-								WHEN pr.is_full_fee = TRUE THEN pr.full_fee
-								ELSE pr.program_fee_per_meeting * pr.program_meetings
+								WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
 							)
 						) AS initial_fee, -- ujroh awal
@@ -850,8 +850,8 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 							COALESCE(pr.foreign_learning_fee, 0) +
 							COALESCE(pr.initial_fee,
 								CASE
-									WHEN pr.is_full_fee THEN pr.full_fee
-									ELSE pr.program_fee_per_meeting * pr.program_meetings
+									WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+									ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 								END
 							)
 						) AS real_fee, -- ujroh real
