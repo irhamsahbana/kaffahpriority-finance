@@ -33,6 +33,68 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		}
 	}()
 
+	// Get current registration data to check if lecturer_id is being changed
+	type currentRegistration struct {
+		LecturerId *string `db:"lecturer_id"`
+		ProgramId  string  `db:"program_id"`
+	}
+	var currentReg currentRegistration
+	queryCurrent := `
+		SELECT
+			lecturer_id,
+			program_id
+		FROM
+			program_registrations
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+	err = tx.GetContext(ctx, &currentReg, tx.Rebind(queryCurrent), req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
+			return nil, errmsg.NewCustomErrors(404).SetMessage("Registrasi tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get current registration data", fnName)
+		return nil, err
+	}
+
+	// Check if lecturer_id is being changed
+	lecturerIdChanged := false
+	if (currentReg.LecturerId == nil && req.LecturerId != nil) ||
+		(currentReg.LecturerId != nil && req.LecturerId == nil) ||
+		(currentReg.LecturerId != nil && req.LecturerId != nil && *currentReg.LecturerId != *req.LecturerId) {
+		lecturerIdChanged = true
+	}
+
+	// Check if program_id is being changed
+	programIdChanged := currentReg.ProgramId != req.ProgramId
+
+	// If lecturer_id or program_id is being changed, check if the new combination already exists
+	if (lecturerIdChanged || programIdChanged) && req.LecturerId != nil {
+		var count int
+		queryCheck := `
+			SELECT
+				COUNT(*)
+			FROM
+				program_registrations
+			WHERE
+				lecturer_id = ?
+				AND program_id = ?
+				AND id != ?
+				AND deleted_at IS NULL
+		`
+		err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.ID)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to check duplicate lecturer_id and program_id", fnName)
+			return nil, err
+		}
+		if count > 0 {
+			log.Warn().Any("req", req).Msgf("%s - duplicate combination of lecturer_id and program_id already exists", fnName)
+			return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id dan program_id sudah ada dalam program_registrations")
+		}
+	}
+
 	query := `
 		UPDATE program_registrations SET
 			program_id = ?,
