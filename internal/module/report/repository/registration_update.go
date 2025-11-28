@@ -69,71 +69,71 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		return nil, err
 	}
 
-	// Check if lecturer_id is being changed
-	lecturerIdChanged := false
-	if (currentReg.LecturerId == nil && req.LecturerId != nil) ||
-		(currentReg.LecturerId != nil && req.LecturerId == nil) ||
-		(currentReg.LecturerId != nil && req.LecturerId != nil && *currentReg.LecturerId != *req.LecturerId) {
-		lecturerIdChanged = true
-	}
+	// // Check if lecturer_id is being changed
+	// lecturerIdChanged := false
+	// if (currentReg.LecturerId == nil && req.LecturerId != nil) ||
+	// 	(currentReg.LecturerId != nil && req.LecturerId == nil) ||
+	// 	(currentReg.LecturerId != nil && req.LecturerId != nil && *currentReg.LecturerId != *req.LecturerId) {
+	// 	lecturerIdChanged = true
+	// }
 
-	// Check if program_id is being changed
-	programIdChanged := currentReg.ProgramId != req.ProgramId
+	// // Check if program_id is being changed
+	// programIdChanged := currentReg.ProgramId != req.ProgramId
 
-	// Check if student_id is being changed
-	studentIdChanged := currentReg.StudentId != req.StudentId
+	// // Check if student_id is being changed
+	// studentIdChanged := currentReg.StudentId != req.StudentId
 
-	// Only check for duplicate if:
-	// 1. Either lecturer_id, program_id, or student_id is being changed
-	// 2. AND the new lecturer_id is not NULL (NULL lecturer_id can have multiple entries per program)
-	if (lecturerIdChanged || programIdChanged || studentIdChanged) && req.LecturerId != nil {
-		var count int
-		// Use IS NOT DISTINCT FROM to properly handle NULL comparisons
-		queryCheck := `
-			SELECT
-				COUNT(*)
-			FROM
-				program_registrations
-			WHERE
-				lecturer_id IS NOT DISTINCT FROM ?
-				AND program_id = ?
-				AND student_id = ?
-				AND id != ?
-				AND deleted_at IS NULL
-		`
-		err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.StudentId, req.ID)
-		if err != nil {
-			log.Error().Err(err).
-				Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
-				Str("req_lecturer_id", getStringValue(req.LecturerId)).
-				Str("current_program_id", currentReg.ProgramId).
-				Str("req_program_id", req.ProgramId).
-				Str("current_student_id", currentReg.StudentId).
-				Str("req_student_id", req.StudentId).
-				Bool("lecturer_id_changed", lecturerIdChanged).
-				Bool("program_id_changed", programIdChanged).
-				Bool("student_id_changed", studentIdChanged).
-				Any("req", req).
-				Msgf("%s - failed to check duplicate lecturer_id, program_id, and student_id", fnName)
-			return nil, err
-		}
-		if count > 0 {
-			log.Warn().
-				Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
-				Str("req_lecturer_id", getStringValue(req.LecturerId)).
-				Str("current_program_id", currentReg.ProgramId).
-				Str("req_program_id", req.ProgramId).
-				Str("current_student_id", currentReg.StudentId).
-				Str("req_student_id", req.StudentId).
-				Int("duplicate_count", count).
-				Bool("lecturer_id_changed", lecturerIdChanged).
-				Bool("program_id_changed", programIdChanged).
-				Bool("student_id_changed", studentIdChanged).
-				Any("req", req).
-				Msgf("%s - duplicate combination of lecturer_id, program_id, and student_id already exists", fnName)
-			return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id, program_id, dan student_id sudah ada dalam program_registrations")
-		}
-	}
+	// // Only check for duplicate if:
+	// // 1. Either lecturer_id, program_id, or student_id is being changed
+	// // 2. AND the new lecturer_id is not NULL (NULL lecturer_id can have multiple entries per program)
+	// if (lecturerIdChanged || programIdChanged || studentIdChanged) && req.LecturerId != nil {
+	// 	var count int
+	// 	// Use IS NOT DISTINCT FROM to properly handle NULL comparisons
+	// 	queryCheck := `
+	// 		SELECT
+	// 			COUNT(*)
+	// 		FROM
+	// 			program_registrations
+	// 		WHERE
+	// 			lecturer_id IS NOT DISTINCT FROM ?
+	// 			AND program_id = ?
+	// 			AND student_id = ?
+	// 			AND id != ?
+	// 			AND deleted_at IS NULL
+	// 	`
+	// 	err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.StudentId, req.ID)
+	// 	if err != nil {
+	// 		log.Error().Err(err).
+	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
+	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
+	// 			Str("current_program_id", currentReg.ProgramId).
+	// 			Str("req_program_id", req.ProgramId).
+	// 			Str("current_student_id", currentReg.StudentId).
+	// 			Str("req_student_id", req.StudentId).
+	// 			Bool("lecturer_id_changed", lecturerIdChanged).
+	// 			Bool("program_id_changed", programIdChanged).
+	// 			Bool("student_id_changed", studentIdChanged).
+	// 			Any("req", req).
+	// 			Msgf("%s - failed to check duplicate lecturer_id, program_id, and student_id", fnName)
+	// 		return nil, err
+	// 	}
+	// 	if count > 0 {
+	// 		log.Warn().
+	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
+	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
+	// 			Str("current_program_id", currentReg.ProgramId).
+	// 			Str("req_program_id", req.ProgramId).
+	// 			Str("current_student_id", currentReg.StudentId).
+	// 			Str("req_student_id", req.StudentId).
+	// 			Int("duplicate_count", count).
+	// 			Bool("lecturer_id_changed", lecturerIdChanged).
+	// 			Bool("program_id_changed", programIdChanged).
+	// 			Bool("student_id_changed", studentIdChanged).
+	// 			Any("req", req).
+	// 			Msgf("%s - duplicate combination of lecturer_id, program_id, and student_id already exists", fnName)
+	// 		return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id, program_id, dan student_id sudah ada dalam program_registrations")
+	// 	}
+	// }
 
 	query := `
 		UPDATE program_registrations SET
