@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -322,11 +323,11 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 	query = `
 		SELECT
 			pr.id,
-			STRING_AGG(pras.name, ', ') AS additional_students
+			STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
 		FROM
 			program_registrations pr
 		JOIN
-			pr_additional_students pras ON pr.id = pras.pr_id
+			(SELECT DISTINCT pr_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras ON pr.id = pras.pr_id
 		WHERE
 			pr.id IN (?)
 		GROUP BY
@@ -352,10 +353,33 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 		return nil, err
 	}
 
-	// Tambahkan data additional students ke resp.Items field student_name
+	// Kumpulkan additional students per item index untuk menghindari duplikasi
+	additionalStudentsPerItem := make(map[int]map[string]bool)
 	for _, item := range additionalStudentsData {
 		if idx, exists := lastRegistrationWithKeyId[item.RegistrationId]; exists {
-			resp.Items[idx].StudentName += ", " + item.AdditionalStudents
+			if additionalStudentsPerItem[idx] == nil {
+				additionalStudentsPerItem[idx] = make(map[string]bool)
+			}
+			// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
+			names := strings.Split(item.AdditionalStudents, ", ")
+			for _, name := range names {
+				name = strings.TrimSpace(name)
+				if name != "" {
+					additionalStudentsPerItem[idx][name] = true
+				}
+			}
+		}
+	}
+
+	// Tambahkan data additional students ke resp.Items field student_name tanpa duplikasi
+	for idx, nameMap := range additionalStudentsPerItem {
+		if len(nameMap) > 0 {
+			names := make([]string, 0, len(nameMap))
+			for name := range nameMap {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			resp.Items[idx].StudentName += ", " + strings.Join(names, ", ")
 		}
 	}
 
@@ -709,11 +733,11 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 	query = `
 		SELECT
 			pr.id,
-			STRING_AGG(pras.name, ', ') AS additional_students
+			STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
 		FROM
 			program_registrations pr
 		JOIN
-			pr_additional_students pras ON pr.id = pras.pr_id
+			(SELECT DISTINCT pr_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras ON pr.id = pras.pr_id
 		WHERE
 			pr.id IN (?)
 		GROUP BY
@@ -739,10 +763,33 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		return nil, err
 	}
 
-	// Tambahkan data additional students ke resp.Items field student_name
+	// Kumpulkan additional students per item index untuk menghindari duplikasi
+	additionalStudentsPerItem := make(map[int]map[string]bool)
 	for _, item := range additionalStudentsData {
 		if idx, exists := lastRegistrationWithKeyId[item.RegistrationId]; exists {
-			resp.Items[idx].StudentName += ", " + item.AdditionalStudents
+			if additionalStudentsPerItem[idx] == nil {
+				additionalStudentsPerItem[idx] = make(map[string]bool)
+			}
+			// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
+			names := strings.Split(item.AdditionalStudents, ", ")
+			for _, name := range names {
+				name = strings.TrimSpace(name)
+				if name != "" {
+					additionalStudentsPerItem[idx][name] = true
+				}
+			}
+		}
+	}
+
+	// Tambahkan data additional students ke resp.Items field student_name tanpa duplikasi
+	for idx, nameMap := range additionalStudentsPerItem {
+		if len(nameMap) > 0 {
+			names := make([]string, 0, len(nameMap))
+			for name := range nameMap {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			resp.Items[idx].StudentName += ", " + strings.Join(names, ", ")
 		}
 	}
 

@@ -3,8 +3,10 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"sort"
+	"strings"
 
-	// "github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -161,52 +163,80 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 		registrationIds = append(registrationIds, resp.Items[i].ID)
 	}
 
-	// type daos struct {
-	// 	PrId string `db:"pr_id"`
-	// 	entity.AddStudent
-	// }
+	// Query additional students if there are registrations
+	if len(registrationIds) > 0 {
+		query = `
+			SELECT
+				pr.id,
+				STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
+			FROM
+				program_registrations pr
+			JOIN
+				(SELECT DISTINCT pr_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras ON pr.id = pras.pr_id
+			WHERE
+				pr.id IN (?)
+			GROUP BY
+				pr.id
+		`
 
-	// var (
-	// 	daosData = make([]daos, 0)
-	// )
+		type additionalStudents struct {
+			RegistrationId     string `db:"id"`
+			AdditionalStudents string `db:"additional_students"`
+		}
 
-	// query = `
-	// 		SELECT
-	// 			prs.pr_id,
-	// 			prs.student_id,
-	// 			CASE
-	// 				WHEN s.id IS NULL THEN prs.name
-	// 				ELSE s.name
-	// 			END AS name
-	// 		FROM
-	// 			pr_additional_students prs
-	// 		LEFT JOIN
-	// 			students s
-	// 			ON prs.student_id = s.id
-	// 		WHERE prs.pr_id IN (?)
-	// 	`
+		var additionalStudentsData = make([]additionalStudents, 0)
 
-	// query, args, err = sqlx.In(query, registrationIds)
-	// if err != nil {
-	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
-	// 	return nil, err
-	// }
+		query, args, err := sqlx.In(query, registrationIds)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
+			return nil, err
+		}
 
-	// query = r.db.Rebind(query)
-	// err = r.db.SelectContext(ctx, &daosData, query, args...)
-	// if err != nil {
-	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
-	// 	return nil, err
-	// }
+		err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			return nil, err
+		}
 
-	// for i, item := range resp.Items {
-	// 	for _, data := range daosData {
-	// 		if item.ID == data.PrId {
-	// 			resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
-	// 			resp.Items[i].StudentName += ", " + *data.AddStudent.Name
-	// 		}
-	// 	}
-	// }
+		// Kumpulkan additional students per registration untuk menghindari duplikasi
+		additionalStudentsMap := make(map[string]map[string]bool)
+		additionalStudentsList := make(map[string][]entity.AddStudent)
+		for _, item := range additionalStudentsData {
+			if additionalStudentsMap[item.RegistrationId] == nil {
+				additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
+				additionalStudentsList[item.RegistrationId] = make([]entity.AddStudent, 0)
+			}
+			// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
+			names := strings.Split(item.AdditionalStudents, ", ")
+			for _, name := range names {
+				name = strings.TrimSpace(name)
+				if name != "" && !additionalStudentsMap[item.RegistrationId][name] {
+					additionalStudentsMap[item.RegistrationId][name] = true
+					// Create AddStudent entity for Students array
+					namePtr := name
+					additionalStudentsList[item.RegistrationId] = append(additionalStudentsList[item.RegistrationId], entity.AddStudent{
+						Name: &namePtr,
+					})
+				}
+			}
+		}
+
+		// Add additional students to resp.Items
+		for i, item := range resp.Items {
+			if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
+				// Tambahkan ke Students array
+				resp.Items[i].Students = append(resp.Items[i].Students, additionalStudentsList[item.ID]...)
+				
+				// Tambahkan ke StudentName tanpa duplikasi
+				names := make([]string, 0, len(nameMap))
+				for name := range nameMap {
+					names = append(names, name)
+				}
+				sort.Strings(names)
+				resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
+			}
+		}
+	}
 
 	respUnused.Items = append(respUnused.Items, resp.Items...)
 	respUnused.TotalITP += resp.TotalITP

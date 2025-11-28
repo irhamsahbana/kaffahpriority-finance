@@ -3,6 +3,8 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -235,7 +237,11 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 		daosData = make([]daos, 0)
 	)
 	query = `
-			SELECT
+			SELECT DISTINCT ON (prs.pr_id, 
+				CASE
+					WHEN s.id IS NULL THEN prs.name
+					ELSE s.name
+				END)
 				prs.pr_id,
 				prs.student_id,
 				CASE
@@ -248,6 +254,12 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 				students s
 				ON prs.student_id = s.id
 			WHERE prs.pr_id IN (?)
+				AND prs.deleted_at IS NULL
+			ORDER BY prs.pr_id, 
+				CASE
+					WHEN s.id IS NULL THEN prs.name
+					ELSE s.name
+				END
 		`
 
 	query, args, err = sqlx.In(query, registrationIds)
@@ -263,12 +275,33 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 		return nil, err
 	}
 
+	// Kumpulkan additional students per registration untuk menghindari duplikasi
+	additionalStudentsMap := make(map[string]map[string]bool)
+	additionalStudentsList := make(map[string][]entity.AddStudent)
+	for _, data := range daosData {
+		if additionalStudentsMap[data.PrId] == nil {
+			additionalStudentsMap[data.PrId] = make(map[string]bool)
+			additionalStudentsList[data.PrId] = make([]entity.AddStudent, 0)
+		}
+		name := *data.AddStudent.Name
+		if !additionalStudentsMap[data.PrId][name] {
+			additionalStudentsMap[data.PrId][name] = true
+			additionalStudentsList[data.PrId] = append(additionalStudentsList[data.PrId], data.AddStudent)
+		}
+	}
+
 	for i, item := range resp.Items {
-		for _, data := range daosData {
-			if item.ID == data.PrId {
-				resp.Items[i].Students = append(resp.Items[i].Students, data.AddStudent)
-				resp.Items[i].StudentName += ", " + *data.AddStudent.Name
+		if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
+			// Tambahkan ke Students array
+			resp.Items[i].Students = append(resp.Items[i].Students, additionalStudentsList[item.ID]...)
+			
+			// Tambahkan ke StudentName tanpa duplikasi
+			names := make([]string, 0, len(nameMap))
+			for name := range nameMap {
+				names = append(names, name)
 			}
+			sort.Strings(names)
+			resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
 		}
 	}
 

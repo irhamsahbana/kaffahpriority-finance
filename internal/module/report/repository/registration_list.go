@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -682,6 +684,87 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 
 	resp.Items = ress
 
+	// Collect all registration IDs for additional students query
+	registrationIds := make([]string, 0)
+	for _, item := range data {
+		registrationIds = append(registrationIds, item.ID)
+	}
+
+	// Query additional students if there are registrations
+	if len(registrationIds) > 0 {
+		query = `
+			SELECT
+				pr.id,
+				STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
+			FROM
+				program_registrations pr
+			JOIN
+				(SELECT DISTINCT pr_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras ON pr.id = pras.pr_id
+			WHERE
+				pr.id IN (?)
+			GROUP BY
+				pr.id
+		`
+
+		type additionalStudents struct {
+			RegistrationId     string `db:"id"`
+			AdditionalStudents string `db:"additional_students"`
+		}
+
+		var additionalStudentsData = make([]additionalStudents, 0)
+
+		query, args, err := sqlx.In(query, registrationIds)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
+			return nil, err
+		}
+
+		err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			return nil, err
+		}
+
+		// Create map of registration ID to additional students (deduplicated)
+		additionalStudentsMap := make(map[string]map[string]bool)
+		for _, item := range additionalStudentsData {
+			if additionalStudentsMap[item.RegistrationId] == nil {
+				additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
+			}
+			// Split string and add each name to map to remove duplicates
+			names := strings.Split(item.AdditionalStudents, ", ")
+			for _, name := range names {
+				name = strings.TrimSpace(name)
+				if name != "" {
+					additionalStudentsMap[item.RegistrationId][name] = true
+				}
+			}
+		}
+
+		// Add additional students to StudentName for each row
+		for i := range resp.Items {
+			// Collect all unique additional students for all registrations in this row
+			allAdditionalStudents := make(map[string]bool)
+			for _, month := range resp.Items[i].Months {
+				if nameMap, exists := additionalStudentsMap[month.RegistrationID]; exists {
+					for name := range nameMap {
+						allAdditionalStudents[name] = true
+					}
+				}
+			}
+
+			// Add to StudentName without duplicates
+			if len(allAdditionalStudents) > 0 {
+				names := make([]string, 0, len(allAdditionalStudents))
+				for name := range allAdditionalStudents {
+					names = append(names, name)
+				}
+				sort.Strings(names)
+				resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
+			}
+		}
+	}
+
 	return resp, nil
 }
 
@@ -809,18 +892,23 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 				queryAddStudents := `
 					SELECT
-						adds.student_id,
+						pras.student_id,
 						CASE
-							WHEN s.id IS NULL THEN adds.name
+							WHEN s.id IS NULL THEN pras.name
 							ELSE s.name
 						END AS name
 					FROM
-						prt_additional_students adds
+						(SELECT DISTINCT pr_id, student_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras
 					LEFT JOIN
 						students s
-						ON adds.student_id = s.id
+						ON pras.student_id = s.id
 					WHERE
-						adds.prt_id = ?
+						pras.pr_id = ?
+					ORDER BY
+						CASE
+							WHEN s.id IS NULL THEN pras.name
+							ELSE s.name
+						END
 				`
 
 				var addStudents = make([]entity.AddStudent, 0)
@@ -829,8 +917,22 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 					log.Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
 					return nil, err
 				}
+				
+				// Kumpulkan nama untuk menghindari duplikasi
+				uniqueNames := make(map[string]bool)
+				names := make([]string, 0)
 				for _, addStudent := range addStudents {
-					academicManagers[i].Items[j].Items[k].StudentName += ", " + *addStudent.Name
+					name := *addStudent.Name
+					if !uniqueNames[name] {
+						uniqueNames[name] = true
+						names = append(names, name)
+					}
+				}
+				
+				// Sort dan gabungkan
+				sort.Strings(names)
+				if len(names) > 0 {
+					academicManagers[i].Items[j].Items[k].StudentName += ", " + strings.Join(names, ", ")
 				}
 
 				query := `
