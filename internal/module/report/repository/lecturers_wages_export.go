@@ -3,6 +3,8 @@ package repository
 import (
 	"codebase-app/internal/module/report/entity"
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -73,6 +75,8 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 		JOIN
 			programs p ON pr.program_id = p.id
 		LEFT JOIN
+			program_registration_templates prt ON pr.template_id = prt.id
+		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
@@ -84,6 +88,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			student_managers sm ON m.student_manager_id = sm.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.category = 'general'
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
@@ -115,9 +120,9 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	query += `
 		ORDER BY
-			am.id ASC,
+			l.academic_manager_id ASC,
 			l.id ASC,
-			pr.template_id ASC
+			COALESCE(prt.created_at, pr.created_at) ASC
 	`
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
@@ -150,11 +155,11 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 	query = `
 		SELECT
 			pr.id,
-			STRING_AGG(pras.name, ', ') AS additional_students
+			STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
 		FROM
 			program_registrations pr
 		JOIN
-			pr_additional_students pras ON pr.id = pras.pr_id
+			(SELECT DISTINCT pr_id, name FROM pr_additional_students WHERE deleted_at IS NULL) pras ON pr.id = pras.pr_id
 		WHERE
 			pr.id IN (?)
 		GROUP BY
@@ -181,14 +186,31 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 		return nil, err
 	}
 
-	// Add additional students data to resp.Items field student_name
+	// Kumpulkan additional students per registration untuk menghindari duplikasi
+	additionalStudentsMap := make(map[string]map[string]bool)
 	for _, item := range additionalStudentsData {
-		for i, d := range resp.Items {
-			if d.RegistrationID == item.RegistrationId {
-				resp.Items[i].StudentName += ", " + item.AdditionalStudents
-
-				break
+		if additionalStudentsMap[item.RegistrationId] == nil {
+			additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
+		}
+		// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
+		names := strings.Split(item.AdditionalStudents, ", ")
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				additionalStudentsMap[item.RegistrationId][name] = true
 			}
+		}
+	}
+
+	// Add additional students data to resp.Items field student_name tanpa duplikasi
+	for i, d := range resp.Items {
+		if nameMap, exists := additionalStudentsMap[d.RegistrationID]; exists && len(nameMap) > 0 {
+			names := make([]string, 0, len(nameMap))
+			for name := range nameMap {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
 		}
 	}
 
