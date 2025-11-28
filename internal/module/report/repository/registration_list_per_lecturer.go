@@ -89,11 +89,12 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			s.name,
 			p.name,
 			l.academic_manager_id,
-			am.name
+			am.name,
+			l.id
 		ORDER BY
 			l.academic_manager_id ASC,
-			prt.lecturer_id ASC,
-			MIN(prt.id) ASC
+			l.id ASC,
+			MIN(prt.created_at) ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
@@ -441,11 +442,12 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			s.name,
 			p.name,
 			l.academic_manager_id,
-			am.name
+			am.name,
+			l.id
 		ORDER BY
 			l.academic_manager_id ASC,
-			prt.lecturer_id ASC,
-			MIN(prt.id) ASC
+			l.id ASC,
+			MIN(prt.created_at) ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)

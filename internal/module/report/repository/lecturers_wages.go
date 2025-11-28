@@ -97,6 +97,8 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 		JOIN
 			programs p ON pr.program_id = p.id
 		LEFT JOIN
+			program_registration_templates prt ON pr.template_id = prt.id
+		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
@@ -140,9 +142,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 
 	query += `
 		ORDER BY
-			am.id ASC,
+			l.academic_manager_id ASC,
 			l.id ASC,
-			pr.template_id ASC
+			COALESCE(prt.created_at, pr.created_at) ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
