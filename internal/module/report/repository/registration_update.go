@@ -12,6 +12,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// getStringValue returns the string value or "<nil>" if pointer is nil
+func getStringValue(s *string) string {
+	if s == nil {
+		return "<nil>"
+	}
+	return *s
+}
+
 func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
 	fnName := "repo::UpdateRegistration"
 	tx, err := r.db.BeginTxx(ctx, nil)
@@ -33,16 +41,18 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		}
 	}()
 
-	// Get current registration data to check if lecturer_id is being changed
+	// Get current registration data to check if lecturer_id, program_id, or student_id is being changed
 	type currentRegistration struct {
 		LecturerId *string `db:"lecturer_id"`
 		ProgramId  string  `db:"program_id"`
+		StudentId  string  `db:"student_id"`
 	}
 	var currentReg currentRegistration
 	queryCurrent := `
 		SELECT
 			lecturer_id,
-			program_id
+			program_id,
+			student_id
 		FROM
 			program_registrations
 		WHERE
@@ -70,28 +80,58 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// Check if program_id is being changed
 	programIdChanged := currentReg.ProgramId != req.ProgramId
 
-	// If lecturer_id or program_id is being changed, check if the new combination already exists
-	if (lecturerIdChanged || programIdChanged) && req.LecturerId != nil {
+	// Check if student_id is being changed
+	studentIdChanged := currentReg.StudentId != req.StudentId
+
+	// Only check for duplicate if:
+	// 1. Either lecturer_id, program_id, or student_id is being changed
+	// 2. AND the new lecturer_id is not NULL (NULL lecturer_id can have multiple entries per program)
+	if (lecturerIdChanged || programIdChanged || studentIdChanged) && req.LecturerId != nil {
 		var count int
+		// Use IS NOT DISTINCT FROM to properly handle NULL comparisons
 		queryCheck := `
 			SELECT
 				COUNT(*)
 			FROM
 				program_registrations
 			WHERE
-				lecturer_id = ?
+				lecturer_id IS NOT DISTINCT FROM ?
 				AND program_id = ?
+				AND student_id = ?
 				AND id != ?
 				AND deleted_at IS NULL
 		`
-		err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.ID)
+		err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.StudentId, req.ID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to check duplicate lecturer_id and program_id", fnName)
+			log.Error().Err(err).
+				Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
+				Str("req_lecturer_id", getStringValue(req.LecturerId)).
+				Str("current_program_id", currentReg.ProgramId).
+				Str("req_program_id", req.ProgramId).
+				Str("current_student_id", currentReg.StudentId).
+				Str("req_student_id", req.StudentId).
+				Bool("lecturer_id_changed", lecturerIdChanged).
+				Bool("program_id_changed", programIdChanged).
+				Bool("student_id_changed", studentIdChanged).
+				Any("req", req).
+				Msgf("%s - failed to check duplicate lecturer_id, program_id, and student_id", fnName)
 			return nil, err
 		}
 		if count > 0 {
-			log.Warn().Any("req", req).Msgf("%s - duplicate combination of lecturer_id and program_id already exists", fnName)
-			return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id dan program_id sudah ada dalam program_registrations")
+			log.Warn().
+				Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
+				Str("req_lecturer_id", getStringValue(req.LecturerId)).
+				Str("current_program_id", currentReg.ProgramId).
+				Str("req_program_id", req.ProgramId).
+				Str("current_student_id", currentReg.StudentId).
+				Str("req_student_id", req.StudentId).
+				Int("duplicate_count", count).
+				Bool("lecturer_id_changed", lecturerIdChanged).
+				Bool("program_id_changed", programIdChanged).
+				Bool("student_id_changed", studentIdChanged).
+				Any("req", req).
+				Msgf("%s - duplicate combination of lecturer_id, program_id, and student_id already exists", fnName)
+			return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id, program_id, dan student_id sudah ada dalam program_registrations")
 		}
 	}
 
@@ -244,67 +284,175 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		return nil, err
 	}
 
-	query = `
-		UPDATE program_registration_templates SET
-			program_id = ?,
-			lecturer_id = ?,
-			marketer_id = ?,
-			student_id = ?,
-			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
-			program_fee = ?,
-			administration_fee = ?,
-			foreign_learning_fee = ?,
-			night_learning_fee = ?,
-			marketer_commission_fee = ?,
-			overpayment_fee = ?,
-			hr_fee = ?,
-			marketer_gifts_fee = ?,
-			closing_fee_for_office = ?,
-			closing_fee_for_reward = ?,
-			days = ?,
-			notes = ?,
-			is_itp = ?,
-			updated_at = NOW()
-		WHERE
-			id = ?
-			AND deleted_at IS NULL
+	// Check if there's any registration with is_paid = true for the same template_id
+	var hasPaidRegistration bool
+	queryCheckPaid := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM program_registrations
+			WHERE template_id = ?
+				AND is_paid = TRUE
+				AND deleted_at IS NULL
+		)
 	`
-
-	_, err = tx.ExecContext(ctx, tx.Rebind(query),
-		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
-		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
-		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
-		req.IsITP,
-		reg.TemplateId,
-	)
+	err = tx.GetContext(ctx, &hasPaidRegistration, tx.Rebind(queryCheckPaid), reg.TemplateId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update template data", fnName)
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check paid registration", fnName)
 		return nil, err
 	}
 
-	query = `
-		DELETE FROM prt_additional_students WHERE prt_id = ?
-	`
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), reg.TemplateId)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students from template", fnName)
-		return nil, err
-	}
+	if hasPaidRegistration {
+		// Create new template instead of updating existing one
+		newTemplateId := ulid.Make().String()
 
-	for _, item := range req.Students {
 		query = `
-			INSERT INTO prt_additional_students (
-				id, prt_id, student_id, name
-			) VALUES (?, ?, ?, ?)
+			WITH program AS (
+				SELECT
+					p.price_per_meeting AS program_fee_per_meeting,
+					p.commission_fee AS marketer_commission_fee
+				FROM
+					programs p
+				WHERE
+					p.id = ?
+					AND p.deleted_at IS NULL
+			)
+			INSERT INTO program_registration_templates (
+				id,
+				user_id,
+				program_id,
+				lecturer_id,
+				marketer_id,
+				student_id,
+				days,
+				notes,
+				program_fee,
+				program_fee_per_meeting,
+				administration_fee,
+				foreign_learning_fee,
+				night_learning_fee,
+				is_itp,
+				marketer_commission_fee,
+				overpayment_fee,
+				hr_fee,
+				marketer_gifts_fee,
+				closing_fee_for_office,
+				closing_fee_for_reward
+			) VALUES (
+				?, ?, ?, ?, ?, ?, ?, ?, ?,
+				(SELECT program_fee_per_meeting FROM program),
+				?, ?, ?, ?,
+				(SELECT marketer_commission_fee FROM program),
+				?, ?, ?, ?, ?
+			)
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			ulid.Make().String(), reg.TemplateId, item.StudentID, item.Name,
+			req.ProgramId,
+			newTemplateId, req.UserID, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
+			pq.Array(req.Days), req.Notes, req.ProgramFee,
+			req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
+			req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
+			req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to create new template", fnName)
 			return nil, err
+		}
+
+		// Insert additional students for new template
+		for _, item := range req.Students {
+			query = `
+				INSERT INTO prt_additional_students (
+					id, prt_id, student_id, name
+				) VALUES (?, ?, ?, ?)
+			`
+
+			_, err = tx.ExecContext(ctx, tx.Rebind(query),
+				ulid.Make().String(), newTemplateId, item.StudentID, item.Name,
+			)
+			if err != nil {
+				log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into new template", fnName)
+				return nil, err
+			}
+		}
+
+		// Update registration to use new template_id
+		query = `
+			UPDATE program_registrations SET
+				template_id = ?
+			WHERE
+				id = ?
+				AND deleted_at IS NULL
+		`
+		_, err = tx.ExecContext(ctx, tx.Rebind(query), newTemplateId, req.ID)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration template_id", fnName)
+			return nil, err
+		}
+	} else {
+		// Update existing template
+		query = `
+			UPDATE program_registration_templates SET
+				program_id = ?,
+				lecturer_id = ?,
+				marketer_id = ?,
+				student_id = ?,
+				program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
+				program_fee = ?,
+				administration_fee = ?,
+				foreign_learning_fee = ?,
+				night_learning_fee = ?,
+				marketer_commission_fee = ?,
+				overpayment_fee = ?,
+				hr_fee = ?,
+				marketer_gifts_fee = ?,
+				closing_fee_for_office = ?,
+				closing_fee_for_reward = ?,
+				days = ?,
+				notes = ?,
+				is_itp = ?,
+				updated_at = NOW()
+			WHERE
+				id = ?
+				AND deleted_at IS NULL
+		`
+
+		_, err = tx.ExecContext(ctx, tx.Rebind(query),
+			req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
+			req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+			req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
+			req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
+			req.IsITP,
+			reg.TemplateId,
+		)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update template data", fnName)
+			return nil, err
+		}
+
+		query = `
+			DELETE FROM prt_additional_students WHERE prt_id = ?
+		`
+		_, err = tx.ExecContext(ctx, tx.Rebind(query), reg.TemplateId)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students from template", fnName)
+			return nil, err
+		}
+
+		for _, item := range req.Students {
+			query = `
+				INSERT INTO prt_additional_students (
+					id, prt_id, student_id, name
+				) VALUES (?, ?, ?, ?)
+			`
+
+			_, err = tx.ExecContext(ctx, tx.Rebind(query),
+				ulid.Make().String(), reg.TemplateId, item.StudentID, item.Name,
+			)
+			if err != nil {
+				log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
+				return nil, err
+			}
 		}
 	}
 
