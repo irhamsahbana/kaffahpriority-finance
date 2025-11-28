@@ -73,6 +73,8 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 		JOIN
 			programs p ON pr.program_id = p.id
 		LEFT JOIN
+			program_registration_templates prt ON pr.template_id = prt.id
+		LEFT JOIN
 			lecturers l ON pr.lecturer_id = l.id
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
@@ -84,6 +86,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			student_managers sm ON m.student_manager_id = sm.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.category = 'general'
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
@@ -115,9 +118,9 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	query += `
 		ORDER BY
-			am.id ASC,
+			l.academic_manager_id ASC,
 			l.id ASC,
-			pr.template_id ASC
+			COALESCE(prt.created_at, pr.created_at) ASC
 	`
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {

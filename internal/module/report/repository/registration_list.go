@@ -704,6 +704,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 			academic_managers am ON l.academic_manager_id = am.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.category = 'general'
 			AND pr.lecturer_id IS NOT NULL
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 		ORDER BY
@@ -765,6 +766,8 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 					pr.is_itp
 				FROM
 					program_registrations pr
+				LEFT JOIN
+					program_registration_templates prt ON pr.template_id = prt.id
 				JOIN
 					students s ON pr.student_id = s.id
 				JOIN
@@ -774,9 +777,10 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				WHERE
 					pr.lecturer_id = ?
 					AND pr.deleted_at IS NULL
+					AND pr.category = 'general'
 					AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 				ORDER BY
-					pr.template_id ASC
+					COALESCE(prt.created_at, pr.created_at) ASC
 			`
 
 			var registrations = make([]entity.WageRecapRegistration, 0)
