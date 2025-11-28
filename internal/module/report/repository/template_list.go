@@ -139,7 +139,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		ORDER BY
 			l.academic_manager_id ASC,
 			l.id ASC,
-			prt.id ASC
+			prt.created_at ASC
 		LIMIT ? OFFSET ?
 	`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
