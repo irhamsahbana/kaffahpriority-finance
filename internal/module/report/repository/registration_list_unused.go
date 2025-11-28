@@ -27,6 +27,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			COUNT(*) OVER() AS total_data,
 			pr.batch,
 			pr.is_paid,
+			pr.category,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -67,7 +68,10 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.paid_at,
 			pr.created_at,
 			pr.updated_at,
-			pr.allocated_at,
+			CASE
+				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				ELSE pr.allocated_at
+			END AS allocated_at,
 			pr.notes,
 			pr.notes_for_category,
 			pr.program_fee +
@@ -94,13 +98,31 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			am.name AS academic_manager_name,
 			sm.name AS student_manager_name,
 			CASE
-				WHEN pr.program_meetings > 0 THEN TRUE
-				ELSE FALSE
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					CASE
+						WHEN parent.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
+				ELSE
+					CASE
+						WHEN pr.program_meetings > 0 THEN TRUE
+						ELSE FALSE
+					END
 			END AS is_started,
 			CASE
-				WHEN pr.program_acquisition_rights > 10 THEN 0
-				WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
-				ELSE pr.program_acquisition_rights
+				WHEN pr.parent_id IS NOT NULL
+				THEN
+					CASE
+						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+					END
+				ELSE
+					CASE
+						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
+						ELSE pr.program_acquisition_rights
+					END
 			END AS acquisition_rights
 		FROM
 			program_registrations pr
@@ -122,9 +144,18 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		JOIN
 			programs p
 			ON pr.program_id = p.id
+		-- join with parent
+		LEFT JOIN
+			program_registrations parent
+			ON pr.parent_id = parent.id
+		LEFT JOIN
+			students parent_student
+			ON parent.student_id = parent_student.id
 		WHERE
 			pr.deleted_at IS NULL
 			AND pr.mentor_detail_fee_used IS NULL
+			AND
+			parent.deleted_at IS NULL
 	`
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
@@ -145,14 +176,19 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 	}
 
 	if req.ExcludeAllocatedMonth != "" {
-		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') != ?`
-		args = append(args, req.Timezone, req.ExcludeAllocatedMonth)
+		query += `
+			AND CASE
+				WHEN pr.parent_id IS NOT NULL
+				THEN TO_CHAR(parent.allocated_at AT TIME ZONE ?, 'YYYY-MM')
+				ELSE TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM')
+			END != ?`
+		args = append(args, req.Timezone, req.Timezone, req.ExcludeAllocatedMonth)
 	}
 
 	if req.Q != "" {
 		query += ` AND (
-			pr.program_name ILIKE '%' || ? || '%' OR
-			s.name ILIKE '%' || ? || '%'
+			s.name ILIKE '%' || ? || '%' OR
+			parent_student.name ILIKE '%' || ? || '%'
 		)`
 		args = append(args, req.Q, req.Q)
 	}
