@@ -284,24 +284,45 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		return nil, err
 	}
 
-	// Check if there's any registration with is_paid = true for the same template_id
-	var hasPaidRegistration bool
-	queryCheckPaid := `
-		SELECT EXISTS (
-			SELECT 1
-			FROM program_registrations
-			WHERE template_id = ?
-				AND is_paid = TRUE
-				AND deleted_at IS NULL
-		)
+	// Check if core template fields (lecturer_id, program_id, student_id) have changed
+	// If any of these fields changed, create a new template
+	// If none changed, update the existing template
+	type templateCoreFields struct {
+		LecturerId *string `db:"lecturer_id"`
+		ProgramId  string  `db:"program_id"`
+		StudentId  string  `db:"student_id"`
+	}
+	var currentTemplate templateCoreFields
+	queryGetTemplate := `
+		SELECT
+			lecturer_id,
+			program_id,
+			student_id
+		FROM
+			program_registration_templates
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
 	`
-	err = tx.GetContext(ctx, &hasPaidRegistration, tx.Rebind(queryCheckPaid), reg.TemplateId)
+	err = tx.GetContext(ctx, &currentTemplate, tx.Rebind(queryGetTemplate), reg.TemplateId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to check paid registration", fnName)
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get template core fields", fnName)
 		return nil, err
 	}
 
-	if hasPaidRegistration {
+	// Check if any core field has changed
+	lecturerIdChanged := false
+	if (currentTemplate.LecturerId == nil && req.LecturerId != nil) ||
+		(currentTemplate.LecturerId != nil && req.LecturerId == nil) ||
+		(currentTemplate.LecturerId != nil && req.LecturerId != nil && *currentTemplate.LecturerId != *req.LecturerId) {
+		lecturerIdChanged = true
+	}
+	programIdChanged := currentTemplate.ProgramId != req.ProgramId
+	studentIdChanged := currentTemplate.StudentId != req.StudentId
+
+	coreFieldsChanged := lecturerIdChanged || programIdChanged || studentIdChanged
+
+	if coreFieldsChanged {
 		// Create new template instead of updating existing one
 		newTemplateId := ulid.Make().String()
 
@@ -391,6 +412,8 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		}
 	} else {
 		// Update existing template
+		// Only update fields that exist in program_registration_templates table
+		// Skip fields like notes_for_category which only exist in program_registrations
 		query = `
 			UPDATE program_registration_templates SET
 				program_id = ?,
