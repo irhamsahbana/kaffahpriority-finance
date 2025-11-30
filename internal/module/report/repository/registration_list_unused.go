@@ -239,6 +239,14 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		}
 	}
 
+	if req.IsITP != "" {
+		if req.IsITP == "true" {
+			query += ` AND pr.is_itp = TRUE`
+		} else {
+			query += ` AND pr.is_itp = FALSE`
+		}
+	}
+
 	sortByMap := map[string]string{
 		"created_at":   "pr.created_at",
 		"paid_at":      "pr.paid_at",
