@@ -42,6 +42,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_paid AS has_payment,
 			(
 				CASE
 					WHEN pr.program_acquisition_rights > 10 THEN 0

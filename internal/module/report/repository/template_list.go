@@ -49,6 +49,15 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.updated_at,
 			prt.deleted_at,
 
+			-- Check if template has any paid registrations
+			EXISTS(
+				SELECT 1
+				FROM program_registrations pr
+				WHERE pr.template_id = prt.id
+				AND pr.is_paid = true
+				AND pr.deleted_at IS NULL
+			) AS has_fund,
+
 			m.student_manager_id,
 			l.academic_manager_id,
 			p.name AS program_name,
