@@ -32,6 +32,51 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 		return err
 	}
 
+	// check if any existing registrations with the same template_id have allocated_at matching any of the sent allocations
+	for _, allocation := range req.Allocations {
+		var paidAt sql.NullTime
+		checkQuery := `
+			SELECT paid_at
+			FROM program_registrations
+			WHERE template_id = ?
+				AND TO_CHAR(allocated_at AT TIME ZONE 'Asia/Makassar', 'YYYY-MM') = ?
+				AND deleted_at IS NULL
+			LIMIT 1
+		`
+		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), templateId, allocation).Scan(&paidAt)
+		
+		if err == nil {
+			// Registration exists, format the error message with paid_at date
+			paidAtStr := "tanpa tanggal pembayaran"
+			if paidAt.Valid {
+				paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
+			}
+			
+			// Format allocation from YYYY-MM to MMMM YYYY
+			allocationFormatted := allocation
+			if len(allocation) == 7 { // YYYY-MM format
+				// convert month to full month name
+				monthNames := map[string]string{
+					"01": "Januari", "02": "Februari", "03": "Maret",
+					"04": "April", "05": "Mei", "06": "Juni",
+					"07": "Juli", "08": "Agustus", "09": "September",
+					"10": "Oktober", "11": "November", "12": "Desember",
+				}
+				month := allocation[5:7]
+				year := allocation[0:4]
+				if monthName, ok := monthNames[month]; ok {
+					allocationFormatted = monthName + " " + year
+				}
+			}
+			
+			log.Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("%s - allocation already exists for this template", fnName)
+			return errmsg.NewCustomErrors(400, errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
+		} else if err != sql.ErrNoRows {
+			log.Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("%s - failed to check existing allocations", fnName)
+			return err
+		}
+	}
+
 	for _, allocation := range req.Allocations {
 		// check if registration already exists
 		type existingData struct {
