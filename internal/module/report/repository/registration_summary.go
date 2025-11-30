@@ -78,8 +78,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 		SELECT
 			COALESCE(SUM(COALESCE(pr.mentor_detail_fee, 0) + COALESCE(pr.hr_detail_fee, 0)), 0) AS total_debit,
 			COALESCE(SUM(pr.overpayment_fee), 0) AS total_overpayment,
-			0 AS total_credit
-			-- COALESCE(SUM(pr.credit), 0) AS total_credit
+			COALESCE(SUM(pr.mentor_detail_fee_used), 0) AS total_credit
 		FROM
 			program_registrations pr
 		WHERE
@@ -89,7 +88,6 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
 	`
-	// TODO: add credit column in database migration, // and uncomment the total_credit line and remove the 0 above
 
 	args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 
