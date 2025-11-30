@@ -14,6 +14,7 @@ type GetRegistrationsReq struct {
 	AllocatedMonth string `query:"allocated_month" validate:"omitempty,datetime=2006-01"`
 	Timezone       string `query:"timezone" validate:"required,timezone"`
 	IsPaid         string `query:"is_paid" validate:"omitempty,oneof=true false"`
+	IsITP          string `query:"is_itp" validate:"omitempty,oneof=true false"`
 	IsStarted      string `query:"is_started" validate:"omitempty,oneof=true false"`
 
 	MarketerID string `query:"marketer_id" validate:"omitempty,ulid"`
