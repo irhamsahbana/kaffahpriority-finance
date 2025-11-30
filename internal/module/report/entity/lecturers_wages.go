@@ -61,6 +61,7 @@ type LecturersWageItem struct {
 	AllocatedAt          *string          `json:"allocated_at" db:"allocated_at"`
 	Notes                *string          `json:"notes" db:"notes"`
 	TemplateId           string           `json:"template_id" db:"template_id"`
+	HasPayment           bool             `json:"has_payment" db:"has_payment"`
 }
 
 // aggregate version
