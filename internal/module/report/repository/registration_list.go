@@ -168,31 +168,25 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			AND pr.paid_at AT TIME ZONE ? >=
 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
 			AND pr.paid_at AT TIME ZONE ? <
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 day')
-			AND CASE
-				WHEN pr.parent_id IS NOT NULL
-				THEN parent.allocated_at AT TIME ZONE ?
-				ELSE pr.allocated_at AT TIME ZONE ?
-			END >=
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')`
-		args = append(args, req.Timezone, req.PaidAtFrom, req.Timezone, req.PaidAtTo, req.Timezone, req.Timezone, req.PaidAtFrom)
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 day')`
+		args = append(args, req.Timezone, req.PaidAtFrom, req.Timezone, req.PaidAtTo)
 	}
 
 	// Filter khusus untuk CFO2: exclude registrasi dengan allocated_at di luar range dan mentor_detail_fee_used masih NULL
-	if req.IsCFO2 == "true" && req.PaidAtFrom != "" && req.PaidAtTo != "" {
-		query += `
-			AND NOT (
-				CASE
-					WHEN pr.parent_id IS NOT NULL
-					THEN parent.allocated_at AT TIME ZONE ?
-					ELSE pr.allocated_at AT TIME ZONE ?
-				END NOT BETWEEN
-				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
-				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
-				AND pr.mentor_detail_fee_used IS NULL
-			)`
-		args = append(args, req.Timezone, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
-	}
+	// if req.IsCFO2 == "true" && req.PaidAtFrom != "" && req.PaidAtTo != "" {
+	// 	query += `
+	// 		AND NOT (
+	// 			CASE
+	// 				WHEN pr.parent_id IS NOT NULL
+	// 				THEN parent.allocated_at AT TIME ZONE ?
+	// 				ELSE pr.allocated_at AT TIME ZONE ?
+	// 			END NOT BETWEEN
+	// 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+	// 			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+	// 			AND pr.mentor_detail_fee_used IS NULL
+	// 		)`
+	// 	args = append(args, req.Timezone, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+	// }
 
 	if req.IsStarted != "" {
 		if req.IsStarted == "true" {
