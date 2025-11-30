@@ -160,11 +160,10 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
 		query += `
-			AND pr.paid_at AT TIME ZONE ? BETWEEN
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
-			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
+			AND pr.paid_at AT TIME ZONE ? <=
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' - INTERVAL '1 month' + time '23:59:59.999999')
 		`
-		args = append(args, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
+		args = append(args, req.Timezone, req.PaidAtTo)
 	}
 
 	if req.IsStarted != "" {
@@ -175,14 +174,16 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		}
 	}
 
-	if req.ExcludeAllocatedMonth != "" {
+	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
 		query += `
 			AND CASE
 				WHEN pr.parent_id IS NOT NULL
-				THEN TO_CHAR(parent.allocated_at AT TIME ZONE ?, 'YYYY-MM')
-				ELSE TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM')
-			END != ?`
-		args = append(args, req.Timezone, req.Timezone, req.ExcludeAllocatedMonth)
+				THEN parent.allocated_at AT TIME ZONE ?
+				ELSE pr.allocated_at AT TIME ZONE ?
+			END NOT BETWEEN
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' - INTERVAL '1 month' + time '23:59:59.999999')`
+		args = append(args, req.Timezone, req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	}
 
 	if req.Q != "" {

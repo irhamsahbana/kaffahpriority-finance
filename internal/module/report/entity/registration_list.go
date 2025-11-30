@@ -25,6 +25,7 @@ type GetRegistrationsReq struct {
 	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
 	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
 	MentorFeeAllocationStatus  string `query:"mentor_fee_allocation_status" validate:"omitempty,oneof=all full partial none"`
+	IsCFO2                     string `query:"is_cfo2" validate:"omitempty,oneof=true false"`
 
 	SortBy   string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
 	SortType string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
