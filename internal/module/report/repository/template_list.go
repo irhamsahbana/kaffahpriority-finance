@@ -60,7 +60,14 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
-			AS monthly_fee
+			AS monthly_fee,
+			EXISTS (
+				SELECT 1
+				FROM program_registrations pr
+				WHERE pr.template_id = prt.id
+				AND pr.is_paid = true
+				AND pr.deleted_at IS NULL
+			) AS has_registration_paid
 		FROM
 			program_registration_templates prt
 		LEFT JOIN
