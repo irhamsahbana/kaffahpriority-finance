@@ -65,4 +65,5 @@ type TemplateItem struct {
 	CreatedAt               string        `json:"created_at" db:"created_at"`
 	UpdatedAt               string        `json:"updated_at" db:"updated_at"`
 	DeletedAt               *string       `json:"deleted_at" db:"deleted_at"`
+	HasRegistrationPaid     bool          `json:"has_registration_paid" db:"has_registration_paid"`
 }
