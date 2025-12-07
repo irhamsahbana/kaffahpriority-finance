@@ -49,9 +49,5 @@ USER appuser
 # Expose port (default Fiber port is 3000, adjust if needed)
 EXPOSE 3333
 
-# Health check (adjust the endpoint based on your app)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3333/health || exit 1
-
 # Run the application
 CMD ["./kpf-app"]
