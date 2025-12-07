@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+.qoder
+.DS_Store
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+kpf-app
+
+# Test files
+*_test.go
+*.test
+*.out
+
+# Logs
+logs/
+*.log
+
+# Backups
+backups/
+
+# Storage
+storage/
+
+# Documentation
+docs/
+README.md
+GEMINI.md
+
+# CI/CD
+.github
+Jenkinsfile
+immortal-example.yaml
+
+# Task runner
+Taskfile.yml
+
+# Scripts
+scripts/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
