@@ -64,7 +64,7 @@ func initialize() (newArgs []string) {
 		logCfg = *configPath + "/" + *configFilename
 	}
 
-	log.Info().Msgf("Initializing configuration with config: %s", logCfg)
+	log.Info().Msgf("Initializing configuration (will try to load from: %s, fallback to env vars if not found)", logCfg)
 
 	config.Configuration(
 		config.WithPath(*configPath),
