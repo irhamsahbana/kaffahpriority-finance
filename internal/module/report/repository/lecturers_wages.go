@@ -654,6 +654,7 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 		`,
 			strings.Join(queryParts, ", "),
 		)
+		args = append(args, req.RegistrationID)
 
 		_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 		if err != nil {
