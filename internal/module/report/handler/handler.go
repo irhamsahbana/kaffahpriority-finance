@@ -70,7 +70,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 
 	protected.Get("/registration-per-lecturers", h.getRegistrationListPerLecturer)
 	protected.Patch("/lecturers-wages/:id", h.updateLecturerWages)
-	protected.Put("/bulk-lecturers-wages", h.bulkUpdateLecturerWages)
+	protected.Patch("/bulk-lecturers-wages", h.bulkUpdateLecturerWages)
 	protected.Get("/lecturers-wages", h.getLecturerWages)
 	protected.Get("/lecturers-wages-aggregate", h.getLecturerWagesAggregate)
 	protected.Get("/lecturers-wages-aggregate-yearly", h.getLecturerWagesAggregateYearly)
