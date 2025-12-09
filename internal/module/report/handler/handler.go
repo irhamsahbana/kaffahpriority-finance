@@ -840,8 +840,9 @@ func (h *reportHandler) bulkUpdateLecturerWages(c *fiber.Ctx) error {
 	}
 
 	req.UserID = l.GetUserId()
-	for _, d := range req.Data {
+	for i, d := range req.Data {
 		d.UserID = req.UserID
+		req.Data[i] = d
 
 		if err := d.Validate(); err != nil {
 			log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
