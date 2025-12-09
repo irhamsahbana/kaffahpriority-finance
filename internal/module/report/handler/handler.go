@@ -70,6 +70,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 
 	protected.Get("/registration-per-lecturers", h.getRegistrationListPerLecturer)
 	protected.Patch("/lecturers-wages/:id", h.updateLecturerWages)
+	protected.Put("/bulk-lecturers-wages", h.bulkUpdateLecturerWages)
 	protected.Get("/lecturers-wages", h.getLecturerWages)
 	protected.Get("/lecturers-wages-aggregate", h.getLecturerWagesAggregate)
 	protected.Get("/lecturers-wages-aggregate-yearly", h.getLecturerWagesAggregateYearly)
@@ -817,6 +818,45 @@ func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 	}
 
 	err := h.service.UpdateLecturersWage(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) bulkUpdateLecturerWages(c *fiber.Ctx) error {
+	var (
+		fnName = "handler::bulkUpdateLecturerWages"
+		req    = new(entity.BulkUpdateLecturersWageReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserID = l.GetUserId()
+	for _, d := range req.Data {
+		d.UserID = req.UserID
+
+		if err := d.Validate(); err != nil {
+			log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+			code, errs := errmsg.Errors(err, req)
+			return c.Status(code).JSON(response.Error(errs))
+		}
+	}
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.BulkUpdateLecturersWage(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

@@ -115,6 +115,10 @@ func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.Upd
 	return s.repo.UpdateLecturersWage(ctx, req)
 }
 
+func (s *reportService) BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error {
+	return s.repo.BulkUpdateLecturersWage(ctx, req)
+}
+
 func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
 	return s.repo.DistributeHRFee(ctx, req)
 }

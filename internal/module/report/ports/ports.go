@@ -53,6 +53,7 @@ type FinancialRepository interface {
 	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error)
 	GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
+	BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
 
@@ -122,6 +123,7 @@ type FinancialService interface {
 	GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error)
 	GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error)
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
+	BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
 

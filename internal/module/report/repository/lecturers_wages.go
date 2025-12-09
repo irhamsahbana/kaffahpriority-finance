@@ -588,8 +588,109 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 
 	// jika ada perubahan, update juga used_amount menggunakan ujroh real
 	// 1. cari kalkulasi real fee
+	realFee, err := r.GetRealFee(ctx, tx, req.RegistrationID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
+			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
+		}
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get real fee", fnName)
+		return err
+	}
 
-	query = `
+	// 2. update used_amount menggunakan real fee
+	err = r.UpdateUsedAmountWithRealFee(ctx, tx, req.RegistrationID, realFee)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update used amount with real fee", fnName)
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		return err
+	}
+
+	return nil
+}
+
+func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.BulkUpdateLecturersWageReq) error {
+	fnName := "repo::BulkUpdateLecturersWage"
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Error().Err(err).Any("req", reqs).Msgf("%s - failed to begin transaction", fnName)
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. update lecturers wages
+	for _, req := range reqs.Data {
+		queryParts := []string{}
+		args := []any{}
+
+		if req.InitialFee.Present {
+			if req.InitialFee.Valid {
+				queryParts = append(queryParts, "initial_fee = ?")
+				args = append(args, req.InitialFee.Val)
+			} else {
+				queryParts = append(queryParts, "initial_fee = NULL")
+			}
+		}
+
+		if req.IsFullFee.Present && req.IsFullFee.Valid {
+			queryParts = append(queryParts, "is_full_fee = ?")
+			args = append(args, req.IsFullFee.Val)
+		}
+
+		if len(queryParts) == 0 {
+			continue
+		}
+
+		query := fmt.Sprintf(`
+			UPDATE program_registrations
+			SET %s
+			WHERE id = ?
+		`,
+			strings.Join(queryParts, ", "),
+		)
+
+		_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update lecturers wages", fnName)
+			return err
+		}
+
+		// 2. update used_amount menggunakan ujroh real
+		realFee, err := r.GetRealFee(ctx, tx, req.RegistrationID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
+				return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
+			}
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get real fee", fnName)
+			return err
+		}
+
+		// 3. update used_amount menggunakan real fee
+		err = r.UpdateUsedAmountWithRealFee(ctx, tx, req.RegistrationID, realFee)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update used amount with real fee", fnName)
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Error().Err(err).Any("req", reqs).Msgf("%s - failed to commit transaction", fnName)
+		return err
+	}
+
+	return nil
+}
+
+func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string) (decimal.Decimal, error) {
+	query := `
 		SELECT
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
@@ -606,18 +707,16 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			AND pr.deleted_at IS NULL
 	`
 	var realFee decimal.Decimal
-	err = tx.GetContext(ctx, &realFee, tx.Rebind(query), req.RegistrationID)
+	err := tx.GetContext(ctx, &realFee, tx.Rebind(query), registrationID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
-			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
-		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get real fee", fnName)
-		return err
+		return realFee, err
 	}
 
-	// 2. update used_amount menggunakan real fee
-	query = `
+	return realFee, nil
+}
+
+func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string, realFee decimal.Decimal) error {
+	query := `
 		UPDATE program_registrations
 		SET
 			mentor_detail_fee_used = ?,
@@ -628,19 +727,8 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			AND is_paid = TRUE
 	`
 
-	_, err = tx.ExecContext(ctx, tx.Rebind(query), realFee, req.RegistrationID)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update ujroh real", fnName)
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
-		return err
-	}
-
-	return nil
+	_, err := tx.ExecContext(ctx, tx.Rebind(query), realFee, registrationID)
+	return err
 }
 
 func (r *reportRepo) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (

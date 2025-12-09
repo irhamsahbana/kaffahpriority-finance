@@ -54,6 +54,12 @@ func (r *UpdateLecturersWageReq) Validate() error {
 	return nil
 }
 
+type BulkUpdateLecturersWageReq struct {
+	UserID string `json:"user_id" validate:"required,ulid"`
+
+	Data []UpdateLecturersWageReq `json:"data" validate:"required,dive"`
+}
+
 type UpdateLecturersWageResp struct {
 	RegistrationID string `json:"registration_id"`
 
