@@ -62,3 +62,5 @@ go test ./...
 - The main application entry point is likely `cmd/bin/main.go`.
 - The application uses a `.env` file for environment variables.
 - The `Taskfile.yml` provides a convenient way to run common commands.
+
+
