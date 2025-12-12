@@ -113,6 +113,7 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 		)
 		SELECT
 			pr.id,
+			pr.category,
 			pr.lecturer_id,
 			pr.program_id,
 			pr.student_id,

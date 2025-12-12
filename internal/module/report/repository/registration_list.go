@@ -74,7 +74,10 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.created_at,
 			pr.updated_at,
 			CASE
-				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				WHEN
+					pr.allocated_at IS NULL AND 
+					pr.parent_id IS NOT NULL 
+					THEN parent.allocated_at
 				ELSE pr.allocated_at
 			END AS allocated_at,
 			pr.notes,
@@ -918,7 +921,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 					log.Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
 					return nil, err
 				}
-				
+
 				// Kumpulkan nama untuk menghindari duplikasi
 				uniqueNames := make(map[string]bool)
 				names := make([]string, 0)
@@ -929,7 +932,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 						names = append(names, name)
 					}
 				}
-				
+
 				// Sort dan gabungkan
 				sort.Strings(names)
 				if len(names) > 0 {

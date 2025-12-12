@@ -47,7 +47,10 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.updated_at,
 			pr.paid_at,
 			CASE
-				WHEN pr.parent_id IS NOT NULL THEN parent.allocated_at
+				WHEN
+					pr.allocated_at IS NULL AND 
+					pr.parent_id IS NOT NULL 
+					THEN parent.allocated_at
 				ELSE pr.allocated_at
 			END AS allocated_at,
 			pr.notes,

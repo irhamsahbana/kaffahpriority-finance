@@ -222,6 +222,7 @@ INSERT INTO program_registrations (
 	closing_fee_for_reward,
 	days,
 	notes,
+	notes_for_lecturer_wage,
 	allocated_at
 )
 SELECT
@@ -254,6 +255,24 @@ SELECT
 	(SELECT closing_fee_for_reward FROM template),
 	(SELECT days FROM template),
 	(SELECT notes FROM template),
+	-- get the latest notes_for_lecturer_wage for the same program, lecturer, and student
+	(
+		SELECT
+			COALESCE(prr.notes_for_lecturer_wage, '')
+		FROM
+			program_registrations prr
+		WHERE
+			prr.program_id = (SELECT program_id FROM template)
+			AND
+			prr.lecturer_id = (SELECT lecturer_id FROM template)
+			AND
+			prr.student_id = (SELECT student_id FROM template)
+			AND
+			prr.deleted_at IS NULL
+		ORDER BY
+			prr.id DESC
+			LIMIT 1
+	),
 	NOW()
 `
 
