@@ -142,6 +142,9 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 	}
 
 	for _, item := range resp.Items {
+		if item.MentorDetailFee.IsZero() {
+			continue
+		}
 		resp.TotalFee = resp.TotalFee.Add(item.MentorDetailFee)
 		var feeUsed decimal.Decimal
 		if item.MentorDetailFeeUsed != nil {
