@@ -45,6 +45,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
                 program_meetings_completed,
                 full_fee,
                 marketer_gifts_fee,
+                allocated_at,
                 days
             FROM
                 program_registrations pr
@@ -80,6 +81,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             days,
             is_paid,
             paid_at,
+            allocated_at,
             created_at,
             updated_at
         )
@@ -114,6 +116,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             (SELECT days FROM parent),
             TRUE,
             (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
+            (SELECT allocated_at FROM parent),
             NOW(),
             NOW()
     `
