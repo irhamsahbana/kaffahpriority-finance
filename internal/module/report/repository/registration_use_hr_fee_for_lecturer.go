@@ -131,6 +131,8 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 			pr.student_id = (SELECT student_id FROM regis)
 			AND
 			pr.program_id = (SELECT program_id FROM regis)
+			AND
+			pr.mentor_detail_fee > 0
 		ORDER BY
 			pr.allocated_at ASC
 	`
@@ -142,9 +144,6 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 	}
 
 	for _, item := range resp.Items {
-		if item.MentorDetailFee.IsZero() {
-			continue
-		}
 		resp.TotalFee = resp.TotalFee.Add(item.MentorDetailFee)
 		var feeUsed decimal.Decimal
 		if item.MentorDetailFeeUsed != nil {
