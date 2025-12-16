@@ -127,6 +127,10 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 	return s.repo.UseHRfeeForLecturer(ctx, req)
 }
 
+func (s *reportService) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.BulkUseHRfeeForLecturerReq) error {
+	return s.repo.BulkUseHRfeeForLecturer(ctx, req)
+}
+
 func (s *reportService) GetRelatedRegistrations(ctx context.Context, req *entity.GetRelatedRegistrationsReq) (*entity.GetRelatedRegistrationsResp, error) {
 	return s.repo.GetRelatedRegistrations(ctx, req)
 }

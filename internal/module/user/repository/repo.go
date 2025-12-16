@@ -2,7 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/adapter"
-	"codebase-app/internal/module/user/entity"
+	"codebase-app/internal/entity"
 	"codebase-app/internal/module/user/ports"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/jwthandler"

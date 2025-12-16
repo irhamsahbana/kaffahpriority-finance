@@ -2,8 +2,8 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	"codebase-app/internal/entity"
 	m "codebase-app/internal/middleware"
-	"codebase-app/internal/module/master/entity"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
 

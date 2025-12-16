@@ -62,6 +62,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Delete("/registrations/:id", h.deleteRegistration)
 	protected.Put("/registrations/:id/hr-fee-distributions", h.hrDistributions)
 	protected.Put("/registrations/:id/lecturer-distributions", h.lecturerDistributions)
+	protected.Patch("/registrations-bulk-lecturer-distributions", h.bulkLecturerDistributions)
 	protected.Get("/registrations/:id/related-registrations", h.getRelatedRegistrations)
 	protected.Put("/registrations/:id/lecturers", h.updateRegistrationLecturer)
 	protected.Put("/registrations/:id/is-paid", h.updateRegistrationIsPaid)
@@ -528,6 +529,46 @@ func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 	}
 
 	err := h.service.UseHRfeeForLecturer(c.Context(), req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) bulkLecturerDistributions(c *fiber.Ctx) error {
+	var (
+		fnName = "handler::bulkLecturerDistributions"
+		req    = new(entity.BulkUseHRfeeForLecturerReq)
+		v      = adapter.Adapters.Validator
+		l      = m.GetLocals(c)
+	)
+
+	if err := c.BodyParser(req); err != nil {
+		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserID = l.GetUserId()
+	for i, d := range req.Data {
+		d.UserID = req.UserID
+		req.Data[i] = d
+
+		if err := d.Validate(); err != nil {
+			log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+			code, errs := errmsg.Errors(err, req)
+			return c.Status(code).JSON(response.Error(errs))
+		}
+	}
+
+	if err := v.Validate(req); err != nil {
+		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.BulkUseHRfeeForLecturer(c.Context(), req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

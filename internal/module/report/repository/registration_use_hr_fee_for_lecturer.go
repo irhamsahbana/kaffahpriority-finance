@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/pkg/errmsg"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -51,7 +52,32 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	// Validasi: jumlah yang digunakan tidak boleh melebihi total fee tersisa dari related items
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(totalFeeRemaining) {
+		// get lecturer, program and student
+		registrationResp, err := r.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.RegistrationID,
+		})
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get registration", fnName)
+			return err
+		}
+
+		var lecturerName string
+		if registrationResp.LecturerName != nil {
+			lecturerName = *registrationResp.LecturerName
+		} else {
+			lecturerName = "Mentor belum dipilih"
+		}
+
 		errMsg := "jumlah yang diminta melebihi total sisa dana yang tersedia."
+		errMsg = fmt.Sprintf(
+			"%s (mentor: %s, santri: %s, program: %s)",
+			errMsg,
+			lecturerName,
+			registrationResp.StudentName,
+			registrationResp.ProgramName,
+		)
+
 		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
 		return errmsg.
 			NewCustomErrors(http.StatusUnprocessableEntity).
@@ -91,68 +117,30 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	return nil
 }
 
-func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.GetRelatedRegistrationsReq) (*entity.GetRelatedRegistrationsResp, error) {
+func (r *reportRepo) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.BulkUseHRfeeForLecturerReq) error {
 	var (
-		fnName = "repo::GetRelatedRegistrations"
-		resp   = new(entity.GetRelatedRegistrationsResp)
+		fnName  = "repo::BulkUseHRfeeForLecturer"
+		errBulk = []error{}
 	)
-	resp.Items = make([]entity.RelatedRegistration, 0)
 
-	query := `
-		WITH regis AS (
-			SELECT
-				pr.lecturer_id,
-				pr.student_id,
-				pr.program_id
-			FROM
-				program_registrations pr
-			WHERE
-				pr.deleted_at IS NULL
-				AND
-				pr.id = ?
-		)
-		SELECT
-			pr.id,
-			pr.category,
-			pr.lecturer_id,
-			pr.program_id,
-			pr.student_id,
-			pr.mentor_detail_fee,
-			pr.mentor_detail_fee_used,
-			pr.paid_at,
-			pr.allocated_at
-		FROM
-			program_registrations pr
-		WHERE
-			pr.deleted_at IS NULL
-			AND
-			pr.is_paid = TRUE
-			AND
-			pr.student_id = (SELECT student_id FROM regis)
-			AND
-			pr.program_id = (SELECT program_id FROM regis)
-			AND
-			pr.mentor_detail_fee > 0
-		ORDER BY
-			pr.allocated_at ASC
-	`
-
-	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.RegistrationID)
-	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query related registrations", fnName)
-		return nil, err
-	}
-
-	for _, item := range resp.Items {
-		resp.TotalFee = resp.TotalFee.Add(item.MentorDetailFee)
-		var feeUsed decimal.Decimal
-		if item.MentorDetailFeeUsed != nil {
-			feeUsed = feeUsed.Add(*item.MentorDetailFeeUsed)
+	for _, item := range req.Data {
+		err := r.UseHRfeeForLecturer(ctx, &item)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Any("item", item).Msgf("%s - failed to use hr fee for lecturer", fnName)
+			errBulk = append(errBulk, err)
 		}
-		resp.TotalFeeUsed = resp.TotalFeeUsed.Add(feeUsed)
 
-		resp.TotalFeeRemaining = resp.TotalFeeRemaining.Add(item.MentorDetailFee).Sub(feeUsed)
 	}
 
-	return resp, nil
+	if len(errBulk) > 0 {
+		var errorMessages string
+		for _, err := range errBulk {
+			errorMessages += err.Error() + "\n"
+		}
+
+		return errmsg.NewCustomErrors(http.StatusUnprocessableEntity).
+			SetMessage(errorMessages)
+	}
+
+	return nil
 }
