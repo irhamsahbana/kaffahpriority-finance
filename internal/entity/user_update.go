@@ -14,9 +14,3 @@ type UpdateUserReq struct {
 type UpdateUserResp struct {
 	ID string `json:"id"`
 }
-
-type DeleteUserReq struct {
-	UserID string `json:"user_id" validate:"required,ulid"`
-
-	ID string `json:"id" validate:"required,ulid"`
-}
