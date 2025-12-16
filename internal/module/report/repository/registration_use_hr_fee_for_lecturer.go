@@ -2,11 +2,11 @@ package repository
 
 import (
 	"codebase-app/internal/module/report/entity"
-	"codebase-app/pkg"
 	"codebase-app/pkg/errmsg"
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/shopspring/decimal"
@@ -53,7 +53,32 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	// Validasi: jumlah yang digunakan tidak boleh melebihi total fee tersisa dari related items
 	if req.UsedAmount != nil && req.UsedAmount.GreaterThan(totalFeeRemaining) {
+		// get lecturer, program and student
+		registrationResp, err := r.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.RegistrationID,
+		})
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get registration", fnName)
+			return err
+		}
+
+		var lecturerName string
+		if registrationResp.LecturerName != nil {
+			lecturerName = *registrationResp.LecturerName
+		} else {
+			lecturerName = "Mentor belum dipilih"
+		}
+
 		errMsg := "jumlah yang diminta melebihi total sisa dana yang tersedia."
+		errMsg = fmt.Sprintf(
+			"%s (mentor: %s, santri: %s, program: %s)",
+			errMsg,
+			lecturerName,
+			registrationResp.StudentName,
+			registrationResp.ProgramName,
+		)
+
 		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
 		return errmsg.
 			NewCustomErrors(http.StatusUnprocessableEntity).
@@ -95,18 +120,21 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 func (r *reportRepo) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.BulkUseHRfeeForLecturerReq) error {
 	var (
-		fnName = "repo::BulkUseHRfeeForLecturer"
+		fnName  = "repo::BulkUseHRfeeForLecturer"
+		errBulk = []error{}
 	)
 
 	for _, item := range req.Data {
-		ctxChild := pkg.GenerateChildContext(ctx, time.Second*30)
-		go func(ctx context.Context, item entity.UseHRfeeForLecturerReq) {
-			err := r.UseHRfeeForLecturer(ctx, &item)
-			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("item", item).Msgf("%s - failed to use hr fee for lecturer", fnName)
-				return
-			}
-		}(ctxChild, item)
+		err := r.UseHRfeeForLecturer(ctx, &item)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Any("item", item).Msgf("%s - failed to use hr fee for lecturer", fnName)
+			errBulk = append(errBulk, err)
+		}
+
+	}
+
+	if len(errBulk) > 0 {
+		return errors.Join(errBulk...)
 	}
 
 	return nil
