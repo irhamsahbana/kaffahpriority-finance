@@ -62,7 +62,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Delete("/registrations/:id", h.deleteRegistration)
 	protected.Put("/registrations/:id/hr-fee-distributions", h.hrDistributions)
 	protected.Put("/registrations/:id/lecturer-distributions", h.lecturerDistributions)
-	protected.Patch("/registrations/:id/bulk-lecturer-distributions", h.bulkLecturerDistributions)
+	protected.Patch("/registrations-bulk-lecturer-distributions", h.bulkLecturerDistributions)
 	protected.Get("/registrations/:id/related-registrations", h.getRelatedRegistrations)
 	protected.Put("/registrations/:id/lecturers", h.updateRegistrationLecturer)
 	protected.Put("/registrations/:id/is-paid", h.updateRegistrationIsPaid)
