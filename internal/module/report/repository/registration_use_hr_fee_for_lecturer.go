@@ -4,7 +4,6 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/pkg/errmsg"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -134,7 +133,13 @@ func (r *reportRepo) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.Bu
 	}
 
 	if len(errBulk) > 0 {
-		return errors.Join(errBulk...)
+		var errorMessages string
+		for _, err := range errBulk {
+			errorMessages += err.Error() + "\n"
+		}
+
+		return errmsg.NewCustomErrors(http.StatusUnprocessableEntity).
+			SetMessage(errorMessages)
 	}
 
 	return nil
