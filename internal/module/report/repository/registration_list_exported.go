@@ -179,7 +179,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 	sortTypeMap := map[string]string{
 		"asc":  "ASC",
 		"desc": "DESC",
-		"":     "DESC",
+		"":     "ASC",
 	}
 
 	query += ` ORDER BY ` + sortByMap[req.SortBy] + ` ` + sortTypeMap[req.SortType]
@@ -294,7 +294,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 		if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
 			// Tambahkan ke Students array
 			resp.Items[i].Students = append(resp.Items[i].Students, additionalStudentsList[item.ID]...)
-			
+
 			// Tambahkan ke StudentName tanpa duplikasi
 			names := make([]string, 0, len(nameMap))
 			for name := range nameMap {

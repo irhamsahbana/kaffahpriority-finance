@@ -3,7 +3,7 @@ package entity
 type CreateAdditionalRegistrationReq struct {
 	UserID           string  `json:"user_id" validate:"required,ulid"`
 	ParentID         string  `params:"id" validate:"required,ulid"`
-	Category         string  `json:"category" validate:"required,oneof=general additional shortfall"`
+	Category         string  `json:"category" validate:"required,oneof=general additional"`
 	NotesForCategory *string `json:"notes_for_category" validate:"omitempty,max=255"`
 
 	PaidAt     string `json:"paid_at" validate:"required,datetime=2006-01-02"`
