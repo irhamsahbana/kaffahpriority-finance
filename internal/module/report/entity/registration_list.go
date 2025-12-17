@@ -164,7 +164,7 @@ func (r *GetExportedRegistrationsReq) SetDefault() {
 	}
 
 	if r.SortType == "" {
-		r.SortType = "desc"
+		r.SortType = "asc"
 	}
 
 	if r.MentorFeeAllocationStatus == "" {
