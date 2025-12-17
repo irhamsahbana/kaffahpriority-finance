@@ -76,7 +76,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 
 	query := `
 		SELECT
-			COALESCE(SUM(COALESCE(pr.mentor_detail_fee, 0) + COALESCE(pr.hr_detail_fee, 0)), 0) AS total_debit,
+			COALESCE(SUM(pr.hr_fee), 0)  AS total_debit,
 			COALESCE(SUM(pr.overpayment_fee), 0) AS total_overpayment,
 			COALESCE(SUM(pr.mentor_detail_fee_used), 0) AS total_credit
 		FROM
