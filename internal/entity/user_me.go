@@ -12,9 +12,3 @@ type GetMeResp struct {
 	Email       string       `json:"email" db:"email"`
 	Permissions []Permission `json:"permissions"`
 }
-
-type Permission struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
-}
