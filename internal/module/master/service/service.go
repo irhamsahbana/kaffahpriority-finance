@@ -1,7 +1,7 @@
 package service
 
 import (
-	"codebase-app/internal/module/master/ports"
+	ports "codebase-app/internal/ports/module/master"
 )
 
 var _ ports.MasterService = &masterService{}
