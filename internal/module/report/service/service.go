@@ -2,7 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/module/report/entity"
-	"codebase-app/internal/module/report/ports"
+	ports "codebase-app/internal/ports/module/report"
 	"context"
 )
 
