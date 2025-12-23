@@ -120,6 +120,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 				ELSE
 					CASE
 						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN pr.hr_fee = 0 THEN 0
 						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
 						ELSE pr.program_acquisition_rights
 					END
