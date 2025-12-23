@@ -435,6 +435,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			AND prt.student_id = pr.student_id
 			AND pr.deleted_at IS NULL
 		WHERE prt.deleted_at IS NULL
+			AND prt.lecturer_id IS NOT NULL
 	`
 
 	if req.Q != "" {
