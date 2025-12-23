@@ -60,6 +60,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			pr.closing_fee_for_office,
 			pr.closing_fee_for_reward,
 			pr.paid_at,
+			pr.allocated_at,
 			pr.created_at,
 			pr.updated_at,
 			pr.notes,
