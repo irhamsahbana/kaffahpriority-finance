@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	m "codebase-app/internal/middleware"
+	activityLogRepo "codebase-app/internal/module/activity_log/repository"
 	"codebase-app/internal/module/report/entity"
 	"codebase-app/internal/module/report/repository"
 	"codebase-app/internal/module/report/service"
@@ -10,6 +11,8 @@ import (
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
 	"os"
+
+	userRepo "codebase-app/internal/module/user/repository"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -21,8 +24,14 @@ type reportHandler struct {
 
 func NewReportHandler() *reportHandler {
 	var (
-		repo    = repository.NewReportRepository()
-		svc     = service.NewReportService(repo)
+		repo            = repository.NewReportRepository()
+		repoActivityLog = activityLogRepo.NewActivityLogRepository()
+		repoUser        = userRepo.NewUserRepository()
+		svc             = service.NewReportService(service.Config{
+			Repo:            repo,
+			ActivityLogRepo: repoActivityLog,
+			UserRepo:        repoUser,
+		})
 		handler = new(reportHandler)
 	)
 	handler.service = svc
