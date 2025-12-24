@@ -162,7 +162,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
                     (SELECT acquisition_rights FROM programs WHERE id = ?)
                 )
             ),
-			mentor_detail_fee_used = NULL,
 			hr_detail_fee = (
 				40000 *
 				CASE
