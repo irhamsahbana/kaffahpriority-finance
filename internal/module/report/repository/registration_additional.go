@@ -107,7 +107,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
             ?,
             ?,
             0,
-            0,
+            ?,
             ?,
 
             ?,
@@ -133,6 +133,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 		req.UserID,
 		req.MarketerCommissionFee,
 		req.HrFee,
+        req.HrFee,
 		req.MarketerGiftsFee,
 
 		req.ClosingFeeForOffice,
