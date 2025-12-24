@@ -1,0 +1,60 @@
+package repository
+
+import (
+	"codebase-app/internal/entity"
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
+	fnName := "repo::UpdateUser"
+	var (
+		resp       entity.UpdateUserResp
+		queryParts = []string{}
+		args       = []any{}
+	)
+	resp.ID = req.ID
+
+	queryParts = append(queryParts, `
+		role_id = ?,
+		name = ?,
+		email = ?
+	`)
+	args = append(args, req.RoleID, req.Name, req.Email)
+
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
+			return nil, err
+		}
+
+		queryParts = append(queryParts, "password = ?")
+		args = append(args, hashedPassword)
+	}
+
+	query := `
+		UPDATE
+			users
+		SET
+			%s
+		WHERE
+			id = ?
+	`
+	args = append(args, req.ID)
+
+	queryPartsStr := strings.Join(queryParts, ", ")
+	query = fmt.Sprintf(query, queryPartsStr)
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
+	if err != nil {
+		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update user", fnName)
+		return nil, err
+	}
+
+	return &resp, nil
+}

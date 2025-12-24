@@ -51,6 +51,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.mentor_detail_fee - pr.mentor_detail_fee_used AS hr_fee_for_mentor_remaining,
 			CASE
 				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
+				WHEN pr.hr_fee = 0 THEN 'full'
 				WHEN pr.mentor_detail_fee_used IS NULL THEN NULL
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
@@ -120,6 +121,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 				ELSE
 					CASE
 						WHEN pr.program_acquisition_rights > 10 THEN 0
+						WHEN pr.hr_fee = 0 THEN 0
 						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
 						ELSE pr.program_acquisition_rights
 					END

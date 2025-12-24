@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/module/report/entity"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -129,7 +130,50 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 		// NIS
 		f.SetCellValue(sheetName, fmt.Sprintf("C%v", row), item.StudentIdentifier)
 		// NAMA SANTRI
-		f.SetCellValue(sheetName, fmt.Sprintf("D%v", row), item.StudentName)
+		// allocatedAt is pointer to string, so we need to check if it is nil then only get year and month, not the day
+		var allocatedAt string
+		if item.AllocatedAt != nil {
+			allocatedAtTime, err := time.Parse("2006-01-02T15:04:05Z", *item.AllocatedAt)
+			if err != nil {
+				log.Error().Err(err).Any("req", req).Msgf("%s - error parsing allocated at date", fnName)
+				return nil, err
+			}
+			allocatedAtTime = allocatedAtTime.In(location)
+			// format "nama_bulan_indonesia" + tahun
+
+			allocatedAt = allocatedAtTime.Format("January 2006")
+
+			if strings.Contains(allocatedAt, "January") {
+				allocatedAt = strings.Replace(allocatedAt, "January", "Januari", 1)
+			} else if strings.Contains(allocatedAt, "February") {
+				allocatedAt = strings.Replace(allocatedAt, "February", "Februari", 1)
+			} else if strings.Contains(allocatedAt, "March") {
+				allocatedAt = strings.Replace(allocatedAt, "March", "Maret", 1)
+			} else if strings.Contains(allocatedAt, "April") {
+				allocatedAt = strings.Replace(allocatedAt, "April", "April", 1)
+			} else if strings.Contains(allocatedAt, "May") {
+				allocatedAt = strings.Replace(allocatedAt, "May", "Mei", 1)
+			} else if strings.Contains(allocatedAt, "June") {
+				allocatedAt = strings.Replace(allocatedAt, "June", "Juni", 1)
+			} else if strings.Contains(allocatedAt, "July") {
+				allocatedAt = strings.Replace(allocatedAt, "July", "Juli", 1)
+			} else if strings.Contains(allocatedAt, "August") {
+				allocatedAt = strings.Replace(allocatedAt, "August", "Agustus", 1)
+			} else if strings.Contains(allocatedAt, "September") {
+				allocatedAt = strings.Replace(allocatedAt, "September", "September", 1)
+			} else if strings.Contains(allocatedAt, "October") {
+				allocatedAt = strings.Replace(allocatedAt, "October", "Oktober", 1)
+			} else if strings.Contains(allocatedAt, "November") {
+				allocatedAt = strings.Replace(allocatedAt, "November", "November", 1)
+			} else if strings.Contains(allocatedAt, "December") {
+				allocatedAt = strings.Replace(allocatedAt, "December", "Desember", 1)
+			}
+
+		} else {
+			allocatedAt = "N/A"
+		}
+
+		f.SetCellValue(sheetName, fmt.Sprintf("D%v", row), fmt.Sprintf("%s (%s)", item.StudentName, allocatedAt))
 		// MARKETER (MKP)
 		f.SetCellValue(sheetName, fmt.Sprintf("E%v", row), item.MarketerName)
 		// PROGRAM

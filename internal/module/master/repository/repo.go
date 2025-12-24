@@ -2,7 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/adapter"
-	"codebase-app/internal/module/master/ports"
+	ports "codebase-app/internal/ports/module/master"
 
 	"github.com/jmoiron/sqlx"
 )

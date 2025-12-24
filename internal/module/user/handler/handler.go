@@ -4,9 +4,9 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
 	"codebase-app/internal/middleware"
-	"codebase-app/internal/module/user/ports"
 	"codebase-app/internal/module/user/repository"
 	"codebase-app/internal/module/user/service"
+	ports "codebase-app/internal/ports/module/user"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
 

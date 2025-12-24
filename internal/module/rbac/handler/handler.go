@@ -2,11 +2,11 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	"codebase-app/internal/entity"
 	m "codebase-app/internal/middleware"
-	"codebase-app/internal/module/rbac/entity"
-	"codebase-app/internal/module/rbac/ports"
 	"codebase-app/internal/module/rbac/repository"
 	"codebase-app/internal/module/rbac/service"
+	ports "codebase-app/internal/ports/module/rbac"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
 

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"codebase-app/internal/module/rbac/entity"
-	"codebase-app/internal/module/rbac/ports"
+	"codebase-app/internal/entity"
+	ports "codebase-app/internal/ports/module/rbac"
 	"context"
 )
 

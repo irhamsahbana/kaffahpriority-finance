@@ -2,9 +2,9 @@ package handler
 
 import (
 	m "codebase-app/internal/middleware"
-	"codebase-app/internal/module/master/ports"
 	"codebase-app/internal/module/master/repository"
 	"codebase-app/internal/module/master/service"
+	ports "codebase-app/internal/ports/module/master"
 
 	"github.com/gofiber/fiber/v2"
 )

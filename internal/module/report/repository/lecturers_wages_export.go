@@ -88,6 +88,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			student_managers sm ON m.student_manager_id = sm.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.lecturer_id IS NOT NULL
 			AND pr.category = 'general'
 			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
