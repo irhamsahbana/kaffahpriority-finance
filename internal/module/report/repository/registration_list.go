@@ -386,6 +386,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			pr.is_itp,
 			CASE
 				WHEN pr.program_acquisition_rights > 10 THEN 0
+				WHEN pr.hr_fee = 0 THEN 0
 				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
 				ELSE pr.program_acquisition_rights
 			END AS acquisition_rights,
@@ -461,6 +462,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			ON pr.program_id = p.id
 		WHERE
 			pr.deleted_at IS NULL
+			AND pr.hr_fee > 0
 			AND pr.is_paid = TRUE
 			AND pr.mentor_detail_fee_used IS NULL
 			AND pr.paid_at AT TIME ZONE ? NOT BETWEEN
