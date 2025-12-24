@@ -156,6 +156,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 		WHERE
 			pr.deleted_at IS NULL
 			AND pr.mentor_detail_fee_used IS NULL
+			AND pr.hr_fee > 0
 			AND
 			parent.deleted_at IS NULL
 	`
