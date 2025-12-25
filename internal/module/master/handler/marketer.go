@@ -13,6 +13,7 @@ import (
 
 func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getMarketers"
 		req    = new(entity.GetMarketersReq)
 		v      = adapter.Adapters.Validator
@@ -22,19 +23,19 @@ func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetMarketers(c.Context(), req)
+	resp, err := h.service.GetMarketers(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -45,6 +46,7 @@ func (h *masterHandler) getMarketers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getMarketer"
 		req    = new(entity.GetMarketerReq)
 		v      = adapter.Adapters.Validator
@@ -55,12 +57,12 @@ func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetMarketer(c.Context(), req)
+	resp, err := h.service.GetMarketer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -71,6 +73,7 @@ func (h *masterHandler) getMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createMarketer"
 		req    = new(entity.CreateMarketerReq)
 		v      = adapter.Adapters.Validator
@@ -80,17 +83,17 @@ func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.CreateMarketer(c.Context(), req)
+	resp, err := h.service.CreateMarketer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -101,6 +104,7 @@ func (h *masterHandler) createMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateMarketer"
 		req    = new(entity.UpdateMarketerReq)
 		v      = adapter.Adapters.Validator
@@ -111,17 +115,17 @@ func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.UpdateMarketer(c.Context(), req)
+	err := h.service.UpdateMarketer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -132,6 +136,7 @@ func (h *masterHandler) updateMarketer(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteMarketer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::deleteMarketer"
 		req    = new(entity.DeleteMarketerReq)
 		v      = adapter.Adapters.Validator
@@ -142,12 +147,12 @@ func (h *masterHandler) deleteMarketer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.DeleteMarketer(c.Context(), req)
+	err := h.service.DeleteMarketer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

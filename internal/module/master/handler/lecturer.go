@@ -13,25 +13,26 @@ import (
 
 func (h *masterHandler) getLecturers(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getLecturers"
 		req    = new(entity.GetLecturersReq)
 		v      = adapter.Adapters.Validator
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetLecturers(c.Context(), req)
+	resp, err := h.service.GetLecturers(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -42,6 +43,7 @@ func (h *masterHandler) getLecturers(c *fiber.Ctx) error {
 
 func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getLecturer"
 		req    = new(entity.GetLecturerReq)
 		v      = adapter.Adapters.Validator
@@ -52,12 +54,12 @@ func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetLecturer(c.Context(), req)
+	resp, err := h.service.GetLecturer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -68,6 +70,7 @@ func (h *masterHandler) getLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createLecturer"
 		req    = new(entity.CreateLecturerReq)
 		v      = adapter.Adapters.Validator
@@ -77,17 +80,17 @@ func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.CreateLecturer(c.Context(), req)
+	resp, err := h.service.CreateLecturer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -98,6 +101,7 @@ func (h *masterHandler) createLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateLecturer"
 		req    = new(entity.UpdateLecturerReq)
 		v      = adapter.Adapters.Validator
@@ -108,17 +112,17 @@ func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.UpdateLecturer(c.Context(), req)
+	err := h.service.UpdateLecturer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -129,6 +133,7 @@ func (h *masterHandler) updateLecturer(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteLecturer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::deleteLecturer"
 		req    = new(entity.DeleteLecturerReq)
 		v      = adapter.Adapters.Validator
@@ -139,12 +144,12 @@ func (h *masterHandler) deleteLecturer(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.DeleteLecturer(c.Context(), req)
+	err := h.service.DeleteLecturer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
