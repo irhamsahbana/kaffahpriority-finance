@@ -43,15 +43,15 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 	err := r.db.GetContext(ctx, result, r.db.Rebind(query), req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - User not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - User not found", fnName)
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 		}
-		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to get user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to get user", fnName)
 		return nil, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(req.Password)); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Password not match", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Password not match", fnName)
 		return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 	}
 
@@ -65,7 +65,7 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 
 	token, err := jwthandler.GenerateTokenString(payload)
 	if err != nil {
-		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to generate token", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to generate token", fnName)
 		return nil, errmsg.NewCustomErrors(500).SetMessage("Gagal membuat token")
 	}
 

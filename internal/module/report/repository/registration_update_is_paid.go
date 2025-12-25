@@ -25,7 +25,7 @@ func (r *reportRepo) UpdateRegistrationIsPaid(ctx context.Context, req *entity.U
 
 	err := r.db.QueryRowxContext(ctx, query, req.IsPaid, req.ID).Scan(&resp.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
 		return nil, err
 	}
 

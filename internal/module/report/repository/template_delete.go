@@ -18,7 +18,7 @@ func (r *reportRepo) DeleteTemplate(ctx context.Context, req *entity.GetTemplate
 
 	_, err := r.db.ExecContext(ctx, query, req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete template", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete template", fnName)
 		return err
 	}
 

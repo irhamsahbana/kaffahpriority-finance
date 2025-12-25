@@ -13,6 +13,7 @@ import (
 
 func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getPrograms"
 		req    = new(entity.GetProgramsReq)
 		v      = adapter.Adapters.Validator
@@ -22,19 +23,19 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetPrograms(c.Context(), req)
+	resp, err := h.service.GetPrograms(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -45,6 +46,7 @@ func (h *masterHandler) getPrograms(c *fiber.Ctx) error {
 
 func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getProgram"
 		req    = new(entity.GetProgramReq)
 		v      = adapter.Adapters.Validator
@@ -55,12 +57,12 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetProgram(c.Context(), req)
+	resp, err := h.service.GetProgram(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -71,6 +73,7 @@ func (h *masterHandler) getProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createProgram"
 		req    = new(entity.CreateProgramReq)
 		v      = adapter.Adapters.Validator
@@ -80,17 +83,17 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.CreateProgram(c.Context(), req)
+	resp, err := h.service.CreateProgram(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -101,6 +104,7 @@ func (h *masterHandler) createProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateProgram"
 		req    = new(entity.UpdateProgramReq)
 		v      = adapter.Adapters.Validator
@@ -111,17 +115,17 @@ func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateProgram(c.Context(), req)
+	resp, err := h.service.UpdateProgram(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -132,6 +136,7 @@ func (h *masterHandler) updateProgram(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteProgram(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::deleteProgram"
 		req    = new(entity.DeleteProgramReq)
 		v      = adapter.Adapters.Validator
@@ -142,12 +147,12 @@ func (h *masterHandler) deleteProgram(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.DeleteProgram(c.Context(), req)
+	err := h.service.DeleteProgram(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

@@ -22,7 +22,7 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete user", fnName)
 		return err
 	}
 

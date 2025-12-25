@@ -34,6 +34,8 @@ func AuthBearer(c *fiber.Ctx) error {
 
 	c.Locals("user_id", claims.UserId)
 	c.Locals("role", claims.Role)
+	c.Context().SetUserValue("user_id", claims.UserId)
+	c.Context().SetUserValue("role", claims.Role)
 
 	// If the token is valid, pass the request to the next handler
 	return c.Next()

@@ -41,7 +41,7 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 

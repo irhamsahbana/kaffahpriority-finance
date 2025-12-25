@@ -57,7 +57,7 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 		&resp.TotalProfit,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
 		return nil, err
 	}
 
@@ -97,7 +97,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 		&resp.TotalCredit,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries for CFO2", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries for CFO2", fnName)
 		return nil, err
 	}
 	resp.PaidAtFrom = req.PaidAtFrom
@@ -119,7 +119,7 @@ func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSum
 	var totalBalance decimal.Decimal
 	err = r.db.QueryRowContext(ctx, r.db.Rebind(queryBalance), req.Timezone, req.PaidAtTo).Scan(&totalBalance)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get total balance", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get total balance", fnName)
 		return nil, err
 	}
 

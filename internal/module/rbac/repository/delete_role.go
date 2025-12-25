@@ -18,7 +18,7 @@ func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) er
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete role", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete role", fnName)
 		return err
 	}
 

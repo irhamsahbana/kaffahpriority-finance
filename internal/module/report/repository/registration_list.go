@@ -294,7 +294,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -333,14 +333,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 
 		query, args, err := sqlx.In(query, registrationIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &daosData, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 
@@ -473,7 +473,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -528,14 +528,14 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	// query, args, err := sqlx.In(query, registrationIds)
 	// if err != nil {
-	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+	// 	log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 	// 	return nil, err
 	// }
 
 	// query = r.db.Rebind(query)
 	// err = r.db.SelectContext(ctx, &daosData, query, args...)
 	// if err != nil {
-	// 	log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+	// 	log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 	// 	return nil, err
 	// }
 
@@ -626,7 +626,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 		paidAtTo,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -724,13 +724,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Yearly(
 
 		query, args, err := sqlx.In(query, registrationIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
 			return nil, err
 		}
 
 		err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 
@@ -810,7 +810,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 		req.Timezone, req.Month,
 	)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to fetch academic managers", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to fetch academic managers", fnName)
 		return nil, err
 	}
 
@@ -830,7 +830,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 
 		err = r.db.SelectContext(ctx, &academicManagers[i].Items, r.db.Rebind(query), academicManagers[i].ID)
 		if err != nil {
-			log.Error().Err(err).Msgf("%s - failed to fetch lecturers", fnName)
+			log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to fetch lecturers", fnName)
 			return nil, err
 		}
 
@@ -882,7 +882,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				req.Month,
 			)
 			if err != nil {
-				log.Error().Err(err).Msgf("%s - failed to fetch registrations", fnName)
+				log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to fetch registrations", fnName)
 				return nil, err
 			}
 
@@ -923,7 +923,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				var addStudents = make([]entity.AddStudent, 0)
 				err = r.db.SelectContext(ctx, &addStudents, r.db.Rebind(queryAddStudents), academicManagers[i].Items[j].Items[k].ID)
 				if err != nil {
-					log.Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
+					log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to fetch additional students", fnName)
 					return nil, err
 				}
 
@@ -1015,7 +1015,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				err = r.db.GetContext(ctx, &registration, r.db.Rebind(query), args...)
 				if err != nil && !errors.Is(err, sql.ErrNoRows) {
 
-					log.Error().Err(err).Msgf("%s - failed to fetch registration details", fnName)
+					log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to fetch registration details", fnName)
 					return nil, err
 				}
 

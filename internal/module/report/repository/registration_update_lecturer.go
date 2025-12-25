@@ -23,7 +23,7 @@ func (r *reportRepo) UpdateRegistrationLecturer(ctx context.Context, req *entity
 
 	err := r.db.QueryRowxContext(ctx, query, req.LecturerId, req.ID).Scan(&resp.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration lecturer", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration lecturer", fnName)
 		return nil, err
 	}
 

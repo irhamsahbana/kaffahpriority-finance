@@ -73,7 +73,7 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -121,14 +121,14 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 
 		query, args, err := sqlx.In(query, lecturerIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &dataTemplate, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 			return nil, err
 		}
 
@@ -151,7 +151,7 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to start transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to start transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -162,10 +162,10 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 	err = tx.GetContext(ctx, &hrFee, r.db.Rebind(queryFee), req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msgf("%s - HR fee not found", fnName)
+			log.Ctx(ctx).Warn().Any("req", req).Msgf("%s - HR fee not found", fnName)
 			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch HR fee", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch HR fee", fnName)
 		return err
 	}
 
@@ -173,7 +173,7 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 	hrFeeForHR := decimal.NewFromFloat(req.HRFeeForHR)
 
 	if hrFeeForMentor.Add(hrFeeForHR).GreaterThan(hrFee) || hrFeeForMentor.Add(hrFeeForHR).LessThan(hrFee) {
-		log.Warn().Any("req", req).Msgf("%s - HR fee is greater than total HR fee", fnName)
+		log.Ctx(ctx).Warn().Any("req", req).Msgf("%s - HR fee is greater than total HR fee", fnName)
 		return errmsg.NewCustomErrors(400).SetMessage("Distribusi Pengeluaran SDM tidak boleh melebihi atau kurang dari total biaya SDM")
 	}
 
@@ -190,13 +190,13 @@ func (r *reportRepo) DistributeHRFee(ctx context.Context, req *entity.HRDistribu
 
 	_, err = tx.ExecContext(ctx, r.db.Rebind(query), req.HRFeeForMentor, req.HRFeeForHR, req.RegistrationID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

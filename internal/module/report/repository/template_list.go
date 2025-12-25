@@ -152,7 +152,7 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -191,14 +191,14 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 
 		query, args, err := sqlx.In(query, templateIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 			return nil, err
 		}
 
 		query = r.db.Rebind(query)
 		err = r.db.SelectContext(ctx, &daosData, query, args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 

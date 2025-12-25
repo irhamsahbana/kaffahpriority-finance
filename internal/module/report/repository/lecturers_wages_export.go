@@ -127,7 +127,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 	`
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
 		return nil, err
 	}
 
@@ -176,14 +176,14 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	query, args, err := sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query for additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query for additional students", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &additionalStudentsData, query, args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 

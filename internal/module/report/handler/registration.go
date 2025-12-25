@@ -13,6 +13,7 @@ import (
 
 func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createRegistrations"
 		req    = new(entity.CreateRegistrationsReq)
 		v      = adapter.Adapters.Validator
@@ -20,19 +21,19 @@ func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(&req.Registrations); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.CreateRegistrations(c.Context(), req)
+	err := h.service.CreateRegistrations(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -43,6 +44,7 @@ func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::copyRegistrations"
 		req    = new(entity.CopyRegistrationsReq)
 		v      = adapter.Adapters.Validator
@@ -50,19 +52,19 @@ func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(&req.Registrations); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.CopyRegistrations(c.Context(), req)
+	err := h.service.CopyRegistrations(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -73,6 +75,7 @@ func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateRegistration"
 		req    = new(entity.UpdateRegistrationReq)
 		v      = adapter.Adapters.Validator
@@ -80,7 +83,7 @@ func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -88,18 +91,18 @@ func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateRegistration(c.Context(), req)
+	resp, err := h.service.UpdateRegistration(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -110,6 +113,7 @@ func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getRegistrations"
 		req    = new(entity.GetRegistrationsReq)
 		v      = adapter.Adapters.Validator
@@ -117,7 +121,7 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -125,18 +129,18 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetRegistrations(c.Context(), req)
+	resp, err := h.service.GetRegistrations(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -147,6 +151,7 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getUnusedRegistrations"
 		req    = new(entity.GetRegistrationsReq)
 		v      = adapter.Adapters.Validator
@@ -154,7 +159,7 @@ func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 	)
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -162,18 +167,18 @@ func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetUnusedRegistrations(c.Context(), req)
+	resp, err := h.service.GetUnusedRegistrations(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -184,6 +189,7 @@ func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateRegistrationLecturer"
 		req    = new(entity.UpdateRegistrationLecturerReq)
 		v      = adapter.Adapters.Validator
@@ -191,7 +197,7 @@ func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -199,12 +205,12 @@ func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateRegistrationLecturer(c.Context(), req)
+	resp, err := h.service.UpdateRegistrationLecturer(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -215,6 +221,7 @@ func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateRegistrationIsPaid"
 		req    = new(entity.UpdateRegistrationIsPaidReq)
 		v      = adapter.Adapters.Validator
@@ -222,7 +229,7 @@ func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -230,12 +237,12 @@ func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateRegistrationIsPaid(c.Context(), req)
+	resp, err := h.service.UpdateRegistrationIsPaid(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -246,6 +253,7 @@ func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 
 func (h *reportHandler) registrationsMarkAsUsed(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::registrationsMarkAsUsed"
 		req    = new(entity.RegistrationsMarkAsUsedReq)
 		v      = adapter.Adapters.Validator
@@ -253,19 +261,19 @@ func (h *reportHandler) registrationsMarkAsUsed(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.RegistrationsMarkAsUsed(c.Context(), req)
+	err := h.service.RegistrationsMarkAsUsed(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

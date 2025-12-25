@@ -24,20 +24,20 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	fnName := "repo::UpdateRegistration"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Error().Err(errRB).Msgf("%s - failed to rollback transaction", fnName)
+				log.Ctx(ctx).Error().Err(errRB).Msgf("%s - failed to rollback transaction", fnName)
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Error().Err(errCommit).Msgf("%s - failed to commit transaction", fnName)
+			log.Ctx(ctx).Error().Err(errCommit).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
 
@@ -62,10 +62,10 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	err = tx.GetContext(ctx, &currentReg, tx.Rebind(queryCurrent), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Registrasi tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get current registration data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get current registration data", fnName)
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// 	`
 	// 	err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.StudentId, req.ID)
 	// 	if err != nil {
-	// 		log.Error().Err(err).
+	// 		log.Ctx(ctx).Error().Err(err).
 	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
 	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
 	// 			Str("current_program_id", currentReg.ProgramId).
@@ -118,7 +118,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// 		return nil, err
 	// 	}
 	// 	if count > 0 {
-	// 		log.Warn().
+	// 		log.Ctx(ctx).Warn().
 	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
 	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
 	// 			Str("current_program_id", currentReg.ProgramId).
@@ -188,7 +188,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// specify timezone
 	loc, err := time.LoadLocation("Asia/Makassar")
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to load location", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to load location", fnName)
 		return nil, err
 	}
 
@@ -199,13 +199,13 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// parse date
 	parsedPaidAt, err := time.ParseInLocation("2006-01-02 15:04:05", paidAtDateTime, loc)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to parse paid_at", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to parse paid_at", fnName)
 		return nil, err
 	}
 
 	parsedAllocatedAt, err := time.ParseInLocation("2006-01-02 15:04:05", allocatedAtDateTime, loc)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to parse allocated_at", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to parse allocated_at", fnName)
 		return nil, err
 	}
 
@@ -223,7 +223,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.ID,
 	)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return nil, err
 	}
 
@@ -232,7 +232,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	`
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.ID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students", fnName)
 		return nil, err
 	}
 
@@ -247,7 +247,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			ulid.Make().String(), req.ID, item.StudentID, item.Name,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students", fnName)
 			return nil, err
 		}
 	}
@@ -276,10 +276,10 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	err = tx.GetContext(ctx, &reg, tx.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - registration not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("template tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get registration data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get registration data", fnName)
 		return nil, err
 	}
 
@@ -305,7 +305,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	`
 	err = tx.GetContext(ctx, &currentTemplate, tx.Rebind(queryGetTemplate), reg.TemplateId)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get template core fields", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get template core fields", fnName)
 		return nil, err
 	}
 
@@ -375,7 +375,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to create new template", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to create new template", fnName)
 			return nil, err
 		}
 
@@ -391,7 +391,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 				ulid.Make().String(), newTemplateId, item.StudentID, item.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into new template", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into new template", fnName)
 				return nil, err
 			}
 		}
@@ -406,7 +406,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		`
 		_, err = tx.ExecContext(ctx, tx.Rebind(query), newTemplateId, req.ID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration template_id", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration template_id", fnName)
 			return nil, err
 		}
 	} else {
@@ -448,7 +448,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			reg.TemplateId,
 		)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update template data", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update template data", fnName)
 			return nil, err
 		}
 
@@ -457,7 +457,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		`
 		_, err = tx.ExecContext(ctx, tx.Rebind(query), reg.TemplateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students from template", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete additional students from template", fnName)
 			return nil, err
 		}
 
@@ -472,7 +472,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 				ulid.Make().String(), reg.TemplateId, item.StudentID, item.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional students into template", fnName)
 				return nil, err
 			}
 		}

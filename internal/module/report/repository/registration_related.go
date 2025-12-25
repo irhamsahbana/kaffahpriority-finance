@@ -56,7 +56,7 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.RegistrationID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query related registrations", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query related registrations", fnName)
 		return nil, err
 	}
 

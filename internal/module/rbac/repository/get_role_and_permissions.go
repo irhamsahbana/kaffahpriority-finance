@@ -39,7 +39,7 @@ func (r *rbacRepo) GetRoleAndPermissions(ctx context.Context, req *entity.GetRol
 	data := make([]RolePermission, 0)
 	err := r.db.SelectContext(ctx, &data, query)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role and permissions", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get role and permissions", fnName)
 		return nil, err
 	}
 
