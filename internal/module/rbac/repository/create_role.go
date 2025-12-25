@@ -15,7 +15,7 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -27,14 +27,14 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 
 	_, err = tx.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.Name)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create role", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to create role", fnName)
 		return nil, err
 	}
 
 	if len(req.Permissions) == 0 {
 		err = tx.Commit()
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 			return nil, err
 		}
 
@@ -50,14 +50,14 @@ func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*
 	for _, v := range req.Permissions {
 		_, err = tx.ExecContext(ctx, query, resp.ID, v)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
 			return nil, err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return nil, err
 	}
 

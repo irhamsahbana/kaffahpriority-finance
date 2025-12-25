@@ -26,7 +26,7 @@ func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermission
 
 	err := r.db.SelectContext(ctx, &resp.Items, query)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get permissions", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get permissions", fnName)
 		return nil, err
 	}
 

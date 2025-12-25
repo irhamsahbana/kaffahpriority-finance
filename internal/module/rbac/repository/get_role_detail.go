@@ -40,7 +40,7 @@ func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailR
 	data := make([]RolePermission, 0)
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.RoleID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role detail", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get role detail", fnName)
 		return nil, err
 	}
 

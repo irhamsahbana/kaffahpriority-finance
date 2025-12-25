@@ -25,12 +25,12 @@ func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission strin
 	var isHasPermission bool
 	err := r.db.GetContext(ctx, &isHasPermission, query, userId, permission)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to get permission", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to get permission", fnName)
 		return err
 	}
 
 	if !isHasPermission {
-		log.Warn().Msgf("%s - user does not have permission", fnName)
+		log.Ctx(ctx).Warn().Msgf("%s - user does not have permission", fnName)
 		return errmsg.NewCustomErrors(403).SetMessage("Anda tidak memiliki hak akses" + permission + "!")
 	}
 

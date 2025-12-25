@@ -15,7 +15,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -32,7 +32,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 		err = tx.GetContext(ctx, &roleThatHasAllAccess, tx.Rebind(query))
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role that has all_access permission", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get role that has all_access permission", fnName)
 			return nil, err
 		}
 
@@ -46,15 +46,17 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 		var roleID string
 		err = tx.GetContext(ctx, &roleID, tx.Rebind(query), req.UserID)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get role id", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get role id", fnName)
 			return nil, err
 		}
 
 		if roleID == req.RoleID && roleThatHasAllAccess == 1 {
+			log.Ctx(ctx).Warn().Msgf("%s - role %s is the last role that has all_access permission", fnName, req.RoleID)
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Role ini adalah role terakhir yang memiliki all_access permission!")
 		}
 
 		if roleThatHasAllAccess == 1 {
+			log.Ctx(ctx).Warn().Msgf("%s - role %s is the last role that has all_access permission", fnName, req.RoleID)
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Role ini adalah role terakhir yang memiliki all_access permission!")
 		}
 	}
@@ -66,7 +68,7 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query), req.RoleID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete role permissions", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete role permissions", fnName)
 		return nil, err
 	}
 
@@ -79,14 +81,14 @@ func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.Update
 	for _, v := range req.Permissions {
 		_, err = tx.ExecContext(ctx, query, req.RoleID, v)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert role permissions", fnName)
 			return nil, err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return nil, err
 	}
 
