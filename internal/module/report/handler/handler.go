@@ -2,9 +2,9 @@ package handler
 
 import (
 	"codebase-app/internal/adapter"
+	"codebase-app/internal/entity"
 	m "codebase-app/internal/middleware"
 	activityLogRepo "codebase-app/internal/module/activity_log/repository"
-	"codebase-app/internal/module/report/entity"
 	"codebase-app/internal/module/report/repository"
 	"codebase-app/internal/module/report/service"
 	ports "codebase-app/internal/ports/module/report"

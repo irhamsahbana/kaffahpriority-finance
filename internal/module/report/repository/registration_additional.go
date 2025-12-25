@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -133,7 +133,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 		req.UserID,
 		req.MarketerCommissionFee,
 		req.HrFee,
-        req.HrFee,
+		req.HrFee,
 		req.MarketerGiftsFee,
 
 		req.ClosingFeeForOffice,

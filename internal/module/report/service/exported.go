@@ -1,7 +1,7 @@
 package service
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"context"
 	"fmt"
 	"strings"

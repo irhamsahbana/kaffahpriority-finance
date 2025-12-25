@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"context"
 	"sort"
 	"strings"

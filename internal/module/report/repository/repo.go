@@ -2,7 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/adapter"
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	ports "codebase-app/internal/ports/module/report"
 	"codebase-app/pkg/errmsg"
 	"context"

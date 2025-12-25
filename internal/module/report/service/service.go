@@ -1,8 +1,7 @@
 package service
 
 import (
-	commonEntity "codebase-app/internal/entity"
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"time"
 
 	portsActivityLog "codebase-app/internal/ports/module/activity_log"
@@ -43,7 +42,7 @@ func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTe
 	}
 
 	go func() {
-		user, err := s.userRepo.GetMe(ctx, &commonEntity.GetMeReq{UserID: req.UserID})
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Error().Err(err).Msgf("reportService.CreateTemplate - failed to get me")
 			return
@@ -57,11 +56,11 @@ func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTe
 			return
 		}
 
-		err = s.activityLogRepo.CreateActivityLog(ctx, &commonEntity.ActivityLog{
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
 			ID:         ulid.Make().String(),
-			EntityName: commonEntity.ActivityLogEntityProgramRegistrationTemplates,
+			EntityName: entity.ActivityLogEntityProgramRegistrationTemplates,
 			EntityID:   resp.ID,
-			Type:       commonEntity.ActivityLogTypeCreate,
+			Type:       entity.ActivityLogTypeCreate,
 			AuthorName: user.Name,
 			AuthorRole: user.Role,
 			CreatedAt:  time.Now(),
@@ -83,7 +82,7 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 	})
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to get template")
 		return nil, err
 	}
@@ -91,16 +90,16 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 	resp, err := s.repo.UpdateTemplate(ctx, req)
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to update template")
 		return nil, err
 	}
 
 	go func() {
-		user, err := s.userRepo.GetMe(ctx, &commonEntity.GetMeReq{UserID: req.UserID})
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to get me")
 			return
 		}
@@ -110,15 +109,15 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 		})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to get template")
 			return
 		}
-		err = s.activityLogRepo.CreateActivityLog(ctx, &commonEntity.ActivityLog{
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
 			ID:         ulid.Make().String(),
-			EntityName: commonEntity.ActivityLogEntityProgramRegistrationTemplates,
+			EntityName: entity.ActivityLogEntityProgramRegistrationTemplates,
 			EntityID:   resp.ID,
-			Type:       commonEntity.ActivityLogTypeUpdate,
+			Type:       entity.ActivityLogTypeUpdate,
 			AuthorName: user.Name,
 			AuthorRole: user.Role,
 			UpdatedAt:  time.Now(),
@@ -129,7 +128,7 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 		})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
 	}()
@@ -149,7 +148,7 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 	oldTemplate, err := s.repo.GetTemplate(ctx, req)
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to get template")
 		return err
 	}
@@ -157,26 +156,26 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 	err = s.repo.DeleteTemplate(ctx, req)
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to delete template")
 		return err
 	}
 
 	go func() {
-		user, err := s.userRepo.GetMe(ctx, &commonEntity.GetMeReq{UserID: req.UserID})
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to get me")
 			return
 		}
 
 		deleteTime := time.Now()
-		err = s.activityLogRepo.CreateActivityLog(ctx, &commonEntity.ActivityLog{
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
 			ID:         ulid.Make().String(),
-			EntityName: commonEntity.ActivityLogEntityProgramRegistrationTemplates,
+			EntityName: entity.ActivityLogEntityProgramRegistrationTemplates,
 			EntityID:   req.ID,
-			Type:       commonEntity.ActivityLogTypeDelete,
+			Type:       entity.ActivityLogTypeDelete,
 			AuthorName: user.Name,
 			AuthorRole: user.Role,
 			DeletedAt:  &deleteTime,
@@ -186,7 +185,7 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 		})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
 	}()
@@ -210,7 +209,7 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 	})
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to get registration")
 		return nil, err
 	}
@@ -218,16 +217,16 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 	resp, err := s.repo.UpdateRegistration(ctx, req)
 	if err != nil {
 		log.Error().Err(err).
-			Any(commonEntity.Payload, req).
+			Any(entity.Payload, req).
 			Msgf("failed to update registration")
 		return nil, err
 	}
 
 	go func() {
-		user, err := s.userRepo.GetMe(ctx, &commonEntity.GetMeReq{UserID: req.UserID})
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to get me")
 			return
 		}
@@ -238,16 +237,16 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 		})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to get registration")
 			return
 		}
 
-		err = s.activityLogRepo.CreateActivityLog(ctx, &commonEntity.ActivityLog{
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
 			ID:         ulid.Make().String(),
-			EntityName: commonEntity.ActivityLogEntityProgramRegistrations,
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
 			EntityID:   req.ID,
-			Type:       commonEntity.ActivityLogTypeUpdate,
+			Type:       entity.ActivityLogTypeUpdate,
 			AuthorName: user.Name,
 			AuthorRole: user.Role,
 			UpdatedAt:  time.Now(),
@@ -258,7 +257,7 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 		})
 		if err != nil {
 			log.Error().Err(err).
-				Any(commonEntity.Payload, req).
+				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
 	}()
