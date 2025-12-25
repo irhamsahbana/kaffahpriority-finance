@@ -27,7 +27,7 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
     `
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth, req.AllocatedMonth); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err
 	}
 

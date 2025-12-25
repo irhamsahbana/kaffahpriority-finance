@@ -13,6 +13,7 @@ import (
 
 func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getTemplates"
 		req    = new(entity.GetTemplatesReq)
 		v      = adapter.Adapters.Validator
@@ -22,19 +23,19 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetTemplates(c.Context(), req)
+	resp, err := h.service.GetTemplates(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -45,6 +46,7 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 
 func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getTemplate"
 		req    = new(entity.GetTemplateReq)
 		v      = adapter.Adapters.Validator
@@ -55,12 +57,12 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetTemplate(c.Context(), req)
+	resp, err := h.service.GetTemplate(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -71,6 +73,7 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createTemplate"
 		req    = new(entity.CreateTemplateReq)
 		v      = adapter.Adapters.Validator
@@ -78,25 +81,25 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.CreateTemplate(c.Context(), req)
+	resp, err := h.service.CreateTemplate(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -107,6 +110,7 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateTemplate"
 		req    = new(entity.UpdateTemplateGeneralReq)
 		v      = adapter.Adapters.Validator
@@ -114,7 +118,7 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -122,18 +126,18 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateTemplate(c.Context(), req)
+	resp, err := h.service.UpdateTemplate(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -144,6 +148,7 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::deleteTemplate"
 		req    = new(entity.GetTemplateReq)
 		v      = adapter.Adapters.Validator
@@ -154,12 +159,12 @@ func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.DeleteTemplate(c.Context(), req)
+	err := h.service.DeleteTemplate(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))

@@ -187,7 +187,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -223,7 +223,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	respSummary, err := r.GetSummaries(ctx, reqSummary)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get summaries", fnName)
 		return nil, err
 	}
 
@@ -265,14 +265,14 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	query, args, err = sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &daosData, query, args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 

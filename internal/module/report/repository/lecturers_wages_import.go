@@ -14,7 +14,7 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -44,13 +44,13 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 			data.Notes,
 			data.RegistrationID,
 		); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration for id %s", fnName, data.RegistrationID)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration for id %s", fnName, data.RegistrationID)
 			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

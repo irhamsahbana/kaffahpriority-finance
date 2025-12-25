@@ -15,7 +15,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -25,10 +25,10 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 	var templateId, programId, studentId, lecturerId string
 	if err := tx.QueryRowContext(ctx, tx.Rebind(query), req.TemplateId).Scan(&templateId, &programId, &studentId, &lecturerId); err != nil {
 		if err == sql.ErrNoRows {
-			log.Error().Err(err).Any("req", req).Msgf("%s - template not found", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - template not found", fnName)
 			return errmsg.NewCustomErrors(404, errmsg.WithMessage("Bank data tidak ditemukan"))
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get template id", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get template id", fnName)
 		return err
 	}
 
@@ -69,10 +69,10 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				}
 			}
 
-			log.Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("%s - allocation already exists for this template", fnName)
+			log.Ctx(ctx).Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("%s - allocation already exists for this template", fnName)
 			return errmsg.NewCustomErrors(400, errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
 		} else if err != sql.ErrNoRows {
-			log.Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("%s - failed to check existing allocations", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("%s - failed to check existing allocations", fnName)
 			return err
 		}
 	}
@@ -112,13 +112,13 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				req.PaidAtTime, // Paid at time
 				existing.ID,    // Registration ID
 			); err != nil {
-				log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
 				return err
 			}
 
 			continue
 		} else if err != sql.ErrNoRows {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to check existing registration", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to check existing registration", fnName)
 			return err
 		}
 
@@ -136,7 +136,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			req.PaidAtTime, // Paid at time
 			allocation,     // Allocation date
 		); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert registration", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert registration", fnName)
 			return err
 		}
 
@@ -146,7 +146,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 		var students = make([]entity.AddStudent, 0)
 		err = tx.SelectContext(ctx, &students, tx.Rebind(queryStudents), templateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to select students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to select students", fnName)
 			return err
 		}
 
@@ -156,14 +156,14 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				ulid.Make().String(), registrationId, student.StudentID, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

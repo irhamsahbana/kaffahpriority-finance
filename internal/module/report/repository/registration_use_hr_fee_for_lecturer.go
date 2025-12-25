@@ -21,7 +21,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 		RegistrationID: req.RegistrationID,
 	})
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get related registrations", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get related registrations", fnName)
 		return err
 	}
 
@@ -58,7 +58,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 			ID:     req.RegistrationID,
 		})
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to get registration", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get registration", fnName)
 			return err
 		}
 
@@ -78,7 +78,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 			registrationResp.ProgramName,
 		)
 
-		log.Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
+		log.Ctx(ctx).Error().Any("req", req).Msgf("%s - %s", fnName, errMsg)
 		return errmsg.
 			NewCustomErrors(http.StatusUnprocessableEntity).
 			Add("used_amount", errMsg).
@@ -87,7 +87,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	Tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer Tx.Rollback()
@@ -105,12 +105,12 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	_, err = Tx.ExecContext(ctx, Tx.Rebind(query), req.UsedAmount, req.Notes, req.RegistrationID)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update mentor detail fee used", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update mentor detail fee used", fnName)
 		return err
 	}
 
 	if err = Tx.Commit(); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 
@@ -126,7 +126,7 @@ func (r *reportRepo) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.Bu
 	for _, item := range req.Data {
 		err := r.UseHRfeeForLecturer(ctx, &item)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Any("item", item).Msgf("%s - failed to use hr fee for lecturer", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("item", item).Msgf("%s - failed to use hr fee for lecturer", fnName)
 			errBulk = append(errBulk, err)
 		}
 

@@ -14,7 +14,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	fnName := "repo::GenerateRegistrationReports"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -36,7 +36,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 	// query all templates that are not deleted and have a marketer_id set
 	if err := tx.SelectContext(ctx, &templateIds, queryTemplates); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to select templates", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to select templates", fnName)
 		return err
 	}
 
@@ -52,7 +52,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	`
 
 	if err := tx.SelectContext(ctx, &deletedTemplateIds, queryDeletedTemplates); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to select deleted templates", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to select deleted templates", fnName)
 		return err
 	}
 
@@ -74,7 +74,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 			pq.Array(deletedTemplateIds),
 			req.Timezone,
 		); err != nil {
-			log.Error().Err(err).Msgf("%s - failed to delete registrations", fnName)
+			log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to delete registrations", fnName)
 			return err
 		}
 	}
@@ -92,7 +92,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
 			templateId).Scan(&lecturerId, &studentId, &programId)
 		if err != nil {
-			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to get template data", fnName)
+			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to get template data", fnName)
 			return err
 		}
 
@@ -108,7 +108,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		if err == nil {
 			continue
 		} else if err != sql.ErrNoRows {
-			log.Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to check if registration exists", fnName)
+			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to check if registration exists", fnName)
 			return err
 		}
 
@@ -127,14 +127,14 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// insert into program_registrations
 		if _, err := tx.ExecContext(ctx, queryInsertRegistration, args...); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to insert program registration", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert program registration", fnName)
 			return err
 		}
 
 		// fetch additional students from prt_additional_students
 		err = tx.SelectContext(ctx, &students, queryStudents, templateId)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to select additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to select additional students", fnName)
 			return err
 		}
 
@@ -144,14 +144,14 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 				ulid.Make().String(), programRegistrationId, student.StudentID, student.Name,
 			)
 			if err != nil {
-				log.Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
 				return err
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

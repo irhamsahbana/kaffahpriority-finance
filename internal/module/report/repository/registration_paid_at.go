@@ -11,7 +11,7 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 	fnName := "repo::UpdateRegistrationsPaidAt"
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
 		return err
 	}
 	defer tx.Rollback()
@@ -33,13 +33,13 @@ func (r *reportRepo) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.
 			req.AllocatedAt+" "+req.AllocatedAtTime,
 			registrationId,
 		); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to update registration paid_at for id %s", fnName, registrationId)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration paid_at for id %s", fnName, registrationId)
 			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		return err
 	}
 

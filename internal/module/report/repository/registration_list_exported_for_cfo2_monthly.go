@@ -129,7 +129,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
 		return nil, err
 	}
 
@@ -189,13 +189,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 
 		query, args, err := sqlx.In(query, registrationIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
 			return nil, err
 		}
 
 		err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 			return nil, err
 		}
 
