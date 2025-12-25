@@ -45,6 +45,8 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	}
 
 	app := fiber.New()
+	app.Use(middleware.Prometheus())
+	infrastructure.InitializeMetrics(app)
 	infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
 	infrastructure.InitializeAccessLogger(envs.App.Environtment, envs.App.LogFileAccess, logLevel)
 
@@ -88,7 +90,7 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 
 	app.Static("api/storage/public", envs.App.LocalStoragePublicPath)
 	metricTitle := envs.App.Name + " " + envs.App.Environtment + " " + "Metrics"
-	app.Get("/metrics", monitor.New(monitor.Config{Title: metricTitle}))
+	app.Get("/simple-metrics", monitor.New(monitor.Config{Title: metricTitle}))
 	route.SetupRoutes(app)
 
 	// Run server in goroutine

@@ -1,0 +1,40 @@
+networks:
+  kaffah_network:
+    driver: bridge
+
+services:
+  # microservice:
+  #   build: ./golang-app
+  #   container_name: microservice
+  #   ports:
+  #     - "1000:1000"
+  #   networks:
+  #     - kaffah_network
+
+  prometheus:
+    image: prom/prometheus:v3.8.1
+    container_name: prometheus-kaffah
+    ports:
+      - "9191:9191"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # prometheus config
+      - ./volumes/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.listen-address=:9191'
+    networks:
+      - kaffah_network
+
+  grafana:
+    image: grafana/grafana:12.3
+    container_name: grafana-kaffah
+    ports:
+      - "3535:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./volumes/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./volumes/grafana/data:/var/lib/grafana # to ensure grafana data won't gone if container restarted
+    networks:
+      - kaffah_network
