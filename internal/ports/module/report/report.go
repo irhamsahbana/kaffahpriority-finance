@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"context"
 )
 

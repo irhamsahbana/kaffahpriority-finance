@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"context"
 	"sort"
 	"strings"
@@ -227,7 +227,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 			if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
 				// Tambahkan ke Students array
 				resp.Items[i].Students = append(resp.Items[i].Students, additionalStudentsList[item.ID]...)
-				
+
 				// Tambahkan ke StudentName tanpa duplikasi
 				names := make([]string, 0, len(nameMap))
 				for name := range nameMap {

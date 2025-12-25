@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"codebase-app/internal/module/report/entity"
+	"codebase-app/internal/entity"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -44,14 +44,14 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 			LIMIT 1
 		`
 		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), templateId, allocation).Scan(&paidAt)
-		
+
 		if err == nil {
 			// Registration exists, format the error message with paid_at date
 			paidAtStr := "tanpa tanggal pembayaran"
 			if paidAt.Valid {
 				paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
 			}
-			
+
 			// Format allocation from YYYY-MM to MMMM YYYY
 			allocationFormatted := allocation
 			if len(allocation) == 7 { // YYYY-MM format
@@ -68,7 +68,7 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 					allocationFormatted = monthName + " " + year
 				}
 			}
-			
+
 			log.Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("%s - allocation already exists for this template", fnName)
 			return errmsg.NewCustomErrors(400, errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
 		} else if err != sql.ErrNoRows {
