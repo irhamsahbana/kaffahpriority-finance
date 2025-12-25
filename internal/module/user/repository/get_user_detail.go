@@ -30,10 +30,10 @@ func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity
 	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Err(err).Any("req", req).Msgf("%s - user not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - user not found", fnName)
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Data tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to fetch user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch user", fnName)
 		return nil, err
 	}
 

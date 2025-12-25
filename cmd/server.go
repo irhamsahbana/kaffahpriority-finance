@@ -45,6 +45,8 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	}
 
 	app := fiber.New()
+	infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
+	infrastructure.InitializeAccessLogger(envs.App.Environtment, envs.App.LogFileAccess, logLevel)
 
 	// Application Local Storage
 	err = os.MkdirAll(envs.App.LocalStoragePublicPath, os.ModePerm)
@@ -73,7 +75,9 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	}))
 
 	// Access log middleware
-	app.Use(middleware.AccessLog)
+	app.Use(middleware.RequestID)
+	app.Use(middleware.WithAccessLog(infrastructure.AccessLogger))
+	app.Use(middleware.WithAppLogger(log.Logger))
 	// End Application Middlewares
 
 	adapter.Adapters.Sync(
@@ -82,7 +86,6 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 		adapter.WithValidator(validator.NewValidator()),
 	)
 
-	infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
 	app.Static("api/storage/public", envs.App.LocalStoragePublicPath)
 	metricTitle := envs.App.Name + " " + envs.App.Environtment + " " + "Metrics"
 	app.Get("/metrics", monitor.New(monitor.Config{Title: metricTitle}))

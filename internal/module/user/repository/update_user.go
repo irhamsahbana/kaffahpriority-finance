@@ -29,7 +29,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
 			return nil, err
 		}
 
@@ -52,7 +52,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update user", fnName)
 		return nil, err
 	}
 

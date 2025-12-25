@@ -41,24 +41,25 @@ func (h *userHandler) Register(router fiber.Router) {
 
 func (h *userHandler) login(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::login"
 		req    = new(entity.LoginReq)
 		v      = adapter.Adapters.Validator
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
-	resp, err := h.service.Login(c.Context(), req)
+	resp, err := h.service.Login(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Any("req", req.Log()).Msgf("%s - Service error", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Service error", fnName)
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 
@@ -67,6 +68,7 @@ func (h *userHandler) login(c *fiber.Ctx) error {
 
 func (h *userHandler) me(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::me"
 		req    = new(entity.GetMeReq)
 		v      = adapter.Adapters.Validator
@@ -75,12 +77,12 @@ func (h *userHandler) me(c *fiber.Ctx) error {
 
 	req.UserID = l.GetUserId()
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetMe(c.Context(), req)
+	resp, err := h.service.GetMe(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -91,6 +93,7 @@ func (h *userHandler) me(c *fiber.Ctx) error {
 
 func (h *userHandler) getUsers(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getUsers"
 		req    = new(entity.GetUsersReq)
 		v      = adapter.Adapters.Validator
@@ -101,12 +104,12 @@ func (h *userHandler) getUsers(c *fiber.Ctx) error {
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetUsers(c.Context(), req)
+	resp, err := h.service.GetUsers(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -117,6 +120,7 @@ func (h *userHandler) getUsers(c *fiber.Ctx) error {
 
 func (h *userHandler) getUser(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::getUser"
 		req    = new(entity.GetUserReq)
 		v      = adapter.Adapters.Validator
@@ -127,12 +131,12 @@ func (h *userHandler) getUser(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.GetUser(c.Context(), req)
+	resp, err := h.service.GetUser(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -143,6 +147,7 @@ func (h *userHandler) getUser(c *fiber.Ctx) error {
 
 func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::updateUser"
 		req    = new(entity.UpdateUserReq)
 		v      = adapter.Adapters.Validator
@@ -153,17 +158,17 @@ func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.UpdateUser(c.Context(), req)
+	resp, err := h.service.UpdateUser(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -174,6 +179,7 @@ func (h *userHandler) updateUser(c *fiber.Ctx) error {
 
 func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::deleteUser"
 		req    = new(entity.DeleteUserReq)
 		v      = adapter.Adapters.Validator
@@ -184,12 +190,12 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	err := h.service.DeleteUser(c.Context(), req)
+	err := h.service.DeleteUser(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
@@ -200,6 +206,7 @@ func (h *userHandler) deleteUser(c *fiber.Ctx) error {
 
 func (h *userHandler) createUser(c *fiber.Ctx) error {
 	var (
+		ctx    = c.UserContext()
 		fnName = "handler::createUser"
 		req    = new(entity.CreateUserReq)
 		v      = adapter.Adapters.Validator
@@ -209,17 +216,17 @@ func (h *userHandler) createUser(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
-	resp, err := h.service.CreateUser(c.Context(), req)
+	resp, err := h.service.CreateUser(ctx, req)
 	if err != nil {
 		code, errs := errmsg.Errors[error](err)
 		return c.Status(code).JSON(response.Error(errs))
