@@ -266,11 +266,129 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 }
 
 func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *entity.UpdateRegistrationLecturerReq) (*entity.UpdateRegistrationLecturerResp, error) {
-	return s.repo.UpdateRegistrationLecturer(ctx, req)
+	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+		UserID: req.UserID,
+		ID:     req.ID,
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to get registration")
+		return nil, err
+	}
+
+	resp, err := s.repo.UpdateRegistrationLecturer(ctx, req)
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to update registration lecturer")
+		return nil, err
+	}
+
+	go func() {
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		registration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.ID,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get registration")
+			return
+		}
+
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
+			EntityID:   req.ID,
+			Type:       entity.ActivityLogTypeUpdate,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			UpdatedAt:  time.Now(),
+			UpdatedBy:  req.UserID,
+			Message:    "berhasil mengupdate pengajar registrasi",
+			Before:     oldRegistration,
+			After:      registration,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return resp, nil
 }
 
 func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entity.UpdateRegistrationIsPaidReq) (*entity.UpdateRegistrationIsPaidResp, error) {
-	return s.repo.UpdateRegistrationIsPaid(ctx, req)
+	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+		UserID: req.UserID,
+		ID:     req.ID,
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to get registration")
+		return nil, err
+	}
+
+	resp, err := s.repo.UpdateRegistrationIsPaid(ctx, req)
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to update registration is paid")
+		return nil, err
+	}
+
+	go func() {
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		registration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.ID,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get registration")
+			return
+		}
+
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
+			EntityID:   req.ID,
+			Type:       entity.ActivityLogTypeUpdate,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			UpdatedAt:  time.Now(),
+			UpdatedBy:  req.UserID,
+			Message:    "berhasil mengupdate status pembayaran registrasi",
+			Before:     oldRegistration,
+			After:      registration,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return resp, nil
 }
 
 func (s *reportService) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.UpdateRegisPaidAtReq) error {
@@ -327,19 +445,197 @@ func (s *reportService) GetLecturersWagesAggregateYearly(ctx context.Context, re
 }
 
 func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
-	return s.repo.UpdateLecturersWage(ctx, req)
+	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+		UserID: req.UserID,
+		ID:     req.RegistrationID,
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to get registration")
+		return err
+	}
+
+	err = s.repo.UpdateLecturersWage(ctx, req)
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to update lecturers wage")
+		return err
+	}
+
+	go func() {
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		registration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.RegistrationID,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get registration")
+			return
+		}
+
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
+			EntityID:   req.RegistrationID,
+			Type:       entity.ActivityLogTypeUpdate,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			UpdatedAt:  time.Now(),
+			UpdatedBy:  req.UserID,
+			Message:    "berhasil mengupdate ujrah pengajar",
+			Before:     oldRegistration,
+			After:      registration,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return nil
 }
 
 func (s *reportService) BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error {
+	// TODO: implement bulk update activity log if needed
 	return s.repo.BulkUpdateLecturersWage(ctx, req)
 }
 
 func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
-	return s.repo.DistributeHRFee(ctx, req)
+	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+		UserID: req.UserID,
+		ID:     req.RegistrationID,
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to get registration")
+		return err
+	}
+
+	err = s.repo.DistributeHRFee(ctx, req)
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to distribute hr fee")
+		return err
+	}
+
+	go func() {
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		registration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.RegistrationID,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get registration")
+			return
+		}
+
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
+			EntityID:   req.RegistrationID,
+			Type:       entity.ActivityLogTypeUpdate,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			UpdatedAt:  time.Now(),
+			UpdatedBy:  req.UserID,
+			Message:    "berhasil mendistribusikan biaya SDM",
+			Before:     oldRegistration,
+			After:      registration,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return nil
 }
 
 func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
-	return s.repo.UseHRfeeForLecturer(ctx, req)
+	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+		UserID: req.UserID,
+		ID:     req.RegistrationID,
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to get registration")
+		return err
+	}
+
+	err = s.repo.UseHRfeeForLecturer(ctx, req)
+	if err != nil {
+		log.Error().Err(err).
+			Any(entity.Payload, req).
+			Msgf("failed to use hr fee for lecturer")
+		return err
+	}
+
+	go func() {
+		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		registration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
+			UserID: req.UserID,
+			ID:     req.RegistrationID,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get registration")
+			return
+		}
+
+		err = s.activityLogRepo.CreateActivityLog(ctx, &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrations,
+			EntityID:   req.RegistrationID,
+			Type:       entity.ActivityLogTypeUpdate,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			UpdatedAt:  time.Now(),
+			UpdatedBy:  req.UserID,
+			Message:    "berhasil menggunakan biaya SDM untuk pengajar",
+			Before:     oldRegistration,
+			After:      registration,
+		})
+		if err != nil {
+			log.Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return nil
 }
 
 func (s *reportService) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.BulkUseHRfeeForLecturerReq) error {
