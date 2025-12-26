@@ -37,6 +37,10 @@ type Config struct {
 		JwtPrivateKeyWs string `env:"JWT_PRIVATE_KEY_WS"`
 		JwtWsExp        int    `env:"JWT_WS_EXP" env-default:"10"`     // 1 hour in  seconds
 		SharedLinkExp   int    `env:"SHARED_LINK_EXP" env-default:"5"` // in minutes
+		Metrics         struct {
+			BasicAuthUser string `env:"METRICS_BASIC_AUTH_USER"`
+			BasicAuthPass string `env:"METRICS_BASIC_AUTH_PASS"`
+		}
 	}
 	FrontendURL struct {
 		ClientBaseURL     string `env:"FRONTEND_CLIENT_BASE_URL" env-default:"http://localhost:5000"`
