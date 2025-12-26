@@ -57,11 +57,11 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			CASE
 				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
 				WHEN pr.hr_fee = 0 THEN 'full'
-				WHEN pr.mentor_detail_fee_used IS NULL THEN NULL
+				WHEN pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0 THEN NULL
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
+				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
@@ -399,11 +399,11 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			CASE
 				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
 				WHEN pr.hr_fee = 0 THEN 'full'
-				WHEN pr.mentor_detail_fee_used IS NULL THEN NULL
+				WHEN pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0 THEN NULL
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
+				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
