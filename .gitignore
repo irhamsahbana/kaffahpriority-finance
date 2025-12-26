@@ -13,6 +13,7 @@ backups
 logs
 storage
 tmp
+volumes
 
 # executables to ignore
 main.exe
