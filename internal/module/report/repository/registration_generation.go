@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/entity"
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
@@ -85,7 +86,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	queryStudents := r.db.Rebind(queryStudents)
 	queryInsertStudents := r.db.Rebind(queryInsertStudents)
 
-	for _, templateId := range templateIds {
+	for i, templateId := range templateIds {
 		// Ambil data dari template untuk pengecekan
 		var studentId, programId string
 		var lecturerId *string
@@ -106,6 +107,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// if registration already exists, skip this template
 		if err == nil {
+			fmt.Printf("[INFO] %d/%d - Template %s: SKIPPED (Already exists for %s - %s)\n", i+1, len(templateIds), templateId, studentName, programName)
 			continue
 		} else if err != sql.ErrNoRows {
 			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to check if registration exists", fnName)
@@ -113,6 +115,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		}
 
 		// if registration does not exist, proceed to insert
+		fmt.Printf("[INFO] %d/%d - Template %s: GENERATING...\n", i+1, len(templateIds), templateId)
 
 		// insert into program_registrations
 		programRegistrationId := ulid.Make().String()
@@ -155,6 +158,7 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		return err
 	}
 
+	fmt.Printf("[SUCCESS] %s - Finished generating reports.\n", fnName)
 	return nil
 }
 
@@ -171,7 +175,7 @@ WITH template AS (
 		p.acquisition_rights,
 		p.full_fee,
 		prt.program_fee,
-		prt.program_fee_per_meeting,
+		p.price_per_meeting AS program_fee_per_meeting,
 		prt.administration_fee,
 		prt.foreign_learning_fee,
 		prt.night_learning_fee,
@@ -320,7 +324,7 @@ var queryCheckRegistrationExists = `
 		)
 		AND pr.student_id = ?
 		AND pr.program_id = ?
-		AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM NOW() AT TIME ZONE ?)
-		AND EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(MONTH FROM NOW() AT TIME ZONE ?)
+        AND pr.allocated_at AT TIME ZONE ? >= date_trunc('month', NOW() AT TIME ZONE ?)
+        AND pr.allocated_at AT TIME ZONE ? < date_trunc('month', NOW() AT TIME ZONE ?) + interval '1 month'
 	LIMIT 1
 `

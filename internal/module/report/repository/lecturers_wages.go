@@ -558,6 +558,15 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 		args = append(args, req.IsFullFee.Val)
 	}
 
+	if req.ProgramFeePerMeeting.Present {
+		if req.ProgramFeePerMeeting.Valid {
+			queryParts = append(queryParts, "program_fee_per_meeting = ?")
+			args = append(args, req.ProgramFeePerMeeting.Val)
+		} else {
+			queryParts = append(queryParts, "program_fee_per_meeting = NULL")
+		}
+	}
+
 	if req.Notes.Present {
 		if req.Notes.Valid {
 			queryParts = append(queryParts, "notes_for_lecturer_wage = ?")
@@ -642,6 +651,15 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 		if req.IsFullFee.Present && req.IsFullFee.Valid {
 			queryParts = append(queryParts, "is_full_fee = ?")
 			args = append(args, req.IsFullFee.Val)
+		}
+
+		if req.ProgramFeePerMeeting.Present {
+			if req.ProgramFeePerMeeting.Valid {
+				queryParts = append(queryParts, "program_fee_per_meeting = ?")
+				args = append(args, req.ProgramFeePerMeeting.Val)
+			} else {
+				queryParts = append(queryParts, "program_fee_per_meeting = NULL")
+			}
 		}
 
 		if len(queryParts) == 0 {
