@@ -168,7 +168,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			program_name = (SELECT name FROM programs WHERE id = ?),
 			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
 			full_fee = (SELECT full_fee FROM programs WHERE id = ?),
-			program_acquisition_rights = (SELECT acquisition_rights FROM programs WHERE id = ?),
+			program_acquisition_rights = (CASE WHEN ? THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM programs WHERE id = ?)),
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -230,7 +230,7 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
-		req.ProgramId, req.ProgramId, req.ProgramId, req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		req.ProgramId, req.ProgramId, req.ProgramId, req.IsITP, req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee,
 		req.HRFee,
 		req.HRFee, req.IsITP, req.ProgramId, // calculate mentor_detail_fee

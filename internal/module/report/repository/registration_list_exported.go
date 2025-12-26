@@ -88,7 +88,11 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			CASE
 				WHEN pr.program_meetings > 0 THEN TRUE
 				ELSE FALSE
-			END AS is_started
+			END AS is_started,
+			CASE
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+			END AS acquisition_rights
 		FROM
 			program_registrations pr
 		LEFT JOIN

@@ -38,8 +38,8 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			pr.night_learning_fee,
 			pr.is_itp,
 			CASE
-				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-				ELSE pr.program_acquisition_rights
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 			END AS acquisition_rights,
 			pr.program_meetings,
 			CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
