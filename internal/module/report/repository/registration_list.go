@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
 
@@ -64,6 +65,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
+			pr.mentor_detail_fee_used,
 			CASE
 				WHEN pr.lecturer_id IS NOT NULL THEN TRUE
 				ELSE FALSE
@@ -220,6 +222,11 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		} else if req.MentorFeeAllocationStatus == "partial" {
 			query += ` AND (COALESCE(pr.mentor_detail_fee, 0) - COALESCE(pr.mentor_detail_fee_used, 0)) > 0`
 		}
+	}
+
+	if len(req.IDs) > 0 {
+		query += ` AND pr.id = ANY(?)`
+		args = append(args, pq.Array(req.IDs))
 	}
 
 	if req.LecturerID != "" {

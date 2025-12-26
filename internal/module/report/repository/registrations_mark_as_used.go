@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.RegistrationsMarkAsUsedReq) error {
+func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.RegistrationsMarkAsUsedReq) ([]string, error) {
 	fnName := "repo::RegistrationsMarkAsUsed"
 
 	query := `
@@ -31,12 +31,14 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
                 AND TO_CHAR(COALESCE(child.allocated_at, parent.allocated_at) AT TIME ZONE 'Asia/Makassar', 'YYYY-MM') = ?
         ) as sub
         WHERE pr.id = sub.id
+		RETURNING pr.id
     `
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth); err != nil {
+	var ids []string
+	if err := r.db.SelectContext(ctx, &ids, r.db.Rebind(query), req.AllocatedMonth); err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return ids, nil
 }
