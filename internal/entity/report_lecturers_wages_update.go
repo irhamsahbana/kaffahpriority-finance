@@ -16,8 +16,9 @@ type UpdateLecturersWageReq struct {
 	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
 	FL              gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
 	NL              gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
-	IsFullFee       gonull.Nullable[bool]            `json:"is_full_fee"`
-	Notes           gonull.Nullable[string]          `json:"notes"`
+	IsFullFee             gonull.Nullable[bool]            `json:"is_full_fee"`
+	ProgramFeePerMeeting  gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
+	Notes                 gonull.Nullable[string]          `json:"notes"`
 }
 
 func (r *UpdateLecturersWageReq) Validate() error {
@@ -47,6 +48,10 @@ func (r *UpdateLecturersWageReq) Validate() error {
 		err.Add("notes", "notes must be less than or equal to 255 characters")
 	}
 
+	if r.ProgramFeePerMeeting.Present && r.ProgramFeePerMeeting.Val.LessThan(decimal.Zero) {
+		err.Add("program_fee_per_meeting", "program_fee_per_meeting must be greater than or equal to 0")
+	}
+
 	if err.HasErrors() {
 		return err
 	}
@@ -67,5 +72,6 @@ type UpdateLecturersWageResp struct {
 	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
 	FL              gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
 	NL              gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
-	IsFullFee       gonull.Nullable[bool]            `json:"is_full_fee"`
+	IsFullFee            gonull.Nullable[bool]            `json:"is_full_fee"`
+	ProgramFeePerMeeting gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
 }

@@ -38,10 +38,8 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 			pr.night_learning_fee,
 			pr.is_itp,
 			CASE
-				WHEN pr.program_acquisition_rights > 10 THEN 0
-				WHEN pr.hr_fee = 0 THEN 0
-				WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-				ELSE pr.program_acquisition_rights
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 			END AS acquisition_rights,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,

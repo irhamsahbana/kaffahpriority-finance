@@ -112,19 +112,8 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 					END
 			END AS is_started,
 			CASE
-				WHEN pr.parent_id IS NOT NULL
-				THEN
-					CASE
-						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
-						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
-					END
-				ELSE
-					CASE
-						WHEN pr.program_acquisition_rights > 10 THEN 0
-						WHEN pr.hr_fee = 0 THEN 0
-						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
-						ELSE pr.program_acquisition_rights
-					END
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 			END AS acquisition_rights
 		FROM
 			program_registrations pr

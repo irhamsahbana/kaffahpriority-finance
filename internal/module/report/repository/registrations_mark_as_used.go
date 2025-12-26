@@ -11,22 +11,29 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
 	fnName := "repo::RegistrationsMarkAsUsed"
 
 	query := `
-        UPDATE program_registrations
-            SET mentor_detail_fee_used = mentor_detail_fee,
-			updated_at = now()
-        WHERE
-            deleted_at IS NULL
-			AND mentor_detail_fee_used IS NULL
-			AND category = 'general'
-			AND is_paid = true
-			AND program_meetings > 0
-            AND allocated_at AT TIME ZONE 'Asia/Makassar' >=
-            (TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC')
-            AND allocated_at AT TIME ZONE 'Asia/Makassar' <
-            (TO_TIMESTAMP(?, 'YYYY-MM') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+        UPDATE program_registrations pr
+        SET 
+            mentor_detail_fee_used = pr.mentor_detail_fee,
+            updated_at = now()
+        FROM (
+            SELECT 
+                child.id
+            FROM 
+                program_registrations child
+            LEFT JOIN 
+                program_registrations parent ON child.parent_id = parent.id
+            WHERE 
+                child.deleted_at IS NULL
+                AND child.mentor_detail_fee_used IS NULL
+                AND child.is_paid = true
+                AND child.category IN ('general', 'additional')
+                AND COALESCE(child.program_meetings, parent.program_meetings, 0) > 0
+                AND TO_CHAR(COALESCE(child.allocated_at, parent.allocated_at) AT TIME ZONE 'Asia/Makassar', 'YYYY-MM') = ?
+        ) as sub
+        WHERE pr.id = sub.id
     `
 
-	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth, req.AllocatedMonth); err != nil {
+	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.AllocatedMonth); err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)
 		return err
 	}
