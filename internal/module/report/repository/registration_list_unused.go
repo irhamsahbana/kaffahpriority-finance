@@ -50,7 +50,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.hr_detail_fee AS hr_fee_for_hr,
 			pr.mentor_detail_fee - pr.mentor_detail_fee_used AS hr_fee_for_mentor_remaining,
 			CASE
-				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
+				WHEN pr.mentor_detail_fee_used >= pr.mentor_detail_fee THEN 'full'
 				WHEN pr.hr_fee = 0 THEN 'full'
 				WHEN pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0 THEN NULL
 				ELSE 'partial'
