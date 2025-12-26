@@ -249,7 +249,7 @@ SELECT
 	(SELECT program_fee_per_meeting FROM template),
 	(SELECT full_fee FROM template),
 	0,
-	(SELECT acquisition_rights FROM template),
+	(CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)),
 	(SELECT administration_fee FROM template),
 	(SELECT foreign_learning_fee FROM template),
 	(SELECT night_learning_fee FROM template),

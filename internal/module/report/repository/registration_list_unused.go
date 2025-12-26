@@ -50,13 +50,13 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.hr_detail_fee AS hr_fee_for_hr,
 			pr.mentor_detail_fee - pr.mentor_detail_fee_used AS hr_fee_for_mentor_remaining,
 			CASE
-				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
+				WHEN pr.mentor_detail_fee_used >= pr.mentor_detail_fee THEN 'full'
 				WHEN pr.hr_fee = 0 THEN 'full'
-				WHEN pr.mentor_detail_fee_used IS NULL THEN NULL
+				WHEN pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0 THEN NULL
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
+				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
@@ -112,19 +112,8 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 					END
 			END AS is_started,
 			CASE
-				WHEN pr.parent_id IS NOT NULL
-				THEN
-					CASE
-						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
-						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
-					END
-				ELSE
-					CASE
-						WHEN pr.program_acquisition_rights > 10 THEN 0
-						WHEN pr.hr_fee = 0 THEN 0
-						WHEN pr.is_itp THEN 2 * pr.program_acquisition_rights
-						ELSE pr.program_acquisition_rights
-					END
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 			END AS acquisition_rights
 		FROM
 			program_registrations pr
@@ -155,7 +144,7 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			ON parent.student_id = parent_student.id
 		WHERE
 			pr.deleted_at IS NULL
-			AND pr.mentor_detail_fee_used IS NULL
+			AND (pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0)
 			AND pr.hr_fee > 0
 			AND
 			parent.deleted_at IS NULL

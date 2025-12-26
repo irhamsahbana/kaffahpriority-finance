@@ -45,11 +45,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.is_paid AS has_payment,
 			(
 				CASE
-					WHEN pr.program_acquisition_rights > 10 THEN 0
-					WHEN pr.hr_fee = 0 THEN 0
 					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-					ELSE pr.program_acquisition_rights
+					WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+					ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 				END
 				+
 				COALESCE((
@@ -282,10 +280,9 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			COALESCE(
 				SUM(
 					CASE
-						WHEN pr.program_acquisition_rights > 10 THEN 0
 						WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-						WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-						ELSE pr.program_acquisition_rights
+						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 					END
 				),
 				0
@@ -440,10 +437,9 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 				COALESCE(
 					SUM(
 						CASE
-							WHEN pr.program_acquisition_rights > 10 THEN 0
 							WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-							WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-							ELSE pr.program_acquisition_rights
+							WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+							ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 						END
 					),
 					0
@@ -558,6 +554,15 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 		args = append(args, req.IsFullFee.Val)
 	}
 
+	if req.ProgramFeePerMeeting.Present {
+		if req.ProgramFeePerMeeting.Valid {
+			queryParts = append(queryParts, "program_fee_per_meeting = ?")
+			args = append(args, req.ProgramFeePerMeeting.Val)
+		} else {
+			queryParts = append(queryParts, "program_fee_per_meeting = NULL")
+		}
+	}
+
 	if req.Notes.Present {
 		if req.Notes.Valid {
 			queryParts = append(queryParts, "notes_for_lecturer_wage = ?")
@@ -644,6 +649,15 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 			args = append(args, req.IsFullFee.Val)
 		}
 
+		if req.ProgramFeePerMeeting.Present {
+			if req.ProgramFeePerMeeting.Valid {
+				queryParts = append(queryParts, "program_fee_per_meeting = ?")
+				args = append(args, req.ProgramFeePerMeeting.Val)
+			} else {
+				queryParts = append(queryParts, "program_fee_per_meeting = NULL")
+			}
+		}
+
 		if len(queryParts) == 0 {
 			continue
 		}
@@ -721,7 +735,7 @@ func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.T
 	query := `
 		UPDATE program_registrations
 		SET
-			mentor_detail_fee_used = ?,
+			mentor_detail_fee_used = LEAST(COALESCE(?, 0), COALESCE(mentor_detail_fee, 0)),
 			notes_for_fund_distributions = NULL
 		WHERE
 			id = ?
@@ -769,10 +783,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 			sm.name AS student_manager_name,
 			SUM(
 				CASE
-					WHEN pr.program_acquisition_rights > 10 THEN 0
 					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-					ELSE pr.program_acquisition_rights
+					WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+					ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 				END
 			) AS total_acquisition_rights
 		FROM
@@ -849,10 +862,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 			am.name AS academic_manager_name,
 			SUM(
 				CASE
-					WHEN pr.program_acquisition_rights > 10 THEN 0
 					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-					WHEN pr.is_itp THEN pr.program_acquisition_rights * 2
-					ELSE pr.program_acquisition_rights
+					WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+					ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 				END
 			) AS total_acquisition_rights
 		FROM

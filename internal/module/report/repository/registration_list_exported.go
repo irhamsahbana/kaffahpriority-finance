@@ -45,11 +45,11 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			pr.mentor_detail_fee - pr.mentor_detail_fee_used AS hr_fee_for_mentor_remaining,
 			CASE
 				WHEN pr.mentor_detail_fee_used = pr.mentor_detail_fee THEN 'full'
-				WHEN pr.mentor_detail_fee_used IS NULL THEN NULL
+				WHEN pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0 THEN NULL
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
+				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
@@ -88,7 +88,11 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			CASE
 				WHEN pr.program_meetings > 0 THEN TRUE
 				ELSE FALSE
-			END AS is_started
+			END AS is_started,
+			CASE
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+			END AS acquisition_rights
 		FROM
 			program_registrations pr
 		LEFT JOIN

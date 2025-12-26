@@ -72,7 +72,10 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			m.name AS marketer_name,
 			s.name AS student_name,
 			p.name AS program_name,
-			pr.program_acquisition_rights
+			CASE
+				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+			END AS program_acquisition_rights
 		FROM
 			program_registrations pr
 		LEFT JOIN
