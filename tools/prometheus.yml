@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 1s # Default is every 15 seconds for production
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9191"]
+        labels:
+          app_type: tools
+          app_name: prometheus
+
+  - job_name: "kaffah_finance_app"
+    scrape_interval: 1s
+    static_configs:
+      - targets: ["host.docker.internal:3001"]
+        labels:
+          app_type: http_server
+          app_name: kaffah_finance
+    basic_auth:
+      username: <METRICS_BASIC_AUTH_USER>
+      password: <METRICS_BASIC_AUTH_PASS>

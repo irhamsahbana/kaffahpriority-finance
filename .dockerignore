@@ -35,6 +35,7 @@ backups/
 
 # Storage
 storage/
+volumes/
 
 # Documentation
 docs/
