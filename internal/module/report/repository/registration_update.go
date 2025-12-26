@@ -43,16 +43,18 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 
 	// Get current registration data to check if lecturer_id, program_id, or student_id is being changed
 	type currentRegistration struct {
-		LecturerId *string `db:"lecturer_id"`
-		ProgramId  string  `db:"program_id"`
-		StudentId  string  `db:"student_id"`
+		LecturerId  *string   `db:"lecturer_id"`
+		ProgramId   string    `db:"program_id"`
+		StudentId   string    `db:"student_id"`
+		AllocatedAt time.Time `db:"allocated_at"`
 	}
 	var currentReg currentRegistration
 	queryCurrent := `
 		SELECT
 			lecturer_id,
 			program_id,
-			student_id
+			student_id,
+			allocated_at
 		FROM
 			program_registrations
 		WHERE
@@ -135,6 +137,28 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	// 	}
 	// }
 
+	// specify timezone
+	loc, err := time.LoadLocation("Asia/Makassar")
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to load location", fnName)
+		return nil, err
+	}
+
+	// Check if reset is needed
+	lecturerChanged := false
+	if (currentReg.LecturerId == nil && req.LecturerId != nil) ||
+		(currentReg.LecturerId != nil && req.LecturerId == nil) ||
+		(currentReg.LecturerId != nil && req.LecturerId != nil && *currentReg.LecturerId != *req.LecturerId) {
+		lecturerChanged = true
+	}
+
+	// Compare months (YYYY-MM)
+	currentMonth := currentReg.AllocatedAt.In(loc).Format("2006-01")
+	newMonth := req.AllocatedAt[0:7]
+	monthChanged := currentMonth != newMonth
+
+	shouldResetFees := lecturerChanged || monthChanged
+
 	query := `
 		UPDATE program_registrations SET
 			program_id = ?,
@@ -179,18 +203,13 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			is_itp = ?,
 			paid_at = ?,
 			allocated_at = ?,
+			mentor_detail_fee_used = CASE WHEN ? THEN NULL ELSE mentor_detail_fee_used END,
+			notes_for_fund_distributions = CASE WHEN ? THEN NULL ELSE notes_for_fund_distributions END,
 			updated_at = NOW()
 		WHERE
-			id = ?
+			(id = ? OR parent_id = ?)
 			AND deleted_at IS NULL
 	`
-
-	// specify timezone
-	loc, err := time.LoadLocation("Asia/Makassar")
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to load location", fnName)
-		return nil, err
-	}
 
 	// Combine date and time strings, then parse as timestamp
 	paidAtDateTime := req.PaidAt + " " + req.PaidAtTime
@@ -220,7 +239,10 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes, req.NotesForCategory,
 		req.IsITP,
 		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),
-		req.ID,
+		shouldResetFees, // reset mentor_detail_fee_used
+		shouldResetFees, // reset notes_for_fund_distributions
+		req.ID,          // for id = ?
+		req.ID,          // for parent_id = ?
 	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update data", fnName)

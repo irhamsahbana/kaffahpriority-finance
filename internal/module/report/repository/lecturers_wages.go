@@ -721,7 +721,7 @@ func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.T
 	query := `
 		UPDATE program_registrations
 		SET
-			mentor_detail_fee_used = ?,
+			mentor_detail_fee_used = LEAST(COALESCE(?, 0), COALESCE(mentor_detail_fee, 0)),
 			notes_for_fund_distributions = NULL
 		WHERE
 			id = ?

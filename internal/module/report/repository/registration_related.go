@@ -37,9 +37,11 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 			pr.mentor_detail_fee,
 			pr.mentor_detail_fee_used,
 			pr.paid_at,
-			pr.allocated_at
+			COALESCE(pr.allocated_at, p_p.allocated_at) as allocated_at
 		FROM
 			program_registrations pr
+		LEFT JOIN
+			program_registrations p_p ON pr.parent_id = p_p.id
 		WHERE
 			pr.deleted_at IS NULL
 			AND
@@ -51,7 +53,7 @@ func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.Ge
 			AND
 			pr.mentor_detail_fee > 0
 		ORDER BY
-			pr.allocated_at ASC
+			allocated_at ASC
 	`
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.RegistrationID)
