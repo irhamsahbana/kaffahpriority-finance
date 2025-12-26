@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"codebase-app/internal/infrastructure"
+	"codebase-app/internal/infrastructure/metrics"
 	"strconv"
 	"time"
 
@@ -26,11 +26,11 @@ func Prometheus() fiber.Handler {
 			status   = strconv.Itoa(c.Response().StatusCode())
 		)
 
-		infrastructure.HttpRequestsTotal.
+		metrics.HttpRequestsTotal.
 			WithLabelValues(method, path, status).
 			Inc()
 
-		infrastructure.HttpRequestDuration.
+		metrics.HttpRequestDuration.
 			WithLabelValues(method, path).
 			Observe(duration)
 
