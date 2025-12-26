@@ -17,10 +17,11 @@ type GetRegistrationsReq struct {
 	IsITP          string `query:"is_itp" validate:"omitempty,oneof=true false"`
 	IsStarted      string `query:"is_started" validate:"omitempty,oneof=true false"`
 
-	MarketerID string `query:"marketer_id" validate:"omitempty,ulid"`
-	LecturerID string `query:"lecturer_id" validate:"omitempty,ulid"`
-	StudentID  string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramID  string `query:"program_id" validate:"omitempty,ulid"`
+	IDs        []string `query:"ids" validate:"omitempty,dive,ulid"`
+	MarketerID string   `query:"marketer_id" validate:"omitempty,ulid"`
+	LecturerID string   `query:"lecturer_id" validate:"omitempty,ulid"`
+	StudentID  string   `query:"student_id" validate:"omitempty,ulid"`
+	ProgramID  string   `query:"program_id" validate:"omitempty,ulid"`
 
 	// mentor_detail_fee_used
 	IsLecturerFeeUsed          string `query:"is_lecturer_fee_used" validate:"omitempty,oneof=true false"`
@@ -112,6 +113,7 @@ type RegisItem struct {
 	HRFeeForMentorRemaining    *float64     `json:"hr_fee_for_mentor_remaining" db:"hr_fee_for_mentor_remaining"`
 	HRFeeForMentorStatus       *string      `json:"hr_fee_for_mentor_status" db:"hr_fee_for_mentor_status"`
 	IsMentorDetailFeeUsed      bool         `json:"is_mentor_detail_fee_used" db:"is_mentor_detail_fee_used"`
+	MentorDetailFeeUsed        *float64     `json:"mentor_detail_fee_used" db:"mentor_detail_fee_used"`
 	MarketerGiftsFee           float64      `json:"marketer_gifts_fee" db:"marketer_gifts_fee"`
 	ClosingFeeForOffice        *float64     `json:"closing_fee_for_office" db:"closing_fee_for_office"`
 	ClosingFeeForReward        *float64     `json:"closing_fee_for_reward" db:"closing_fee_for_reward"`
