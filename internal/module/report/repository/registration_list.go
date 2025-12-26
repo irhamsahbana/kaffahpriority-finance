@@ -464,7 +464,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			pr.deleted_at IS NULL
 			AND pr.hr_fee > 0
 			AND pr.is_paid = TRUE
-			AND pr.mentor_detail_fee_used IS NULL
+			AND (pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0)
 			AND pr.paid_at AT TIME ZONE ? NOT BETWEEN
 				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC') AND
 				(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + time '23:59:59.999999')
