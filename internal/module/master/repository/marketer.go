@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *masterRepo) GetMarketers(ctx context.Context, req *entity.GetMarketersReq) (*entity.GetMarketersResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetMarketers")
+	defer span.End()
+
 	fnName := "repo::GetMarketers"
 	type dao struct {
 		TotalData int `db:"total_data"`

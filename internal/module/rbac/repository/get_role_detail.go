@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *rbacRepo) GetRoleDetail(ctx context.Context, req *entity.GetRoleDetailReq) (*entity.GetRoleDetailResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetRoleDetail")
+	defer span.End()
+
 	fnName := "repo::GetRoleDetail"
 	var (
 		resp entity.GetRoleDetailResp

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 
@@ -8,6 +9,9 @@ import (
 )
 
 func (r *rbacRepo) IsHasPermission(ctx context.Context, userId, permission string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.IsHasPermission")
+	defer span.End()
+
 	fnName := "repo::IsHasPermission"
 	query := `
 		SELECT EXISTS (

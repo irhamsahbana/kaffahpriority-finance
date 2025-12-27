@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *rbacRepo) GetPermissions(ctx context.Context, req *entity.GetPermissionsReq) (*entity.GetPermissionsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetPermissions")
+	defer span.End()
+
 	fnName := "repo::GetPermissions"
 	var (
 		resp entity.GetPermissionsResp

@@ -3,6 +3,7 @@ package repository
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	ports "codebase-app/internal/ports/module/activity_log"
 	"context"
 	"database/sql"
@@ -25,6 +26,9 @@ func NewActivityLogRepository() *activityLogRepo {
 }
 
 func (r *activityLogRepo) CreateActivityLog(ctx context.Context, req *entity.ActivityLog) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateActivityLog")
+	defer span.End()
+
 	fnName := "repo::CreateActivityLog"
 
 	queryInsert := `
@@ -55,6 +59,9 @@ func (r *activityLogRepo) CreateActivityLog(ctx context.Context, req *entity.Act
 }
 
 func (r *activityLogRepo) GetActivityLog(ctx context.Context, req *entity.GetActivityLogReq) ([]entity.ActivityLog, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetActivityLog")
+	defer span.End()
+
 	fnName := "repo::GetActivityLog"
 
 	query := `

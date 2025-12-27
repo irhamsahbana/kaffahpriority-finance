@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*entity.GetUsersResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetUsers")
+	defer span.End()
+
 	fnName := "repo::GetUsers"
 	type dao struct {
 		TotalData int `db:"total_data"`

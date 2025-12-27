@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *rbacRepo) UpdateRole(ctx context.Context, req *entity.UpdateRoleReq) (*entity.UpdateRoleResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateRole")
+	defer span.End()
+
 	fnName := "repo::UpdateRole"
 	var resp entity.UpdateRoleResp
 	resp.ID = req.ID

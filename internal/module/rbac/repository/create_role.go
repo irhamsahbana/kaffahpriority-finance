@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -9,6 +10,9 @@ import (
 )
 
 func (r *rbacRepo) CreateRole(ctx context.Context, req *entity.CreateRoleReq) (*entity.CreateRoleResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateRole")
+	defer span.End()
+
 	fnName := "repo::CreateRole"
 	var resp entity.CreateRoleResp
 	resp.ID = ulid.Make().String()

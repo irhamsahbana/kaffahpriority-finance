@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	m "codebase-app/internal/middleware"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
@@ -12,12 +13,15 @@ import (
 )
 
 func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.getStudentManagers")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::getStudentManagers"
-		req    = new(entity.GetStudentManagersReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+
+		req = new(entity.GetStudentManagersReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -45,8 +49,10 @@ func (h *masterHandler) getStudentManagers(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.getStudentManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::getStudentManager"
 		req    = new(entity.GetStudentManagerReq)
 		v      = adapter.Adapters.Validator
@@ -72,8 +78,10 @@ func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.createStudentManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::createStudentManager"
 		req    = new(entity.CreateStudentManagerReq)
 		v      = adapter.Adapters.Validator
@@ -103,8 +111,10 @@ func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.updateStudentManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::updateStudentManager"
 		req    = new(entity.UpdateStudentManagerReq)
 		v      = adapter.Adapters.Validator
@@ -135,8 +145,10 @@ func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.deleteStudentManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::deleteStudentManager"
 		req    = new(entity.DeleteStudentManagerReq)
 		v      = adapter.Adapters.Validator
@@ -162,8 +174,10 @@ func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.getAcademicManagers")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::getAcademicManagers"
 		req    = new(entity.GetAcademicManagersReq)
 		v      = adapter.Adapters.Validator
@@ -195,8 +209,10 @@ func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.getAcademicManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::getAcademicManager"
 		req    = new(entity.GetAcademicManagerReq)
 		v      = adapter.Adapters.Validator
@@ -222,8 +238,10 @@ func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.createAcademicManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::createAcademicManager"
 		req    = new(entity.CreateAcademicManagerReq)
 		v      = adapter.Adapters.Validator
@@ -285,8 +303,10 @@ func (h *masterHandler) updateAcademicManager(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) deleteAcademicManager(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "handler.deleteAcademicManager")
+	defer span.End()
+
 	var (
-		ctx    = c.UserContext()
 		fnName = "handler::deleteAcademicManager"
 		req    = new(entity.DeleteAcademicManagerReq)
 		v      = adapter.Adapters.Validator

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersReq) (*entity.GetLecturersResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturers")
+	defer span.End()
+
 	fnName := "repo::GetLecturers"
 	type dao struct {
 		TotalData int `db:"total_data"`
@@ -71,6 +75,9 @@ func (r *masterRepo) GetLecturers(ctx context.Context, req *entity.GetLecturersR
 }
 
 func (r *masterRepo) CreateLecturer(ctx context.Context, req *entity.CreateLecturerReq) (*entity.CreateLecturerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateLecturer")
+	defer span.End()
+
 	fnName := "repo::CreateLecturer"
 	query := `
 		INSERT INTO lecturers (

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -12,6 +13,9 @@ import (
 )
 
 func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq) (*entity.GetStudentsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetStudents")
+	defer span.End()
+
 	fnName := "repo::GetStudents"
 	type dao struct {
 		TotalData int `db:"total_data"`

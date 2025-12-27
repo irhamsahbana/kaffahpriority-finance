@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"fmt"
 	"strings"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*entity.UpdateUserResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateUser")
+	defer span.End()
+
 	fnName := "repo::UpdateUser"
 	var (
 		resp       entity.UpdateUserResp
