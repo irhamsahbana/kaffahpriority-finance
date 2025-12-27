@@ -25,6 +25,18 @@ services:
     networks:
       - kaffah_network
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger-kaffah
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "17686:16686" # Frontend UI
+      - "5317:4317"   # OTLP gRPC
+      - "5318:4318"   # OTLP HTTP
+    networks:
+      - kaffah_network
+
   grafana:
     image: grafana/grafana:12.3
     container_name: grafana-kaffah

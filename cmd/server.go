@@ -4,9 +4,11 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/internal/middleware"
 	"codebase-app/internal/route"
 	"codebase-app/pkg/validator"
+	"context"
 	"flag"
 	"os"
 	"os/signal"
@@ -47,8 +49,26 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	app := fiber.New()
 	app.Use(middleware.Prometheus())
 	infrastructure.InitializeMetrics(app)
-	infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
+	logWriter := infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
 	infrastructure.InitializeAccessLogger(envs.App.Environtment, envs.App.LogFileAccess, logLevel)
+
+	// Initialize Tracing
+	tp, err := tracing.InitTracer(&tracing.Config{
+		Endpoint:   envs.Instrumentation.OtlpEndpoint,
+		AppName:    envs.App.Name,
+		AppVersion: envs.App.Version,
+		AppEnv:     envs.App.Environtment,
+		LogWriter:  logWriter,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialize tracer")
+	} else {
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Error shutting down tracer provider")
+			}
+		}()
+	}
 
 	// Application Local Storage
 	err = os.MkdirAll(envs.App.LocalStoragePublicPath, os.ModePerm)
@@ -78,6 +98,7 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 
 	// Access log middleware
 	app.Use(middleware.RequestID)
+	app.Use(middleware.WithTracing(envs.App.Name))
 	app.Use(middleware.WithAccessLog(infrastructure.AccessLogger))
 	app.Use(middleware.WithAppLogger(log.Logger))
 	// End Application Middlewares

@@ -2,6 +2,8 @@ package validator
 
 import (
 	"codebase-app/internal/adapter"
+	"codebase-app/internal/infrastructure/tracing"
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -75,6 +77,9 @@ func NewValidator() *Validator {
 }
 
 func (v *Validator) Validate(i any) error {
+	_, span := tracing.StartSpan(context.Background(), "validator.Validate")
+	defer span.End()
+
 	return v.validator.Struct(i)
 }
 

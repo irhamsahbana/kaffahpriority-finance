@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"sort"
 	"strings"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.GetExportedRegistrationsReq) (*entity.GetExportedRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedRegistrations")
+	defer span.End()
+
 	var (
 		fnName          = "repo::GetExportedRegistrations"
 		resp            = new(entity.GetExportedRegistrationsResp)

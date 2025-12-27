@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 
@@ -11,6 +12,8 @@ import (
 )
 
 func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateTemplate")
+	defer span.End()
 	fnName := "repo::CreateTemplate"
 
 	tx, err := r.db.BeginTxx(ctx, nil)

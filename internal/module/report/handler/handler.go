@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	m "codebase-app/internal/middleware"
 	activityLogRepo "codebase-app/internal/module/activity_log/repository"
 	"codebase-app/internal/module/report/repository"
@@ -94,12 +95,13 @@ func (h *reportHandler) Register(router fiber.Router) {
 
 func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getSummaries"
-		req    = new(entity.GetSummariesReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getSummaries")
+		fnName    = "handler::getSummaries"
+		req       = new(entity.GetSummariesReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 
@@ -133,12 +135,13 @@ func (h *reportHandler) getSummaries(c *fiber.Ctx) error {
 
 func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getSummariesForCFO2"
-		req    = new(entity.GetSummariesReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getSummariesForCFO2")
+		fnName    = "handler::getSummariesForCFO2"
+		req       = new(entity.GetSummariesReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 
@@ -166,12 +169,13 @@ func (h *reportHandler) getSummariesForCFO2(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateRegistrationsPaidAt"
-		req    = new(entity.UpdateRegisPaidAtReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateRegistrationsPaidAt")
+		fnName    = "handler::updateRegistrationsPaidAt"
+		req       = new(entity.UpdateRegisPaidAtReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -197,12 +201,13 @@ func (h *reportHandler) updateRegistrationsPaidAt(c *fiber.Ctx) error {
 
 func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getExportedRegistrations"
-		req    = new(entity.GetExportedRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getExportedRegistrations")
+		fnName    = "handler::getExportedRegistrations"
+		req       = new(entity.GetExportedRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -242,12 +247,13 @@ func (h *reportHandler) getExportedRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) createAdditionalRegistration(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::createAdditionalRegistration"
-		req    = new(entity.CreateAdditionalRegistrationReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.createAdditionalRegistration")
+		fnName    = "handler::createAdditionalRegistration"
+		req       = new(entity.CreateAdditionalRegistrationReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -274,12 +280,13 @@ func (h *reportHandler) createAdditionalRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getExportedRegistrationsForCFO2Monthly"
-		req    = new(entity.GetExportedRegistrationsForCFO2MonthlyReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getExportedRegistrationsForCFO2Monthly")
+		fnName    = "handler::getExportedRegistrationsForCFO2Monthly"
+		req       = new(entity.GetExportedRegistrationsForCFO2MonthlyReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -319,12 +326,13 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Monthly(c *fiber.Ctx) err
 
 func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getExportedRegistrationsForCFO2Yearly"
-		req    = new(entity.GetExportedRegistrationsForCFO2YearlyReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getExportedRegistrationsForCFO2Yearly")
+		fnName    = "handler::getExportedRegistrationsForCFO2Yearly"
+		req       = new(entity.GetExportedRegistrationsForCFO2YearlyReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -361,12 +369,13 @@ func (h *reportHandler) getExportedRegistrationsForCFO2Yearly(c *fiber.Ctx) erro
 
 func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getExportedRegistrationsForWageRecapMonthly"
-		req    = new(entity.GetExportedRegistrationsForWageRecapMonthlyReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getExportedRegistrationsForWageRecapMonthly")
+		fnName    = "handler::getExportedRegistrationsForWageRecapMonthly"
+		req       = new(entity.GetExportedRegistrationsForWageRecapMonthlyReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -405,12 +414,13 @@ func (h *reportHandler) getExportedRegistrationsForWageRecapMonthly(c *fiber.Ctx
 
 func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getRegistration"
-		req    = new(entity.GetRegistrationReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getRegistration")
+		fnName    = "handler::getRegistration"
+		req       = new(entity.GetRegistrationReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
@@ -432,12 +442,13 @@ func (h *reportHandler) getRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::deleteRegistration"
-		req    = new(entity.GetRegistrationReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.deleteRegistration")
+		fnName    = "handler::deleteRegistration"
+		req       = new(entity.GetRegistrationReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
@@ -459,12 +470,13 @@ func (h *reportHandler) deleteRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getLecturerPrograms"
-		req    = new(entity.GetLecturerProgramsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getLecturerPrograms")
+		fnName    = "handler::getLecturerPrograms"
+		req       = new(entity.GetLecturerProgramsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -491,12 +503,13 @@ func (h *reportHandler) getLecturerPrograms(c *fiber.Ctx) error {
 
 func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::hrDistributions"
-		req    = new(entity.HRDistributionReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.hrDistributions")
+		fnName    = "handler::hrDistributions"
+		req       = new(entity.HRDistributionReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -523,12 +536,13 @@ func (h *reportHandler) hrDistributions(c *fiber.Ctx) error {
 
 func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::lecturerDistributions"
-		req    = new(entity.UseHRfeeForLecturerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.lecturerDistributions")
+		fnName    = "handler::lecturerDistributions"
+		req       = new(entity.UseHRfeeForLecturerReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -561,12 +575,13 @@ func (h *reportHandler) lecturerDistributions(c *fiber.Ctx) error {
 
 func (h *reportHandler) bulkLecturerDistributions(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::bulkLecturerDistributions"
-		req    = new(entity.BulkUseHRfeeForLecturerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.bulkLecturerDistributions")
+		fnName    = "handler::bulkLecturerDistributions"
+		req       = new(entity.BulkUseHRfeeForLecturerReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -602,12 +617,13 @@ func (h *reportHandler) bulkLecturerDistributions(c *fiber.Ctx) error {
 
 func (h *reportHandler) getRelatedRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getRelatedRegistrations"
-		req    = new(entity.GetRelatedRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getRelatedRegistrations")
+		fnName    = "handler::getRelatedRegistrations"
+		req       = new(entity.GetRelatedRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.RegistrationID = c.Params("id")
@@ -629,12 +645,13 @@ func (h *reportHandler) getRelatedRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getRegistrationListPerLecturer"
-		req    = new(entity.GetRegistrationListPerLecturerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getRegistrationListPerLecturer")
+		fnName    = "handler::getRegistrationListPerLecturer"
+		req       = new(entity.GetRegistrationListPerLecturerReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -661,12 +678,13 @@ func (h *reportHandler) getRegistrationListPerLecturer(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getLecturerWages"
-		req    = new(entity.GetLecturersWagesReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getLecturerWages")
+		fnName    = "handler::getLecturerWages"
+		req       = new(entity.GetLecturersWagesReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -692,12 +710,13 @@ func (h *reportHandler) getLecturerWages(c *fiber.Ctx) error {
 }
 func (h *reportHandler) getExportedLecturersWages(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.GetExportedLecturersWagesReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
-		fnName = "handler::getExportedLecturerWages"
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getExportedLecturersWages")
+		req       = new(entity.GetExportedLecturersWagesReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
+		fnName    = "handler::getExportedLecturerWages"
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -735,11 +754,12 @@ func (h *reportHandler) getExportedLecturersWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) importLecturersWages(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.ImportLecturersWagesReq)
-		l      = m.GetLocals(c)
-		fnName = "handler::importLecturersWages"
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.importLecturersWages")
+		req       = new(entity.ImportLecturersWagesReq)
+		l         = m.GetLocals(c)
+		fnName    = "handler::importLecturersWages"
 	)
+	defer span.End()
 
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
@@ -767,12 +787,13 @@ func (h *reportHandler) importLecturersWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getLecturerWagesAggregate"
-		req    = new(entity.GetLecturersWagesAggregateReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getLecturerWagesAggregate")
+		fnName    = "handler::getLecturerWagesAggregate"
+		req       = new(entity.GetLecturersWagesAggregateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -799,12 +820,13 @@ func (h *reportHandler) getLecturerWagesAggregate(c *fiber.Ctx) error {
 
 func (h *reportHandler) getLecturerWagesAggregateYearly(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getLecturerWagesAggregateYearly"
-		req    = new(entity.GetLecturersWagesAggregateYearlyReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getLecturerWagesAggregateYearly")
+		fnName    = "handler::getLecturerWagesAggregateYearly"
+		req       = new(entity.GetLecturersWagesAggregateYearlyReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -831,12 +853,13 @@ func (h *reportHandler) getLecturerWagesAggregateYearly(c *fiber.Ctx) error {
 
 func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getAcquisitionRightsAggregate"
-		req    = new(entity.GetAcquisitionRightsAggregateReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getAcquisitionRightsAggregate")
+		fnName    = "handler::getAcquisitionRightsAggregate"
+		req       = new(entity.GetAcquisitionRightsAggregateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -863,12 +886,13 @@ func (h *reportHandler) getAcquisitionRightsAggregate(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateLecturerWages(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateLecturerWages"
-		req    = new(entity.UpdateLecturersWageReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateLecturerWages")
+		fnName    = "handler::updateLecturerWages"
+		req       = new(entity.UpdateLecturersWageReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -942,12 +966,13 @@ func (h *reportHandler) bulkUpdateLecturerWages(c *fiber.Ctx) error {
 
 func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::generateRegistrationReports"
-		req    = new(entity.GenerateRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.generateRegistrationReports")
+		fnName    = "handler::generateRegistrationReports"
+		req       = new(entity.GenerateRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)

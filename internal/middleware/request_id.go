@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog"
@@ -24,6 +26,9 @@ func WithAppLogger(base zerolog.Logger) fiber.Handler {
 
 		// inject ke context bawaan Go
 		ctx := subLogger.WithContext(c.UserContext())
+		// Also inject request_id into context for tracing reconstruction
+		ctx = context.WithValue(ctx, "request_id", requestId)
+
 		c.SetUserContext(ctx)
 
 		return c.Next()

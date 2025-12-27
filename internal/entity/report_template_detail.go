@@ -3,9 +3,9 @@ package entity
 import "github.com/lib/pq"
 
 type GetTemplateReq struct {
-	UserID string `validate:"required,ulid"`
+	UserID string `validate:"required,ulid" json:"user_id"`
 
-	ID string `params:"id" validate:"ulid"`
+	ID string `params:"id" validate:"ulid" json:"id"`
 }
 
 type GetTemplateResp struct {

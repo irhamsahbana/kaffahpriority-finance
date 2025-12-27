@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -21,6 +22,9 @@ func getStringValue(s *string) string {
 }
 
 func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateRegistration")
+	defer span.End()
+
 	fnName := "repo::UpdateRegistration"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {

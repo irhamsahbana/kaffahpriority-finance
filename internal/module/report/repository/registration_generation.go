@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"database/sql"
 	"fmt"
@@ -12,6 +13,9 @@ import (
 )
 
 func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.GenerateRegistrationReports")
+	defer span.End()
+
 	fnName := "repo::GenerateRegistrationReports"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -87,6 +91,9 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	queryInsertStudents := r.db.Rebind(queryInsertStudents)
 
 	for i, templateId := range templateIds {
+		ctx, spanTemplate := tracing.StartSpan(ctx, fmt.Sprintf("repo.GenerateRegistrationReports:templateId:%s", templateId))
+		defer spanTemplate.End()
+
 		// Ambil data dari template untuk pengecekan
 		var studentId, programId string
 		var lecturerId *string
@@ -107,7 +114,6 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 
 		// if registration already exists, skip this template
 		if err == nil {
-			fmt.Printf("[INFO] %d/%d - Template %s: SKIPPED (Already exists for %s - %s)\n", i+1, len(templateIds), templateId, studentName, programName)
 			continue
 		} else if err != sql.ErrNoRows {
 			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("%s - failed to check if registration exists", fnName)

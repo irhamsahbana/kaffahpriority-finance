@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *reportRepo) UpdateRegistrationLecturer(ctx context.Context, req *entity.UpdateRegistrationLecturerReq) (*entity.UpdateRegistrationLecturerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateRegistrationLecturer")
+	defer span.End()
+
 	fnName := "repo::UpdateRegistrationLecturer"
 	var (
 		resp = new(entity.UpdateRegistrationLecturerResp)

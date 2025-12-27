@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
 	"time"
 
@@ -37,6 +38,9 @@ func NewReportService(cfg Config) *reportService {
 }
 
 func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.CreateTemplate")
+	defer span.End()
+
 	resp, err := s.repo.CreateTemplate(ctx, req)
 	if err != nil {
 		return nil, err
@@ -79,6 +83,9 @@ func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTe
 }
 
 func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateTemplate")
+	defer span.End()
+
 	oldTemplate, err := s.repo.GetTemplate(ctx, &entity.GetTemplateReq{
 		ID: req.ID,
 	})
@@ -140,14 +147,23 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 }
 
 func (s *reportService) GetTemplates(ctx context.Context, req *entity.GetTemplatesReq) (*entity.GetTemplatesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetTemplates")
+	defer span.End()
+
 	return s.repo.GetTemplates(ctx, req)
 }
 
 func (s *reportService) GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetTemplate")
+	defer span.End()
+
 	return s.repo.GetTemplate(ctx, req)
 }
 
 func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.DeleteTemplate")
+	defer span.End()
+
 	oldTemplate, err := s.repo.GetTemplate(ctx, req)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).
@@ -198,14 +214,23 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 }
 
 func (s *reportService) CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.CreateRegistrations")
+	defer span.End()
+
 	return s.repo.CreateRegistrations(ctx, req)
 }
 
 func (s *reportService) CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.CopyRegistrations")
+	defer span.End()
+
 	return s.repo.CopyRegistrations(ctx, req)
 }
 
 func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateRegistration")
+	defer span.End()
+
 	// return s.repo.UpdateRegistration(ctx, req)
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
@@ -271,6 +296,9 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 }
 
 func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *entity.UpdateRegistrationLecturerReq) (*entity.UpdateRegistrationLecturerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateRegistrationLecturer")
+	defer span.End()
+
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
 		ID:     req.ID,
@@ -335,6 +363,9 @@ func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *ent
 }
 
 func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entity.UpdateRegistrationIsPaidReq) (*entity.UpdateRegistrationIsPaidResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateRegistrationIsPaid")
+	defer span.End()
+
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
 		ID:     req.ID,
@@ -399,26 +430,44 @@ func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entit
 }
 
 func (s *reportService) UpdateRegistrationsPaidAt(ctx context.Context, req *entity.UpdateRegisPaidAtReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateRegistrationsPaidAt")
+	defer span.End()
+
 	return s.repo.UpdateRegistrationsPaidAt(ctx, req)
 }
 
 func (s *reportService) GetRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetRegistrations")
+	defer span.End()
+
 	return s.repo.GetRegistrations(ctx, req)
 }
 
 func (s *reportService) GetUnusedRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetUnusedRegistrations")
+	defer span.End()
+
 	return s.repo.GetUnusedRegistrations(ctx, req)
 }
 
 func (s *reportService) GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetRegistration")
+	defer span.End()
+
 	return s.repo.GetRegistration(ctx, req)
 }
 
 func (s *reportService) DeleteRegistration(ctx context.Context, req *entity.GetRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.DeleteRegistration")
+	defer span.End()
+
 	return s.repo.DeleteRegistration(ctx, req)
 }
 
 func (s *reportService) RegistrationsMarkAsUsed(ctx context.Context, req *entity.RegistrationsMarkAsUsedReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.RegistrationsMarkAsUsed")
+	defer span.End()
+
 	ids, err := s.repo.RegistrationsMarkAsUsed(ctx, req)
 	if err != nil {
 		return err
@@ -475,35 +524,59 @@ func (s *reportService) RegistrationsMarkAsUsed(ctx context.Context, req *entity
 }
 
 func (s *reportService) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetSummaries")
+	defer span.End()
+
 	return s.repo.GetSummaries(ctx, req)
 }
 
 func (s *reportService) GetSummariesForCFO2(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesForCFO2Resp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetSummariesForCFO2")
+	defer span.End()
+
 	return s.repo.GetSummariesForCFO2(ctx, req)
 }
 
 func (s *reportService) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetLecturerPrograms")
+	defer span.End()
+
 	return s.repo.GetLecturerPrograms(ctx, req)
 }
 
 func (s *reportService) GetRegistrationsPerLecturer(ctx context.Context, req *entity.GetRegistrationListPerLecturerReq) (*entity.GetRegistrationListPerLecturerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetRegistrationsPerLecturer")
+	defer span.End()
+
 	// return s.repo.GetRegistrationsPerLecturer(ctx, req)
 	return s.repo.GetRegistrationsPerLecturerV2(ctx, req)
 }
 
 func (s *reportService) GetLecturersWages(ctx context.Context, req *entity.GetLecturersWagesReq) (*entity.GetLecturersWagesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetLecturersWages")
+	defer span.End()
+
 	return s.repo.GetLecturersWages(ctx, req)
 }
 
 func (s *reportService) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetLecturersWagesAggregate")
+	defer span.End()
+
 	return s.repo.GetLecturersWagesAggregate(ctx, req)
 }
 
 func (s *reportService) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetLecturersWagesAggregateYearly")
+	defer span.End()
+
 	return s.repo.GetLecturersWagesAggregateYearly(ctx, req)
 }
 
 func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.UpdateLecturersWage")
+	defer span.End()
+
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
 		ID:     req.RegistrationID,
@@ -567,11 +640,17 @@ func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.Upd
 }
 
 func (s *reportService) BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.BulkUpdateLecturersWage")
+	defer span.End()
+
 	// TODO: implement bulk update activity log if needed
 	return s.repo.BulkUpdateLecturersWage(ctx, req)
 }
 
 func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistributionReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.DistributeHRFee")
+	defer span.End()
+
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
 		ID:     req.RegistrationID,
@@ -636,6 +715,9 @@ func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistr
 }
 
 func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.UseHRfeeForLecturer")
+	defer span.End()
+
 	oldRegistration, err := s.repo.GetRegistration(ctx, &entity.GetRegistrationReq{
 		UserID: req.UserID,
 		ID:     req.RegistrationID,
@@ -700,18 +782,30 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 }
 
 func (s *reportService) BulkUseHRfeeForLecturer(ctx context.Context, req *entity.BulkUseHRfeeForLecturerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.BulkUseHRfeeForLecturer")
+	defer span.End()
+
 	return s.repo.BulkUseHRfeeForLecturer(ctx, req)
 }
 
 func (s *reportService) GetRelatedRegistrations(ctx context.Context, req *entity.GetRelatedRegistrationsReq) (*entity.GetRelatedRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetRelatedRegistrations")
+	defer span.End()
+
 	return s.repo.GetRelatedRegistrations(ctx, req)
 }
 
 func (s *reportService) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetAcquisitionRightsAggregate")
+	defer span.End()
+
 	return s.repo.GetAcquisitionRightsAggregate(ctx, req)
 }
 
 func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.GenerateRegistrationReports")
+	defer span.End()
+
 	return s.repo.GenerateRegistrationReports(ctx, req)
 }
 
@@ -720,6 +814,9 @@ func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *en
 }
 
 func (s *reportService) CreateAdditionalRegistration(ctx context.Context, req *entity.CreateAdditionalRegistrationReq) (*entity.CreateAdditionalRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.CreateAdditionalRegistration")
+	defer span.End()
+
 	resp, err := s.repo.CreateAdditionalRegistration(ctx, req)
 	if err != nil {
 		return nil, err

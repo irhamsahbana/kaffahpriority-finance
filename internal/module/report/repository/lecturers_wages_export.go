@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"sort"
 	"strings"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.GetExportedLecturersWagesReq) (*entity.GetExportedLecturersWagesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedLecturersWages")
+	defer span.End()
+
 	fnName := "repo::GetExportedLecturersWages"
 	type dao struct {
 		TotalData int `db:"total_data"`

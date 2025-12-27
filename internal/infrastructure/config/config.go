@@ -15,6 +15,7 @@ var (
 type Config struct {
 	App struct {
 		Name                    string `env:"APP_NAME"`
+		Version                 string `env:"APP_VERSION"`
 		Environtment            string `env:"APP_ENV" env-default:"production"`
 		BaseURL                 string `env:"APP_BASE_URL" env-default:"http://localhost:3000"`
 		Port                    string `env:"APP_PORT" env-default:"3000"`
@@ -37,10 +38,7 @@ type Config struct {
 		JwtPrivateKeyWs string `env:"JWT_PRIVATE_KEY_WS"`
 		JwtWsExp        int    `env:"JWT_WS_EXP" env-default:"10"`     // 1 hour in  seconds
 		SharedLinkExp   int    `env:"SHARED_LINK_EXP" env-default:"5"` // in minutes
-		Metrics         struct {
-			BasicAuthUser string `env:"METRICS_BASIC_AUTH_USER"`
-			BasicAuthPass string `env:"METRICS_BASIC_AUTH_PASS"`
-		}
+
 	}
 	FrontendURL struct {
 		ClientBaseURL     string `env:"FRONTEND_CLIENT_BASE_URL" env-default:"http://localhost:5000"`
@@ -94,6 +92,11 @@ type Config struct {
 		Token    string `env:"VENAMON_GOLOG_TOKEN" env-default:"6418397550:AAEUTeuJUwBcR1j0fUNRGwzztfSyuuzmLKI"`
 		ChatId   int64  `env:"VENAMON_GOLOG_CHAT_ID" env-default:"-1002247847967"`
 		ThreadId int    `env:"VENAMON_GOLOG_THREAD_ID" env-default:"274"`
+	}
+	Instrumentation struct {
+		OtlpEndpoint         string `env:"INSTRUMENTATION_OTLP_ENDPOINT"`
+		MetricsBasicAuthUser string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_USER"`
+		MetricsBasicAuthPass string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_PASS"`
 	}
 }
 

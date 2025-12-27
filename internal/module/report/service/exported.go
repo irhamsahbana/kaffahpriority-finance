@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"fmt"
 	"strings"
@@ -15,6 +16,9 @@ import (
 func (s *reportService) GetExportedRegistrationsForCFO2Monthly(
 	ctx context.Context,
 	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetExportedRegistrationsForCFO2Monthly")
+	defer span.End()
+
 	resp, err := s.repo.GetExportedRegistrationsForCFO2Monthly(ctx, req)
 	if err != nil {
 		return nil, err
@@ -377,6 +381,9 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	ctx context.Context,
 	req *entity.GetExportedRegistrationsForWageRecapMonthlyReq) (*entity.GetExportedRegistrationsForWageRecapMonthlyResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetExportedRegistrationsForWageRecapMonthly")
+	defer span.End()
+
 	resp, err := s.repo.GetExportedRegistrationsForWageRecapMonthly(ctx, req)
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -10,6 +11,8 @@ import (
 )
 
 func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistrationReq) (*entity.GetRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetRegistration")
+	defer span.End()
 	var (
 		fnName = "repo::GetRegistration"
 		resp   = new(entity.GetRegistrationResp)

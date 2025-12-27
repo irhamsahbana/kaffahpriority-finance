@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/response"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,11 +12,12 @@ import (
 
 func (h *userHandler) login(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::login"
-		req    = new(entity.LoginReq)
-		v      = adapter.Adapters.Validator
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.Login")
+		fnName    = "handler::login"
+		req       = new(entity.LoginReq)
+		v         = adapter.Adapters.Validator
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)

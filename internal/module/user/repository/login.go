@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/jwthandler"
 	"context"
@@ -13,6 +14,9 @@ import (
 )
 
 func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.Login")
+	defer span.End()
+
 	fnName := "repo::Login"
 	type user struct {
 		Id       string `db:"id"`

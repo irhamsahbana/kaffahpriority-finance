@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	ports "codebase-app/internal/ports/module/user"
 	"context"
 )
@@ -19,6 +20,8 @@ func NewUserService(repo ports.UserRepository) *userService {
 }
 
 func (s *userService) Login(ctx context.Context, req *entity.LoginReq) (*entity.LoginResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.Login")
+	defer span.End()
 	return s.repo.Login(ctx, req)
 }
 

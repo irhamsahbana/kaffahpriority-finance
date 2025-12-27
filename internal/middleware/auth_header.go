@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/jwthandler"
 
 	"github.com/gofiber/fiber/v2"
@@ -8,6 +9,9 @@ import (
 )
 
 func AuthBearer(c *fiber.Ctx) error {
+	ctx, span := tracing.StartSpan(c.UserContext(), "middleware.AuthBearer")
+	defer span.End()
+
 	AccessToken := c.Get("Authorization")
 	unauthorizedResponse := fiber.Map{
 		"message": "Unauthorized",
@@ -16,7 +20,7 @@ func AuthBearer(c *fiber.Ctx) error {
 
 	// If the cookie is not set, return an unauthorized status
 	if AccessToken == "" {
-		log.Error().Msg("middleware::AuthMiddleware - Unauthorized [Header not set]")
+		log.Ctx(ctx).Error().Msg("middleware::AuthMiddleware - Unauthorized [Header not set]")
 		return c.Status(fiber.StatusUnauthorized).JSON(unauthorizedResponse)
 	}
 
@@ -28,7 +32,7 @@ func AuthBearer(c *fiber.Ctx) error {
 	// Parse the JWT string and store the result in `claims`
 	claims, err := jwthandler.ParseTokenString(AccessToken)
 	if err != nil {
-		log.Error().Err(err).Any("payload", AccessToken).Msg("middleware::AuthMiddleware - Error while parsing token")
+		log.Ctx(ctx).Error().Err(err).Any("payload", AccessToken).Msg("middleware::AuthMiddleware - Error while parsing token")
 		return c.Status(fiber.StatusUnauthorized).JSON(unauthorizedResponse)
 	}
 

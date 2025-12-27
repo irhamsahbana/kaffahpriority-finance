@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"fmt"
@@ -18,6 +19,9 @@ func (s *reportService) ImportLecturersWages(
 	ctx context.Context, // ctx, context untuk lifecycle request
 	req *entity.ImportLecturersWagesReq, // req, memuat path file Excel dan opsi simpan
 ) error {
+	ctx, span := tracing.StartSpan(ctx, "service.ImportLecturersWages")
+	defer span.End()
+
 	const (
 		fnName       = "service::ImportLecturersWages"
 		sheetName    = "Sheet1"

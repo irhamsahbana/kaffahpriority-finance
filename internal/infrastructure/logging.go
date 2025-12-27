@@ -18,7 +18,7 @@ import (
 var AccessLogger zerolog.Logger
 
 // InitializeLogger will set logging format.
-func InitializeLogger(stage string, filename string, logLevel zerolog.Level) {
+func InitializeLogger(stage string, filename string, logLevel zerolog.Level) io.Writer {
 	// pr, pw := io.Pipe()
 
 	var (
@@ -76,6 +76,11 @@ func InitializeLogger(stage string, filename string, logLevel zerolog.Level) {
 			log.Info().Msg("Rotating logs ...")
 		}
 	}()
+
+	if stage == "production" {
+		return lumberjackLogger
+	}
+	return mw
 }
 
 // InitializeAccessLogger configures a separate logger for access logs.
