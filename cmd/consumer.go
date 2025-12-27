@@ -2,25 +2,32 @@ package cmd
 
 import (
 	"codebase-app/internal/adapter"
-	"codebase-app/internal/infrastructure"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/logging"
+	"context"
 	"flag"
 	"os"
 	"os/signal"
 
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func RunConsumer(cmd *flag.FlagSet, args []string) {
 	envs := config.Envs
-	logLevel, err := zerolog.ParseLevel(envs.App.LogLevel)
-	if err != nil {
-		logLevel = zerolog.InfoLevel
-	}
 
-	infrastructure.InitializeLogger(envs.App.Environtment, "consumer.log", logLevel)
+	lp, _, err := logging.InitLogger(&logging.Config{
+		Endpoint:   envs.Instrumentation.OtlpEndpoint,
+		AppName:    envs.App.Name,
+		AppVersion: envs.App.Version,
+		AppEnv:     envs.App.Environtment,
+		LogFile:    "consumer.log",
+		LogLevel:   envs.App.LogLevel,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize logger")
+	}
+	defer lp.Shutdown(context.Background())
 
 	log.Info().Msg("Running consumer")
 	var (

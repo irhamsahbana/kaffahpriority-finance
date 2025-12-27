@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -38,6 +41,8 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 	globalLogWriter = cfg.LogWriter
 
 	res, err := resource.New(context.Background(),
+		resource.WithHost(),
+		resource.WithOS(),
 		resource.WithAttributes(
 			semconv.ServiceName(cfg.AppName),
 			semconv.DeploymentEnvironment(cfg.AppEnv),
@@ -59,19 +64,55 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 		tracerProviderOptions = append(tracerProviderOptions, sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(0.1)))) // Sample 10% of traces for production
 	}
 
+	if config.Envs.Instrumentation.Debug {
+		exporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create stdout trace exporter: %w", err)
+		}
+		tracerProviderOptions = append(tracerProviderOptions, sdktrace.WithBatcher(exporter))
+		log.Info().Msg("OpenTelemetry stdout exporter initialized (debug mode)")
+	}
+
 	otlpEndpoint := config.Envs.Instrumentation.OtlpEndpoint
 	if otlpEndpoint != "" {
-		// Use OTLP gRPC exporter
-		exporter, err := otlptracegrpc.New(context.Background(),
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(otlpEndpoint),
-		)
+		var exporter sdktrace.SpanExporter
+		var err error
+
+		if strings.HasPrefix(otlpEndpoint, "http://") || strings.HasPrefix(otlpEndpoint, "https://") {
+			// Use OTLP HTTP exporter
+			// Strip scheme and trailing slash
+			endpoint := strings.TrimPrefix(otlpEndpoint, "http://")
+			endpoint = strings.TrimPrefix(endpoint, "https://")
+			endpoint = strings.TrimRight(endpoint, "/")
+
+			opts := []otlptracehttp.Option{
+				otlptracehttp.WithEndpoint(endpoint),
+			}
+
+			if strings.HasPrefix(otlpEndpoint, "http://") {
+				opts = append(opts, otlptracehttp.WithInsecure())
+			}
+
+			exporter, err = otlptracehttp.New(context.Background(), opts...)
+			if err == nil {
+				log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry tracer initialized (OTLP HTTP exporter)")
+			}
+		} else {
+			// Use OTLP gRPC exporter
+			exporter, err = otlptracegrpc.New(context.Background(),
+				otlptracegrpc.WithInsecure(),
+				otlptracegrpc.WithEndpoint(otlpEndpoint),
+			)
+			if err == nil {
+				log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry tracer initialized (OTLP gRPC exporter)")
+			}
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("failed to create otlp exporter: %w", err)
 		}
-		log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry tracer initialized (OTLP gRPC exporter)")
 		tracerProviderOptions = append(tracerProviderOptions, sdktrace.WithBatcher(exporter))
-	} else {
+	} else if !config.Envs.Instrumentation.Debug {
 		log.Info().Msg("OpenTelemetry tracer initialized (no exporter, tracing disabled)")
 	}
 
@@ -132,7 +173,7 @@ func (w *SpanLogWriter) Write(p []byte) (n int, err error) {
 	if json.Unmarshal(p, &data) == nil {
 		attrs := []attribute.KeyValue{}
 		for k, v := range data {
-			if k == "time" || k == "span_id" || k == "trace_id" {
+			if k == "time" {
 				continue
 			}
 			if strVal, ok := v.(string); ok {

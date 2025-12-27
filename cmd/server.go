@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/logging"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/internal/middleware"
 	"codebase-app/internal/route"
@@ -20,7 +21,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -30,11 +30,6 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 		flagAppPort = cmd.String("port", "3000", "Application port")
 		SERVER_PORT string
 	)
-
-	logLevel, err := zerolog.ParseLevel(envs.App.LogLevel)
-	if err != nil {
-		logLevel = zerolog.InfoLevel
-	}
 
 	if err := cmd.Parse(args); err != nil {
 		log.Fatal().Err(err).Msg("Error while parsing flags")
@@ -49,8 +44,26 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	app := fiber.New()
 	app.Use(middleware.Prometheus())
 	infrastructure.InitializeMetrics(app)
-	logWriter := infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFile, logLevel)
-	infrastructure.InitializeAccessLogger(envs.App.Environtment, envs.App.LogFileAccess, logLevel)
+
+	// Initialize Logger
+	lp, logWriter, err := logging.InitLogger(&logging.Config{
+		Endpoint:      envs.Instrumentation.OtlpEndpoint,
+		AppName:       envs.App.Name,
+		AppVersion:    envs.App.Version,
+		AppEnv:        envs.App.Environtment,
+		LogFile:       "logs/server.log",
+		AccessLogFile: "logs/access.log",
+		LogLevel:      envs.App.LogLevel,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize logger")
+	} else {
+		defer func() {
+			if err := lp.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Error shutting down logger provider")
+			}
+		}()
+	}
 
 	// Initialize Tracing
 	tp, err := tracing.InitTracer(&tracing.Config{
@@ -99,7 +112,7 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	// Access log middleware
 	app.Use(middleware.RequestID)
 	app.Use(middleware.WithTracing(envs.App.Name))
-	app.Use(middleware.WithAccessLog(infrastructure.AccessLogger))
+	app.Use(middleware.WithAccessLog(logging.AccessLogger))
 	app.Use(middleware.WithAppLogger(log.Logger))
 	// End Application Middlewares
 

@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"codebase-app/internal/adapter"
-	"codebase-app/internal/infrastructure"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/logging"
 	"codebase-app/internal/middleware"
+	"context"
 	"flag"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -47,11 +47,6 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 		WS_PORT    string
 	)
 
-	logLevel, err := zerolog.ParseLevel(envs.App.LogLevel)
-	if err != nil {
-		logLevel = zerolog.InfoLevel
-	}
-
 	if err := cmd.Parse(args); err != nil {
 		log.Fatal().Err(err).Msg("Error while parsing flags")
 	}
@@ -71,7 +66,18 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 		adapter.WithWebsocketServer(server),
 	)
 
-	infrastructure.InitializeLogger(envs.App.Environtment, envs.App.LogFileWs, logLevel)
+	lp, _, err := logging.InitLogger(&logging.Config{
+		Endpoint:   envs.Instrumentation.OtlpEndpoint,
+		AppName:    envs.App.Name,
+		AppVersion: envs.App.Version,
+		AppEnv:     envs.App.Environtment,
+		LogFile:    envs.App.LogFileWs,
+		LogLevel:   envs.App.LogLevel,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize logger")
+	}
+	defer lp.Shutdown(context.Background())
 
 	quit := make(chan os.Signal, 1)
 
@@ -94,8 +100,7 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 	<-quit
 	log.Info().Msg("Websocket server is shutting down ...")
 
-	err = adapter.Adapters.Unsync()
-	if err != nil {
+	if err := adapter.Adapters.Unsync(); err != nil {
 		log.Error().Err(err).Msg("Error while unsyncing adapter")
 	}
 

@@ -97,6 +97,7 @@ type Config struct {
 		OtlpEndpoint         string `env:"INSTRUMENTATION_OTLP_ENDPOINT"`
 		MetricsBasicAuthUser string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_USER"`
 		MetricsBasicAuthPass string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_PASS"`
+		Debug                bool   `env:"INSTRUMENTATION_DEBUG" env-default:"false"`
 	}
 }
 

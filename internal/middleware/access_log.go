@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"codebase-app/internal/infrastructure"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +20,7 @@ func WithAccessLog(logger zerolog.Logger) fiber.Handler {
 		// get request id from context
 		requestId, _ := c.Context().UserValue("request_id").(string)
 
-		event := infrastructure.AccessLogger.Info().Ctx(c.UserContext()).
+		event := logger.Info().Ctx(c.UserContext()).
 			Str("method", c.Method()).
 			Str("path", c.Path()).
 			Any("query", c.Queries()).
@@ -34,7 +33,7 @@ func WithAccessLog(logger zerolog.Logger) fiber.Handler {
 		if span.SpanContext().IsValid() {
 			event.Str("trace_id", span.SpanContext().TraceID().String())
 			event.Str("span_id", span.SpanContext().SpanID().String())
-			
+
 			// Add access log event to span
 			span.AddEvent("access_log", trace.WithAttributes(
 				attribute.String("method", c.Method()),
