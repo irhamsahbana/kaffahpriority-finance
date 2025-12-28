@@ -13,14 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// getStringValue returns the string value or "<nil>" if pointer is nil
-func getStringValue(s *string) string {
-	if s == nil {
-		return "<nil>"
-	}
-	return *s
-}
-
 func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateRegistrationReq) (*entity.UpdateRegistrationResp, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.UpdateRegistration")
 	defer span.End()
@@ -74,72 +66,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get current registration data", fnName)
 		return nil, err
 	}
-
-	// // Check if lecturer_id is being changed
-	// lecturerIdChanged := false
-	// if (currentReg.LecturerId == nil && req.LecturerId != nil) ||
-	// 	(currentReg.LecturerId != nil && req.LecturerId == nil) ||
-	// 	(currentReg.LecturerId != nil && req.LecturerId != nil && *currentReg.LecturerId != *req.LecturerId) {
-	// 	lecturerIdChanged = true
-	// }
-
-	// // Check if program_id is being changed
-	// programIdChanged := currentReg.ProgramId != req.ProgramId
-
-	// // Check if student_id is being changed
-	// studentIdChanged := currentReg.StudentId != req.StudentId
-
-	// // Only check for duplicate if:
-	// // 1. Either lecturer_id, program_id, or student_id is being changed
-	// // 2. AND the new lecturer_id is not NULL (NULL lecturer_id can have multiple entries per program)
-	// if (lecturerIdChanged || programIdChanged || studentIdChanged) && req.LecturerId != nil {
-	// 	var count int
-	// 	// Use IS NOT DISTINCT FROM to properly handle NULL comparisons
-	// 	queryCheck := `
-	// 		SELECT
-	// 			COUNT(*)
-	// 		FROM
-	// 			program_registrations
-	// 		WHERE
-	// 			lecturer_id IS NOT DISTINCT FROM ?
-	// 			AND program_id = ?
-	// 			AND student_id = ?
-	// 			AND id != ?
-	// 			AND deleted_at IS NULL
-	// 	`
-	// 	err = tx.GetContext(ctx, &count, tx.Rebind(queryCheck), req.LecturerId, req.ProgramId, req.StudentId, req.ID)
-	// 	if err != nil {
-	// 		log.Ctx(ctx).Error().Err(err).
-	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
-	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
-	// 			Str("current_program_id", currentReg.ProgramId).
-	// 			Str("req_program_id", req.ProgramId).
-	// 			Str("current_student_id", currentReg.StudentId).
-	// 			Str("req_student_id", req.StudentId).
-	// 			Bool("lecturer_id_changed", lecturerIdChanged).
-	// 			Bool("program_id_changed", programIdChanged).
-	// 			Bool("student_id_changed", studentIdChanged).
-	// 			Any("req", req).
-	// 			Msgf("%s - failed to check duplicate lecturer_id, program_id, and student_id", fnName)
-	// 		return nil, err
-	// 	}
-	// 	if count > 0 {
-	// 		log.Ctx(ctx).Warn().
-	// 			Str("current_lecturer_id", getStringValue(currentReg.LecturerId)).
-	// 			Str("req_lecturer_id", getStringValue(req.LecturerId)).
-	// 			Str("current_program_id", currentReg.ProgramId).
-	// 			Str("req_program_id", req.ProgramId).
-	// 			Str("current_student_id", currentReg.StudentId).
-	// 			Str("req_student_id", req.StudentId).
-	// 			Int("duplicate_count", count).
-	// 			Bool("lecturer_id_changed", lecturerIdChanged).
-	// 			Bool("program_id_changed", programIdChanged).
-	// 			Bool("student_id_changed", studentIdChanged).
-	// 			Any("req", req).
-	// 			Msgf("%s - duplicate combination of lecturer_id, program_id, and student_id already exists", fnName)
-	// 		return nil, errmsg.NewCustomErrors(409).SetMessage("Kombinasi lecturer_id, program_id, dan student_id sudah ada dalam program_registrations")
-	// 	}
-	// }
 
 	// specify timezone
 	loc, err := time.LoadLocation("Asia/Makassar")
@@ -350,18 +276,33 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 	if coreFieldsChanged {
 		// Create new template instead of updating existing one
 		newTemplateId := ulid.Make().String()
+		queryProgram := `
+			SELECT
+				p.price_per_meeting AS program_fee_per_meeting,
+				p.commission_fee AS marketer_commission_fee
+			FROM
+				programs p
+			WHERE
+				p.id = ?
+				AND p.deleted_at IS NULL
+		`
+
+		var program struct {
+			ProgramFeePerMeeting  float64 `db:"program_fee_per_meeting"`
+			MarketerCommissionFee float64 `db:"marketer_commission_fee"`
+		}
+
+		err = tx.GetContext(ctx, &program, tx.Rebind(queryProgram), req.ProgramId)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - program not found", fnName)
+				return nil, errmsg.NewCustomErrors(404).SetMessage("program tidak ditemukan")
+			}
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get program data", fnName)
+			return nil, err
+		}
 
 		query = `
-			WITH program AS (
-				SELECT
-					p.price_per_meeting AS program_fee_per_meeting,
-					p.commission_fee AS marketer_commission_fee
-				FROM
-					programs p
-				WHERE
-					p.id = ?
-					AND p.deleted_at IS NULL
-			)
 			INSERT INTO program_registration_templates (
 				id,
 				user_id,
@@ -385,9 +326,9 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 				closing_fee_for_reward
 			) VALUES (
 				?, ?, ?, ?, ?, ?, ?, ?, ?,
-				(SELECT program_fee_per_meeting FROM program),
+				?,
 				?, ?, ?, ?,
-				(SELECT marketer_commission_fee FROM program),
+				?,
 				?, ?, ?, ?, ?
 			)
 		`
@@ -396,7 +337,9 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 			req.ProgramId,
 			newTemplateId, req.UserID, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 			pq.Array(req.Days), req.Notes, req.ProgramFee,
+			program.ProgramFeePerMeeting,
 			req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
+			program.MarketerCommissionFee,
 			req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 			req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		)

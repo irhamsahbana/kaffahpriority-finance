@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"codebase-app/pkg/types"
+	"time"
+)
 
 type ActivityLogType string
 
@@ -46,9 +49,12 @@ type ActivityLogChanges struct {
 	Note   string `json:"note" db:"note"`
 }
 
-type GetActivityLogReq struct {
+type GetActivityLogsReq struct {
 	UserID string `json:"user_id" validate:"required,ulid"`
 
-	EntityID   string `json:"entity_id" validate:"required"`
-	EntityName string `json:"entity_name" validate:"required"`
+	EntityID   string `query:"entity_id" validate:"required"`
+	EntityName string `query:"entity_name" validate:"required"`
+	SortBy     string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
+	SortType   string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+	types.MetaQuery
 }
