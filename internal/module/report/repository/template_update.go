@@ -3,7 +3,6 @@ package repository
 import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
-	"codebase-app/pkg/errmsg"
 	"context"
 
 	"github.com/lib/pq"
@@ -33,37 +32,6 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			log.Ctx(ctx).Error().Err(errCommit).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
-
-	var isCombinationExist bool
-	queryCombination := `
-		SELECT EXISTS (
-			SELECT 1
-			FROM program_registration_templates prt
-			WHERE
-				prt.program_id = ?
-				AND prt.marketer_id = ?
-				AND prt.student_id = ?
-				AND (
-					(prt.lecturer_id IS NULL AND ?::TEXT IS NULL)
-					OR prt.lecturer_id = ?
-				)
-				AND prt.id != ?
-				AND prt.deleted_at IS NULL
-		)
-	`
-
-	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCombination),
-		req.ProgramId, req.MarketerId, req.StudentId, req.LecturerId, req.LecturerId, req.ID,
-	)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
-		return nil, err
-	}
-
-	if isCombinationExist {
-		log.Ctx(ctx).Warn().Any("req", req).Msgf("%s - combination already exist", fnName)
-		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
-	}
 
 	query := `
 		UPDATE program_registration_templates SET

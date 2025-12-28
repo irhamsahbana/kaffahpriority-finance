@@ -3,7 +3,6 @@ package repository
 import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
-	"codebase-app/pkg/errmsg"
 	"context"
 
 	"github.com/lib/pq"
@@ -34,39 +33,6 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			log.Ctx(ctx).Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
 		}
 	}()
-
-	isCombinationExist := false
-
-	queryCheckCombination := `
-		SELECT EXISTS (
-			SELECT
-				1
-			FROM
-				program_registration_templates prt
-			WHERE
-				prt.program_id = ?
-				AND prt.marketer_id = ?
-				AND prt.student_id = ?
-				AND (
-					(prt.lecturer_id IS NULL AND ?::TEXT IS NULL)
-					OR prt.lecturer_id = ?
-				)
-				AND prt.deleted_at IS NULL
-		)
-	`
-
-	err = tx.GetContext(ctx, &isCombinationExist, tx.Rebind(queryCheckCombination),
-		req.ProgramID, req.MarketerID, req.StudentID, req.LecturerID, req.LecturerID,
-	)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to check combination", fnName)
-		return nil, err
-	}
-
-	if isCombinationExist {
-		log.Ctx(ctx).Warn().Any("req", req).Msgf("%s - combination already exist", fnName)
-		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
-	}
 
 	var (
 		Id   = ulid.Make().String()

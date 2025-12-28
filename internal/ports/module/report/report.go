@@ -11,6 +11,8 @@ type TemplateRepository interface {
 	GetTemplate(ctx context.Context, req *entity.GetTemplateReq) (*entity.GetTemplateResp, error)
 	CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error)
 	UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error)
+	CheckTemplateCombinationForCreate(ctx context.Context, req *entity.CreateTemplateReq) (bool, error)
+	CheckTemplateCombinationForUpdate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (bool, error)
 	DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error
 }
 
