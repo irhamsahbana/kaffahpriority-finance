@@ -57,7 +57,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
+				WHEN COALESCE(pr.mentor_detail_fee_used, 0) > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
