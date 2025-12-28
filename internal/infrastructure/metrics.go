@@ -14,8 +14,8 @@ func InitializeMetrics(app *fiber.App) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler())
 
 	app.Get("/metrics", func(c *fiber.Ctx) error {
-		u := config.Envs.Guard.Metrics.BasicAuthUser
-		p := config.Envs.Guard.Metrics.BasicAuthPass
+		u := config.Envs.Instrumentation.MetricsBasicAuthUser
+		p := config.Envs.Instrumentation.MetricsBasicAuthPass
 		if u != "" && p != "" {
 			auth := c.Get("Authorization")
 			if !strings.HasPrefix(auth, "Basic ") {

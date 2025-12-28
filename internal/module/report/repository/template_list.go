@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/jmoiron/sqlx"
@@ -9,6 +10,8 @@ import (
 )
 
 func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesReq) (*entity.GetTemplatesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetTemplates")
+	defer span.End()
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.TemplateItem

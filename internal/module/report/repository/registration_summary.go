@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
@@ -9,6 +10,9 @@ import (
 )
 
 func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetSummaries")
+	defer span.End()
+
 	fnName := "repo::GetSummaries"
 	var (
 		resp = new(entity.GetSummariesResp)
@@ -68,6 +72,9 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 }
 
 func (r *reportRepo) GetSummariesForCFO2(ctx context.Context, req *entity.GetSummariesReq) (*entity.GetSummariesForCFO2Resp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetSummariesForCFO2")
+	defer span.End()
+
 	fnName := "repo::GetSummariesForCFO2"
 	var (
 		resp = new(entity.GetSummariesForCFO2Resp)

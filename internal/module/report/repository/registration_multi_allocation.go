@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.RegistrationMultiAllocation")
+	defer span.End()
+
 	fnName := "repo::RegistrationMultiAllocation"
 
 	tx, err := r.db.BeginTxx(ctx, nil)

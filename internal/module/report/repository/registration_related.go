@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
@@ -9,6 +10,8 @@ import (
 )
 
 func (r *reportRepo) GetRelatedRegistrations(ctx context.Context, req *entity.GetRelatedRegistrationsReq) (*entity.GetRelatedRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetRelatedRegistrations")
+	defer span.End()
 	var (
 		fnName = "repo::GetRelatedRegistrations"
 		resp   = new(entity.GetRelatedRegistrationsResp)

@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	m "codebase-app/internal/middleware"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
@@ -13,12 +14,13 @@ import (
 
 func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getTemplates"
-		req    = new(entity.GetTemplatesReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getTemplates")
+		fnName    = "handler::getTemplates"
+		req       = new(entity.GetTemplatesReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 
@@ -46,12 +48,13 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 
 func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getTemplate"
-		req    = new(entity.GetTemplateReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getTemplate")
+		fnName    = "handler::getTemplate"
+		req       = new(entity.GetTemplateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")
@@ -73,12 +76,13 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::createTemplate"
-		req    = new(entity.CreateTemplateReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.createTemplate")
+		fnName    = "handler::createTemplate"
+		req       = new(entity.CreateTemplateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -148,12 +152,13 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::deleteTemplate"
-		req    = new(entity.GetTemplateReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.deleteTemplate")
+		fnName    = "handler::deleteTemplate"
+		req       = new(entity.GetTemplateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")

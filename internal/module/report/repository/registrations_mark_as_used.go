@@ -2,12 +2,15 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.RegistrationsMarkAsUsedReq) ([]string, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.RegistrationsMarkAsUsed")
+	defer span.End()
 	fnName := "repo::RegistrationsMarkAsUsed"
 
 	query := `

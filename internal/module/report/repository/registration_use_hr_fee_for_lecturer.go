@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 )
 
 func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.UseHRfeeForLecturer")
+	defer span.End()
 	var (
 		fnName = "repo::UseHRfeeForLecturer"
 	)
@@ -29,7 +32,7 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	for _, item := range monthlyPool {
 		totalPoolBudget = totalPoolBudget.Add(item.MentorDetailFee)
 		// Console log to help user see what's happening in 'task dev'
-		fmt.Printf("[DEBUG] %s - Pool Item: ID=%s, Category=%s, Budget=%s, ExistingUsed=%v\n", 
+		fmt.Printf("[DEBUG] %s - Pool Item: ID=%s, Category=%s, Budget=%s, ExistingUsed=%v\n",
 			fnName, item.ID, item.Category, item.MentorDetailFee.String(), item.MentorDetailFeeUsed)
 	}
 
@@ -112,10 +115,18 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 
 	// Sort: General first, then target ID, then stability
 	sort.Slice(monthlyPool, func(i, j int) bool {
-		if monthlyPool[i].Category == "general" && monthlyPool[j].Category != "general" { return true }
-		if monthlyPool[i].Category != "general" && monthlyPool[j].Category == "general" { return false }
-		if monthlyPool[i].ID == req.RegistrationID { return true }
-		if monthlyPool[j].ID == req.RegistrationID { return false }
+		if monthlyPool[i].Category == "general" && monthlyPool[j].Category != "general" {
+			return true
+		}
+		if monthlyPool[i].Category != "general" && monthlyPool[j].Category == "general" {
+			return false
+		}
+		if monthlyPool[i].ID == req.RegistrationID {
+			return true
+		}
+		if monthlyPool[j].ID == req.RegistrationID {
+			return false
+		}
 		return monthlyPool[i].ID < monthlyPool[j].ID
 	})
 

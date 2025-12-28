@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 
@@ -9,6 +10,9 @@ import (
 )
 
 func (r *rbacRepo) UpdateRolePermissions(ctx context.Context, req *entity.UpdateRolePermissionsReq) (*entity.UpdateRolePermissionsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateRolePermissions")
+	defer span.End()
+
 	fnName := "repo::UpdateRolePermissions"
 	var resp entity.UpdateRolePermissionsResp
 	resp.ID = req.RoleID

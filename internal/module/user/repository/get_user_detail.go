@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -10,6 +11,9 @@ import (
 )
 
 func (r *userRepo) GetUser(ctx context.Context, req *entity.GetUserReq) (*entity.GetUserResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetUser")
+	defer span.End()
+
 	fnName := "repo::GetUser"
 	var resp entity.GetUserResp
 

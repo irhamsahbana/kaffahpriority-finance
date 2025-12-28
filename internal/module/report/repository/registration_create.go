@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"fmt"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.CreateRegistrationsReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateRegistrations")
+	defer span.End()
+
 	fnName := "repo::CreateRegistrations"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {

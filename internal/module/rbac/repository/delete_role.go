@@ -2,12 +2,16 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *rbacRepo) DeleteRole(ctx context.Context, req *entity.DeleteRoleReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.DeleteRole")
+	defer span.End()
+
 	fnName := "repo::DeleteRole"
 	query := `
 		UPDATE roles

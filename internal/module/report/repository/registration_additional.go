@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -9,6 +10,9 @@ import (
 )
 
 func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *entity.CreateAdditionalRegistrationReq) (*entity.CreateAdditionalRegistrationResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateAdditionalRegistration")
+	defer span.End()
+
 	fnName := "repo::CreateAdditionalRegistration"
 
 	tx, err := r.db.BeginTxx(ctx, nil)

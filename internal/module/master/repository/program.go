@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -13,6 +14,9 @@ import (
 )
 
 func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq) (*entity.GetProgramsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetPrograms")
+	defer span.End()
+
 	fnName := "repo::GetPrograms"
 	type dao struct {
 		TotalData int `db:"total_data"`
@@ -73,6 +77,9 @@ func (r *masterRepo) GetPrograms(ctx context.Context, req *entity.GetProgramsReq
 }
 
 func (r *masterRepo) GetProgram(ctx context.Context, req *entity.GetProgramReq) (*entity.GetProgramResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetProgram")
+	defer span.End()
+
 	fnName := "repo::GetProgram"
 	var (
 		resp = new(entity.GetProgramResp)

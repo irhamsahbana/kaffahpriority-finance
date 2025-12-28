@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	m "codebase-app/internal/middleware"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
@@ -13,12 +14,13 @@ import (
 
 func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::createRegistrations"
-		req    = new(entity.CreateRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.createRegistrations")
+		fnName    = "handler::createRegistrations"
+		req       = new(entity.CreateRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(&req.Registrations); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -44,12 +46,13 @@ func (h *reportHandler) createRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::copyRegistrations"
-		req    = new(entity.CopyRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.copyRegistrations")
+		fnName    = "handler::copyRegistrations"
+		req       = new(entity.CopyRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(&req.Registrations); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -75,12 +78,13 @@ func (h *reportHandler) copyRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateRegistration"
-		req    = new(entity.UpdateRegistrationReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateRegistration")
+		fnName    = "handler::updateRegistration"
+		req       = new(entity.UpdateRegistrationReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -113,12 +117,13 @@ func (h *reportHandler) updateRegistration(c *fiber.Ctx) error {
 
 func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getRegistrations"
-		req    = new(entity.GetRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getRegistrations")
+		fnName    = "handler::getRegistrations"
+		req       = new(entity.GetRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -151,12 +156,13 @@ func (h *reportHandler) getRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::getUnusedRegistrations"
-		req    = new(entity.GetRegistrationsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getUnusedRegistrations")
+		fnName    = "handler::getUnusedRegistrations"
+		req       = new(entity.GetRegistrationsReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -189,12 +195,13 @@ func (h *reportHandler) getUnusedRegistrations(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateRegistrationLecturer(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateRegistrationLecturer"
-		req    = new(entity.UpdateRegistrationLecturerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateRegistrationLecturer")
+		fnName    = "handler::updateRegistrationLecturer"
+		req       = new(entity.UpdateRegistrationLecturerReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
@@ -253,12 +260,13 @@ func (h *reportHandler) updateRegistrationIsPaid(c *fiber.Ctx) error {
 
 func (h *reportHandler) registrationsMarkAsUsed(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::registrationsMarkAsUsed"
-		req    = new(entity.RegistrationsMarkAsUsedReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.registrationsMarkAsUsed")
+		fnName    = "handler::registrationsMarkAsUsed"
+		req       = new(entity.RegistrationsMarkAsUsedReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
 	)
+	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)

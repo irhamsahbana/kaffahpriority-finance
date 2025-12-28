@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
@@ -11,6 +12,9 @@ import (
 )
 
 func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStudentManagersReq) (*entity.GetStudentManagersResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetStudentManagers")
+	defer span.End()
+
 	fnName := "repo::GetStudentManagers"
 	type dao struct {
 		TotalData int `db:"total_data"`
@@ -51,6 +55,9 @@ func (r *masterRepo) GetStudentManagers(ctx context.Context, req *entity.GetStud
 }
 
 func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.CreateStudentManagerReq) (*entity.CreateStudentManagerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateStudentManager")
+	defer span.End()
+
 	fnName := "repo::CreateStudentManager"
 	query := `
 		INSERT INTO student_managers (
@@ -75,6 +82,9 @@ func (r *masterRepo) CreateStudentManager(ctx context.Context, req *entity.Creat
 }
 
 func (r *masterRepo) GetStudentManager(ctx context.Context, req *entity.GetStudentManagerReq) (*entity.GetStudentManagerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetStudentManager")
+	defer span.End()
+
 	fnName := "repo::GetStudentManager"
 	var (
 		resp = new(entity.GetStudentManagerResp)

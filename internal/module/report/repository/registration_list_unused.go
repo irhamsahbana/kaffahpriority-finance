@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/jmoiron/sqlx"
@@ -9,6 +10,8 @@ import (
 )
 
 func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.GetRegistrationsReq) (*entity.GetRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetUnusedRegistrations")
+	defer span.End()
 	fnName := "repo::GetUnusedRegistrations"
 	type dao struct {
 		TotalData int `db:"total_data"`

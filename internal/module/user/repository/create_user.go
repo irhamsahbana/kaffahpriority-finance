@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -10,6 +11,9 @@ import (
 )
 
 func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*entity.CreateUserResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateUser")
+	defer span.End()
+
 	fnName := "repo::CreateUser"
 	var resp entity.CreateUserResp
 	resp.ID = ulid.Make().String()

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/oklog/ulid/v2"
@@ -9,6 +10,9 @@ import (
 )
 
 func (r *masterRepo) GetAcademicManagers(ctx context.Context, req *entity.GetAcademicManagersReq) (*entity.GetAcademicManagersResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcademicManagers")
+	defer span.End()
+
 	fnName := "repo::GetAcademicManagers"
 	type dao struct {
 		TotalData int `db:"total_data"`
@@ -49,6 +53,9 @@ func (r *masterRepo) GetAcademicManagers(ctx context.Context, req *entity.GetAca
 }
 
 func (r *masterRepo) CreateAcademicManager(ctx context.Context, req *entity.CreateAcademicManagerReq) (*entity.CreateAcademicManagerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.CreateAcademicManager")
+	defer span.End()
+
 	fnName := "repo::CreateAcademicManager"
 	query := `
 		INSERT INTO academic_managers (
@@ -73,6 +80,9 @@ func (r *masterRepo) CreateAcademicManager(ctx context.Context, req *entity.Crea
 }
 
 func (r *masterRepo) GetAcademicManager(ctx context.Context, req *entity.GetAcademicManagerReq) (*entity.GetAcademicManagerResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcademicManager")
+	defer span.End()
+
 	fnName := "repo::GetAcademicManager"
 	var (
 		resp = new(entity.GetAcademicManagerResp)
@@ -100,6 +110,9 @@ func (r *masterRepo) GetAcademicManager(ctx context.Context, req *entity.GetAcad
 }
 
 func (r *masterRepo) UpdateAcademicManager(ctx context.Context, req *entity.UpdateAcademicManagerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateAcademicManager")
+	defer span.End()
+
 	fnName := "repo::UpdateAcademicManager"
 	query := `
 		UPDATE academic_managers
@@ -118,6 +131,9 @@ func (r *masterRepo) UpdateAcademicManager(ctx context.Context, req *entity.Upda
 }
 
 func (r *masterRepo) DeleteAcademicManager(ctx context.Context, req *entity.DeleteAcademicManagerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.DeleteAcademicManager")
+	defer span.End()
+
 	fnName := "repo::DeleteAcademicManager"
 	query := `
 		UPDATE academic_managers

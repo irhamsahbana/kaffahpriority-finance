@@ -2,12 +2,15 @@ package repository
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 
 	"github.com/rs/zerolog/log"
 )
 
 func (r *reportRepo) DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.DeleteTemplate")
+	defer span.End()
 	fnName := "repo::DeleteTemplate"
 	query := `
 		UPDATE program_registration_templates

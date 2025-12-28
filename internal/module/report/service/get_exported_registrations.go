@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"fmt"
 	"strings"
@@ -12,6 +13,8 @@ import (
 )
 
 func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entity.GetExportedRegistrationsReq) (*entity.GetExportedRegistrationsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetExportedRegistrations")
+	defer span.End()
 	resp, err := s.repo.GetExportedRegistrations(ctx, req)
 	if err != nil {
 		return nil, err

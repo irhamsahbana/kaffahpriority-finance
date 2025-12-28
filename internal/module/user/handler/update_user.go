@@ -3,6 +3,7 @@ package handler
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/internal/middleware"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
@@ -13,12 +14,13 @@ import (
 
 func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateUser"
-		req    = new(entity.UpdateUserReq)
-		v      = adapter.Adapters.Validator
-		l      = middleware.GetLocals(c)
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateUser")
+		fnName    = "handler::updateUser"
+		req       = new(entity.UpdateUserReq)
+		v         = adapter.Adapters.Validator
+		l         = middleware.GetLocals(c)
 	)
+	defer span.End()
 
 	req.UserID = l.GetUserId()
 	req.ID = c.Params("id")

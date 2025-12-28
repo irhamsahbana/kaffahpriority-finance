@@ -3,6 +3,7 @@ package repository
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
 	ports "codebase-app/internal/ports/module/report"
 	"codebase-app/pkg/errmsg"
 	"context"
@@ -26,6 +27,9 @@ func NewReportRepository() *reportRepo {
 }
 
 func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLecturerProgramsReq) (*entity.GetLecturerProgramsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturerPrograms")
+	defer span.End()
+
 	type daoLecturer struct {
 		TotalData int `db:"total_data"`
 		entity.LecturerProgramItem
