@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -58,7 +59,7 @@ func (r *activityLogRepo) CreateActivityLog(ctx context.Context, req *entity.Act
 	return nil
 }
 
-func (r *activityLogRepo) GetActivityLog(ctx context.Context, req *entity.GetActivityLogReq) ([]entity.ActivityLog, error) {
+func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetActivityLogsReq) ([]entity.ActivityLog, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.GetActivityLog")
 	defer span.End()
 
@@ -68,6 +69,21 @@ func (r *activityLogRepo) GetActivityLog(ctx context.Context, req *entity.GetAct
 		SELECT id, logs FROM activity_logs
 		WHERE entity_name = $1 AND entity_id = $2
 	`
+
+	if req.SortBy != "" {
+		orderBy := "created_at"
+		if req.SortBy == "created_at" {
+			orderBy = "logs->>'created_at'"
+		}
+
+		orderDir := "DESC"
+		if req.SortType == "asc" {
+			orderDir = "ASC"
+		}
+
+		query += fmt.Sprintf(" ORDER BY %s %s", orderBy, orderDir)
+	}
+
 	var resp []entity.ActivityLog
 	rows, err := r.db.QueryxContext(ctx, query, req.EntityName, req.EntityID)
 	if err != nil && err != sql.ErrNoRows {

@@ -25,8 +25,8 @@ func (s *activityLogService) CreateActivityLog(ctx context.Context, req *entity.
 	return s.repo.CreateActivityLog(ctx, req)
 }
 
-func (s *activityLogService) GetActivityLog(ctx context.Context, req *entity.GetActivityLogReq) ([]entity.ActivityLog, error) {
-	ctx, span := tracing.StartSpan(ctx, "service.GetActivityLog")
+func (s *activityLogService) GetActivityLogs(ctx context.Context, req *entity.GetActivityLogsReq) ([]entity.ActivityLog, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetActivityLogs")
 	defer span.End()
-	return s.repo.GetActivityLog(ctx, req)
+	return s.repo.GetActivityLogs(ctx, req)
 }
