@@ -44,21 +44,23 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 		return nil, err
 	}
 
-	shouldResetFees, err := r.checkResetFees(ctx, currentReg, req)
+	shouldResetFees, err := r.shouldResetFees(ctx, currentReg, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.updateRegistrationRecord(ctx, tx, req, shouldResetFees); err != nil {
+	if err := r.updateRegistrationMetadata(ctx, tx, req, shouldResetFees); err != nil {
 		return nil, err
 	}
 
-	if err := r.updateRegistrationStudents(ctx, tx, req); err != nil {
+	if err := r.updateRegistrationAdditionalStudents(ctx, tx, req); err != nil {
 		return nil, err
 	}
 
-	if err := r.handleTemplateUpdate(ctx, tx, currentReg, req); err != nil {
-		return nil, err
+	if req.IsUpdateTemplate {
+		if err := r.processTemplatePropagation(ctx, tx, currentReg, req); err != nil {
+			return nil, err
+		}
 	}
 
 	resp := new(entity.UpdateRegistrationResp)
@@ -67,8 +69,8 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 	return resp, nil
 }
 
-func (r *reportRepo) checkResetFees(ctx context.Context, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) (bool, error) {
-	ctx, span := tracing.StartSpan(ctx, "repo.checkResetFees")
+func (r *reportRepo) shouldResetFees(ctx context.Context, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) (bool, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.shouldResetFees")
 	defer span.End()
 
 	// Check if reset is needed
@@ -107,8 +109,8 @@ func (r *reportRepo) checkResetFees(ctx context.Context, currentReg *entity.GetR
 	return lecturerChanged || monthChanged, nil
 }
 
-func (r *reportRepo) updateRegistrationRecord(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq, shouldResetFees bool) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationRecord")
+func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq, shouldResetFees bool) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationMetadata")
 	defer span.End()
 
 	query := `
@@ -208,8 +210,8 @@ func (r *reportRepo) updateRegistrationRecord(ctx context.Context, tx *sqlx.Tx, 
 	return nil
 }
 
-func (r *reportRepo) updateRegistrationStudents(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationStudents")
+func (r *reportRepo) updateRegistrationAdditionalStudents(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationAdditionalStudents")
 	defer span.End()
 	query := `
 		DELETE FROM pr_additional_students WHERE pr_id = ?
@@ -238,12 +240,9 @@ func (r *reportRepo) updateRegistrationStudents(ctx context.Context, tx *sqlx.Tx
 	return nil
 }
 
-func (r *reportRepo) handleTemplateUpdate(ctx context.Context, tx *sqlx.Tx, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.handleTemplateUpdate")
+func (r *reportRepo) processTemplatePropagation(ctx context.Context, tx *sqlx.Tx, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.processTemplatePropagation")
 	defer span.End()
-	if !req.IsUpdateTemplate {
-		return nil
-	}
 
 	// Check if core template fields (lecturer_id, program_id, student_id) have changed
 	// If any of these fields changed, create a new template
@@ -256,55 +255,63 @@ func (r *reportRepo) handleTemplateUpdate(ctx context.Context, tx *sqlx.Tx, curr
 		return err
 	}
 
-	// Check if any core field has changed
-	lecturerIdChanged := false
-	// lecturer_id is changed from NULL to non-NULL
-	if (currentTemplate.LecturerId == nil && req.LecturerId != nil) ||
-		// lecturer_id is changed from non-NULL to NULL
-		(currentTemplate.LecturerId != nil && req.LecturerId == nil) {
-		lecturerIdChanged = true
+	if err := r.validateTemplateModification(currentTemplate, req); err != nil {
+		return err
 	}
 
+	if r.requiresNewTemplateStrategy(currentTemplate, req) {
+		return r.executeNewTemplateMigration(ctx, tx, currentReg.TemplateID, req)
+	}
+
+	return r.executeUpdateExistingTemplate(ctx, tx, currentReg.TemplateID, req)
+}
+
+func (r *reportRepo) validateTemplateModification(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) error {
 	changeLecturer := currentTemplate.LecturerId != nil && req.LecturerId != nil && *currentTemplate.LecturerId != *req.LecturerId
 	if changeLecturer {
 		return errmsg.NewCustomErrors(http.StatusUnprocessableEntity).SetMessage("Tidak dapat mengubah mentor atau sudah ada registrasi yang menggunakan mentor tersebut, silahkan buat bank data baru")
 	}
-
-	coreFieldsChanged := lecturerIdChanged
-
-	if coreFieldsChanged {
-		newTemplateId, err := r.createNewTemplate(ctx, tx, req)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to create new template")
-			return err
-		}
-
-		// update all registrations that using old template to use new template_id
-		err = r.updateRegistrationsTemplateID(ctx, tx, currentReg.TemplateID, newTemplateId, req)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registrations template_id")
-			return err
-		}
-
-		// Delete old template
-		err = r.deleteOldTemplate(ctx, tx, currentReg.TemplateID)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to delete old template")
-			return err
-		}
-	} else {
-		err = r.updateExistingTemplate(ctx, tx, currentReg.TemplateID, req)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update existing template")
-			return err
-		}
-	}
-
 	return nil
 }
 
-func (r *reportRepo) updateRegistrationsTemplateID(ctx context.Context, tx *sqlx.Tx, oldTemplateID, newTemplateID string, req *entity.UpdateRegistrationReq) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationsTemplateID")
+func (r *reportRepo) requiresNewTemplateStrategy(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) bool {
+	// lecturer_id is changed from NULL to non-NULL
+	if (currentTemplate.LecturerId == nil && req.LecturerId != nil) ||
+		// lecturer_id is changed from non-NULL to NULL
+		(currentTemplate.LecturerId != nil && req.LecturerId == nil) {
+		return true
+	}
+	return false
+}
+
+func (r *reportRepo) executeNewTemplateMigration(ctx context.Context, tx *sqlx.Tx, oldTemplateID string, req *entity.UpdateRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.executeNewTemplateMigration")
+	defer span.End()
+
+	newTemplateId, err := r.createRegistrationTemplate(ctx, tx, req)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to create new template")
+		return err
+	}
+
+	// update all registrations that using old template to use new template_id
+	err = r.migrateRegistrationsToNewTemplate(ctx, tx, oldTemplateID, newTemplateId, req)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registrations template_id")
+		return err
+	}
+
+	// Delete old template
+	err = r.archiveTemplate(ctx, tx, oldTemplateID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to delete old template")
+		return err
+	}
+	return nil
+}
+
+func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *sqlx.Tx, oldTemplateID, newTemplateID string, req *entity.UpdateRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.migrateRegistrationsToNewTemplate")
 	defer span.End()
 	query := `
 		UPDATE program_registrations SET
@@ -382,8 +389,8 @@ func (r *reportRepo) updateRegistrationsTemplateID(ctx context.Context, tx *sqlx
 	return nil
 }
 
-func (r *reportRepo) createNewTemplate(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) (string, error) {
-	ctx, span := tracing.StartSpan(ctx, "repo.createNewTemplate")
+func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) (string, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.createRegistrationTemplate")
 	defer span.End()
 
 	newTemplateId := ulid.Make().String()
@@ -492,8 +499,8 @@ func (r *reportRepo) createNewTemplate(ctx context.Context, tx *sqlx.Tx, req *en
 	return newTemplateId, nil
 }
 
-func (r *reportRepo) updateExistingTemplate(ctx context.Context, tx *sqlx.Tx, templateID string, req *entity.UpdateRegistrationReq) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.updateExistingTemplate")
+func (r *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx.Tx, templateID string, req *entity.UpdateRegistrationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.executeUpdateExistingTemplate")
 	defer span.End()
 	// Update existing template
 	// Only update fields that exist in program_registration_templates table
@@ -564,8 +571,8 @@ func (r *reportRepo) updateExistingTemplate(ctx context.Context, tx *sqlx.Tx, te
 	return nil
 }
 
-func (r *reportRepo) deleteOldTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
-	ctx, span := tracing.StartSpan(ctx, "repo.deleteOldTemplate")
+func (r *reportRepo) archiveTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.archiveTemplate")
 	defer span.End()
 
 	// Delete old template
