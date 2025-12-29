@@ -280,7 +280,7 @@ func (r *reportRepo) handleTemplateUpdate(ctx context.Context, tx *sqlx.Tx, curr
 		}
 
 		// update all registrations that using old template to use new template_id
-		err = r.updateRegistrationsTemplateID(ctx, tx, currentReg.TemplateID, newTemplateId)
+		err = r.updateRegistrationsTemplateID(ctx, tx, currentReg.TemplateID, newTemplateId, req)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registrations template_id")
 			return err
@@ -303,17 +303,78 @@ func (r *reportRepo) handleTemplateUpdate(ctx context.Context, tx *sqlx.Tx, curr
 	return nil
 }
 
-func (r *reportRepo) updateRegistrationsTemplateID(ctx context.Context, tx *sqlx.Tx, oldTemplateID, newTemplateID string) error {
+func (r *reportRepo) updateRegistrationsTemplateID(ctx context.Context, tx *sqlx.Tx, oldTemplateID, newTemplateID string, req *entity.UpdateRegistrationReq) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationsTemplateID")
 	defer span.End()
 	query := `
 		UPDATE program_registrations SET
-			template_id = ?
+			template_id = ?,
+			lecturer_id = ?,
+			marketer_id = ?,
+			program_name = (SELECT name FROM programs WHERE id = ?),
+			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
+			full_fee = (SELECT full_fee FROM programs WHERE id = ?),
+			program_acquisition_rights = (CASE WHEN ? THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM programs WHERE id = ?)),
+			program_fee = ?,
+			administration_fee = ?,
+			foreign_learning_fee = ?,
+			night_learning_fee = ?,
+			marketer_commission_fee = (SELECT commission_fee FROM programs WHERE id = ?),
+			overpayment_fee = ?,
+			hr_fee = ?,
+			mentor_detail_fee = (
+				? - (
+					40000 *
+					CASE
+						WHEN ? THEN 2
+						ELSE 1
+					END *
+					(SELECT acquisition_rights FROM programs WHERE id = ?)
+				)
+			),
+			hr_detail_fee = (
+				40000 *
+				CASE
+					WHEN ? THEN 2
+					ELSE 1
+				END *
+				(SELECT acquisition_rights FROM programs WHERE id = ?)
+			),
+			marketer_gifts_fee = ?,
+			closing_fee_for_office = ?,
+			closing_fee_for_reward = ?,
+			days = ?,
+			notes = ?,
+			is_itp = ?,
+			updated_at = NOW()
 		WHERE
 			template_id = ?
 			AND deleted_at IS NULL
 	`
-	_, err := tx.ExecContext(ctx, tx.Rebind(query), newTemplateID, oldTemplateID)
+	_, err := tx.ExecContext(ctx, tx.Rebind(query),
+		newTemplateID,
+		req.LecturerId, req.MarketerId,
+		req.ProgramId,
+		req.ProgramId,
+		req.ProgramId,
+		req.IsITP, req.ProgramId,
+		req.ProgramFee,
+		req.AdministrationFee,
+		req.FLFee,
+		req.NLFee,
+		req.ProgramId,
+		req.OverpaymentFee,
+		req.HRFee,
+		req.HRFee, req.IsITP, req.ProgramId,
+		req.IsITP, req.ProgramId,
+		req.MarketerGiftsFee,
+		req.ClosingFeeForOffice,
+		req.ClosingFeeForReward,
+		pq.Array(req.Days),
+		req.Notes,
+		req.IsITP,
+		oldTemplateID,
+	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("oldTemplateID", oldTemplateID).Msgf("failed to update registrations template_id")
 		return err
