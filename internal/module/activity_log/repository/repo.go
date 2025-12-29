@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
 
@@ -85,7 +86,7 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 
 	if len(req.EntityIDs) > 0 {
 		query += " AND entity_id = ANY(?)"
-		args = append(args, req.EntityIDs)
+		args = append(args, pq.Array(req.EntityIDs))
 	}
 
 	if req.EntityName != "" {
@@ -97,7 +98,12 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 		ORDER BY ` + req.SortBy + ` ` + req.SortType + `
 	`
 
-	err := r.db.SelectContext(ctx, &data, query, args...)
+	query += `
+		LIMIT ? OFFSET ?
+	`
+	args = append(args, req.Paginate, req.Paginate*(req.Page-1))
+
+	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("error select activity log")
 		return nil, err
