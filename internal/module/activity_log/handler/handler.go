@@ -10,6 +10,7 @@ import (
 	ports "codebase-app/internal/ports/module/activity_log"
 	"codebase-app/pkg/errmsg"
 	"codebase-app/pkg/response"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -38,7 +39,6 @@ func (h *activityLogHandler) Register(router fiber.Router) {
 func (h *activityLogHandler) getActivityLogs(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getActivityLogs")
-		fnName    = "handler::getActivityLogs"
 		req       = new(entity.GetActivityLogsReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -46,23 +46,27 @@ func (h *activityLogHandler) getActivityLogs(c *fiber.Ctx) error {
 	defer span.End()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Error().Err(err).Str("fn", fnName).Msg("error parse query")
+		log.Ctx(ctx).Error().Err(err).Msg("error parse query")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 	req.SetDefault()
 
+	if req.EntityIDsQuery != "" {
+		req.EntityIDs = strings.Split(req.EntityIDsQuery, ",")
+	}
+
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	resp, err := h.service.GetActivityLogs(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Str("fn", fnName).Msg("error get activity logs")
-		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
