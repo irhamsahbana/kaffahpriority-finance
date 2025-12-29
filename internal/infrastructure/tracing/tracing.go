@@ -55,13 +55,7 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 
 	tracerProviderOptions := []sdktrace.TracerProviderOption{
 		sdktrace.WithResource(res),
-	}
-
-	switch cfg.AppEnv {
-	case "development":
-		tracerProviderOptions = append(tracerProviderOptions, sdktrace.WithSampler(sdktrace.AlwaysSample())) // Sample all traces for dev/demo
-	case "production":
-		tracerProviderOptions = append(tracerProviderOptions, sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(0.1)))) // Sample 10% of traces for production
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 	}
 
 	if config.Envs.Instrumentation.Debug {
