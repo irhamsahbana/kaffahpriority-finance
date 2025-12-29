@@ -134,7 +134,7 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 		return nil, err
 	}
 
-	resp, err := s.repo.UpdateRegistration(ctx, req)
+	resp, err := s.repo.UpdateRegistrationV2(ctx, req)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).
 			Any(entity.Payload, req).
