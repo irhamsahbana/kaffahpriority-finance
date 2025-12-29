@@ -45,12 +45,13 @@ func (h *activityLogHandler) getActivityLogs(c *fiber.Ctx) error {
 	)
 	defer span.End()
 
-	req.UserID = l.GetUserId()
-
 	if err := c.QueryParser(req); err != nil {
 		log.Error().Err(err).Str("fn", fnName).Msg("error parse query")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
+
+	req.UserID = l.GetUserId()
+	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
