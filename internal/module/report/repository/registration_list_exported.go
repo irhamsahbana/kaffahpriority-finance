@@ -53,7 +53,7 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 				ELSE 'partial'
 			END AS hr_fee_for_mentor_status,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL OR pr.mentor_detail_fee_used > 0 THEN TRUE
+				WHEN COALESCE(pr.mentor_detail_fee_used, 0) > 0 THEN TRUE
 				ELSE FALSE
 			END AS is_mentor_detail_fee_used,
 			CASE
@@ -135,9 +135,9 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 	if req.IsLecturerFeeUsed != "" {
 		if req.IsLecturerFeeUsed == "true" {
-			query += ` AND pr.mentor_detail_fee_used IS NOT NULL`
+			query += ` AND COALESCE(pr.mentor_detail_fee_used, 0) > 0`
 		} else {
-			query += ` AND pr.mentor_detail_fee_used IS NULL`
+			query += ` AND (pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0)`
 		}
 	}
 

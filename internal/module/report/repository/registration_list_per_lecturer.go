@@ -154,7 +154,7 @@ func (r *reportRepo) GetRegistrationsPerLecturer(ctx context.Context, req *entit
 			pr.mentor_detail_fee AS hr_fee_for_lecturer,
 			pr.mentor_detail_fee_used AS used_amount,
 			CASE
-				WHEN pr.mentor_detail_fee_used IS NOT NULL THEN TRUE
+				WHEN COALESCE(pr.mentor_detail_fee_used, 0) > 0 THEN TRUE
 				ELSE NULL
 			END AS is_used,
 			pr.notes_for_fund_distributions AS notes,
@@ -559,7 +559,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			SUM(c.mentor_detail_fee) AS hr_fee_for_lecturer,
 			SUM(c.mentor_detail_fee_used) AS used_amount,
 			CASE
-				WHEN SUM(CASE WHEN c.mentor_detail_fee_used IS NOT NULL AND c.mentor_detail_fee_used > 0 THEN 1 ELSE 0 END) > 0 THEN TRUE
+				WHEN SUM(COALESCE(c.mentor_detail_fee_used, 0)) > 0 THEN TRUE
 				ELSE NULL
 			END AS is_used,
 			MAX(c.notes_for_fund_distributions) AS notes,
