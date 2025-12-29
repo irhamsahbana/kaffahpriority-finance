@@ -334,7 +334,6 @@ func (r *reportRepo) UpdateRegistration(ctx context.Context, req *entity.UpdateR
 		`
 
 		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			req.ProgramId,
 			newTemplateId, req.UserID, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 			pq.Array(req.Days), req.Notes, req.ProgramFee,
 			program.ProgramFeePerMeeting,
