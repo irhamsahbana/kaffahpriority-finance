@@ -42,6 +42,12 @@ type ActivityLog struct {
 	DeletedBy    *string              `json:"deleted_by" db:"deleted_by"`
 }
 
+type ActivityLogList struct {
+	ActivityLog
+	LogID        string    `json:"log_id"`
+	LogCreatedAt time.Time `json:"log_created_at"`
+}
+
 type ActivityLogChanges struct {
 	Field  string `json:"field" db:"field"`
 	Before string `json:"before" db:"before"`
@@ -52,9 +58,26 @@ type ActivityLogChanges struct {
 type GetActivityLogsReq struct {
 	UserID string `json:"user_id" validate:"required,ulid"`
 
-	EntityID   string `query:"entity_id" validate:"required"`
-	EntityName string `query:"entity_name" validate:"required"`
-	SortBy     string `query:"sort_by" validate:"omitempty,oneof=created_at updated_at paid_at student_name"`
-	SortType   string `query:"sort_type" validate:"omitempty,oneof=asc desc"`
+	EntityIDs  []string `query:"entity_id" validate:"omitempty,dive,ulid"`
+	EntityName string   `query:"entity_name"`
+	SortBy     string   `query:"sort_by" validate:"oneof=created_at"`
+	SortType   string   `query:"sort_type" validate:"oneof=asc desc"`
 	types.MetaQuery
+}
+
+func (r *GetActivityLogsReq) SetDefault() {
+	r.MetaQuery.SetDefault()
+
+	if r.SortBy == "" {
+		r.SortBy = "created_at"
+	}
+
+	if r.SortType == "" {
+		r.SortType = "desc"
+	}
+}
+
+type GetActivityLogsResp struct {
+	Items      []ActivityLogList `json:"items"`
+	types.Meta `json:"meta"`
 }
