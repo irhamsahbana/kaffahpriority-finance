@@ -10,6 +10,7 @@ type GetRegistrationReq struct {
 
 type GetRegistrationResp struct {
 	ID                       string        `json:"id" db:"id"`
+	TemplateID               string        `json:"template_id" db:"template_id"`
 	ProgramID                string        `json:"program_id" db:"program_id"`
 	MarketerID               string        `json:"marketer_id" db:"marketer_id"`
 	LecturerID               *string       `json:"lecturer_id" db:"lecturer_id"`

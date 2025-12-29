@@ -24,6 +24,7 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.batch,
 			pr.is_paid,
 			pr.id,
+			pr.template_id,
 			pr.program_id,
 			pr.marketer_id,
 			pr.lecturer_id,
