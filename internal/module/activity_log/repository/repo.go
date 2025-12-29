@@ -74,6 +74,7 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 		resp = new(entity.GetActivityLogsResp)
 		args = make([]any, 0, 3)
 	)
+	resp.Items = make([]entity.ActivityLogList, 0, req.Paginate)
 
 	query := `
 		SELECT
@@ -92,6 +93,11 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 	if req.EntityName != "" {
 		query += " AND entity_name = ?"
 		args = append(args, req.EntityName)
+	}
+
+	if len(req.ActivityTypes) > 0 {
+		query += " AND logs->>'type' = ANY(?)"
+		args = append(args, pq.Array(req.ActivityTypes))
 	}
 
 	query += `

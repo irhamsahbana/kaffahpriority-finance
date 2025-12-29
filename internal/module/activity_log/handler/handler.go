@@ -57,6 +57,10 @@ func (h *activityLogHandler) getActivityLogs(c *fiber.Ctx) error {
 		req.EntityIDs = strings.Split(req.EntityIDsQuery, ",")
 	}
 
+	if req.ActivityTypesQuery != "" {
+		req.ActivityTypes = strings.Split(req.ActivityTypesQuery, ",")
+	}
+
 	if err := v.Validate(req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("invalid request")
 		code, errs := errmsg.Errors(err, req)
