@@ -6,9 +6,8 @@ import (
 	"codebase-app/internal/infrastructure/tracing"
 	ports "codebase-app/internal/ports/module/activity_log"
 	"context"
-	"database/sql"
 	"encoding/json"
-	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -59,62 +58,66 @@ func (r *activityLogRepo) CreateActivityLog(ctx context.Context, req *entity.Act
 	return nil
 }
 
-func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetActivityLogsReq) ([]entity.ActivityLog, error) {
-	ctx, span := tracing.StartSpan(ctx, "repo.GetActivityLog")
+func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetActivityLogsReq) (*entity.GetActivityLogsResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetActivityLogs")
 	defer span.End()
 
-	fnName := "repo::GetActivityLog"
+	type dao struct {
+		TotalData int       `db:"total_data"`
+		ID        string    `db:"id"`
+		Logs      []byte    `db:"logs"`
+		CreatedAt time.Time `db:"created_at"`
+	}
+	var (
+		data = make([]dao, 0, req.Paginate)
+		resp = new(entity.GetActivityLogsResp)
+		args = make([]any, 0, 3)
+	)
 
 	query := `
-		SELECT id, logs FROM activity_logs
-		WHERE entity_name = $1 AND entity_id = $2
+		SELECT
+			COUNT(*) OVER() AS total_data,
+			id, logs, created_at
+			FROM activity_logs
+		WHERE
+			1 = 1
 	`
 
-	if req.SortBy != "" {
-		orderBy := "created_at"
-		if req.SortBy == "created_at" {
-			orderBy = "logs->>'created_at'"
-		}
-
-		orderDir := "DESC"
-		if req.SortType == "asc" {
-			orderDir = "ASC"
-		}
-
-		query += fmt.Sprintf(" ORDER BY %s %s", orderBy, orderDir)
+	if len(req.EntityIDs) > 0 {
+		query += " AND entity_id = ANY(?)"
+		args = append(args, req.EntityIDs)
 	}
 
-	var resp []entity.ActivityLog
-	rows, err := r.db.QueryxContext(ctx, query, req.EntityName, req.EntityID)
-	if err != nil && err != sql.ErrNoRows {
-		log.Error().Err(err).Str("fn", fnName).Msg("error get activity log")
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var rawLog []byte
-		var logs entity.ActivityLog
-		if err := rows.Scan(&logs.ID, &rawLog); err != nil {
-			log.Error().Err(err).Str("fn", fnName).Msg("error scan activity log")
-			return nil, err
-		}
-
-		if err := json.Unmarshal(rawLog, &logs); err != nil {
-			log.Error().Err(err).Str("fn", fnName).Msg("error unmarshal activity log")
-			return nil, err
-		}
-		resp = append(resp, logs)
+	if req.EntityName != "" {
+		query += " AND entity_name = ?"
+		args = append(args, req.EntityName)
 	}
 
-	if err := rows.Err(); err != nil {
-		log.Error().Err(err).Str("fn", fnName).Msg("error iterate activity log rows")
-		return nil, err
-	}
+	query += `
+		ORDER BY ` + req.SortBy + ` ` + req.SortType + `
+	`
 
+	err := r.db.SelectContext(ctx, &data, query, args...)
 	if err != nil {
-		log.Warn().Err(err).Str("fn", fnName).Msg("activity log not found")
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("error select activity log")
+		return nil, err
 	}
+
+	for _, item := range data {
+		resp.Meta.TotalData = item.TotalData
+		var logs entity.ActivityLog
+		if err := json.Unmarshal(item.Logs, &logs); err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("item", item).Msg("error unmarshal activity log")
+			continue
+		}
+		resp.Items = append(resp.Items, entity.ActivityLogList{
+			ActivityLog:  logs,
+			LogID:        item.ID,
+			LogCreatedAt: item.CreatedAt,
+		})
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
 
 	return resp, nil
 }
