@@ -27,7 +27,7 @@ func (r *reportRepo) RegistrationsMarkAsUsed(ctx context.Context, req *entity.Re
                 program_registrations parent ON child.parent_id = parent.id
             WHERE 
                 child.deleted_at IS NULL
-                AND child.mentor_detail_fee_used IS NULL
+               AND COALESCE(child.mentor_detail_fee_used, 0) = 0
                 AND child.is_paid = true
                 AND child.category IN ('general', 'additional')
                 AND COALESCE(child.program_meetings, parent.program_meetings, 0) > 0
