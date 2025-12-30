@@ -69,6 +69,43 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 	return resp, nil
 }
 
+type programDetails struct {
+	Name              string  `db:"name"`
+	PricePerMeeting   float64 `db:"price_per_meeting"`
+	FullFee           float64 `db:"full_fee"`
+	AcquisitionRights int64   `db:"acquisition_rights"`
+	CommissionFee     float64 `db:"commission_fee"`
+}
+
+func (r *reportRepo) fetchProgramDetails(ctx context.Context, tx *sqlx.Tx, programID string) (*programDetails, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.fetchProgramDetails")
+	defer span.End()
+
+	queryProgram := `
+		SELECT
+			name,
+			price_per_meeting,
+			full_fee,
+			acquisition_rights,
+			commission_fee
+		FROM
+			programs
+		WHERE
+			id = ?
+			AND deleted_at IS NULL
+	`
+
+	var program programDetails
+	err := tx.GetContext(ctx, &program, tx.Rebind(queryProgram), programID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errmsg.NewCustomErrors(404).SetMessage("program tidak ditemukan")
+		}
+		return nil, err
+	}
+	return &program, nil
+}
+
 func (r *reportRepo) shouldResetFees(ctx context.Context, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.shouldResetFees")
 	defer span.End()
@@ -313,40 +350,39 @@ func (r *reportRepo) executeNewTemplateMigration(ctx context.Context, tx *sqlx.T
 func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *sqlx.Tx, oldTemplateID, newTemplateID string, req *entity.UpdateRegistrationReq) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.migrateRegistrationsToNewTemplate")
 	defer span.End()
+
+	program, err := r.fetchProgramDetails(ctx, tx, req.ProgramId)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get program data")
+		return err
+	}
+
+	var multiplier int64 = 1
+	if req.IsITP {
+		multiplier = 2
+	}
+	programAcquisitionRights := multiplier * program.AcquisitionRights
+	hrDetailFee := 40000 * programAcquisitionRights
+	mentorDetailFee := req.HRFee - float64(hrDetailFee)
+
 	query := `
 		UPDATE program_registrations SET
 			template_id = ?,
 			lecturer_id = ?,
 			marketer_id = ?,
-			program_name = (SELECT name FROM programs WHERE id = ?),
-			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
-			full_fee = (SELECT full_fee FROM programs WHERE id = ?),
-			program_acquisition_rights = (CASE WHEN ? THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM programs WHERE id = ?)),
+			program_name = ?,
+			program_fee_per_meeting = ?,
+			full_fee = ?,
+			program_acquisition_rights = ?,
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
-			marketer_commission_fee = (SELECT commission_fee FROM programs WHERE id = ?),
+			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
-			mentor_detail_fee = (
-				? - (
-					40000 *
-					CASE
-						WHEN ? THEN 2
-						ELSE 1
-					END *
-					(SELECT acquisition_rights FROM programs WHERE id = ?)
-				)
-			),
-			hr_detail_fee = (
-				40000 *
-				CASE
-					WHEN ? THEN 2
-					ELSE 1
-				END *
-				(SELECT acquisition_rights FROM programs WHERE id = ?)
-			),
+			mentor_detail_fee = ?,
+			hr_detail_fee = ?,
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
@@ -358,22 +394,22 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 			template_id = ?
 			AND deleted_at IS NULL
 	`
-	_, err := tx.ExecContext(ctx, tx.Rebind(query),
+	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		newTemplateID,
 		req.LecturerId, req.MarketerId,
-		req.ProgramId,
-		req.ProgramId,
-		req.ProgramId,
-		req.IsITP, req.ProgramId,
+		program.Name,
+		program.PricePerMeeting,
+		program.FullFee,
+		programAcquisitionRights,
 		req.ProgramFee,
 		req.AdministrationFee,
 		req.FLFee,
 		req.NLFee,
-		req.ProgramId,
+		program.CommissionFee,
 		req.OverpaymentFee,
 		req.HRFee,
-		req.HRFee, req.IsITP, req.ProgramId,
-		req.IsITP, req.ProgramId,
+		mentorDetailFee,
+		hrDetailFee,
 		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice,
 		req.ClosingFeeForReward,
@@ -394,28 +430,8 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 	defer span.End()
 
 	newTemplateId := ulid.Make().String()
-	queryProgram := `
-		SELECT
-			p.price_per_meeting AS program_fee_per_meeting,
-			p.commission_fee AS marketer_commission_fee
-		FROM
-			programs p
-		WHERE
-			p.id = ?
-			AND p.deleted_at IS NULL
-	`
-
-	var program struct {
-		ProgramFeePerMeeting  float64 `db:"program_fee_per_meeting"`
-		MarketerCommissionFee float64 `db:"marketer_commission_fee"`
-	}
-
-	err := tx.GetContext(ctx, &program, tx.Rebind(queryProgram), req.ProgramId)
+	program, err := r.fetchProgramDetails(ctx, tx, req.ProgramId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("program not found")
-			return newTemplateId, errmsg.NewCustomErrors(404).SetMessage("program tidak ditemukan")
-		}
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get program data")
 		return newTemplateId, err
 	}
@@ -454,9 +470,9 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		newTemplateId, req.UserID, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes, req.ProgramFee,
-		program.ProgramFeePerMeeting,
+		program.PricePerMeeting,
 		req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
-		program.MarketerCommissionFee,
+		program.CommissionFee,
 		req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
 	)
