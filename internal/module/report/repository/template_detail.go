@@ -72,9 +72,7 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 		WHERE
 			prt.id = ?
 	`
-	if req.WithDeleted {
-		query += " AND prt.deleted_at IS NOT NULL"
-	} else {
+	if !req.WithDeleted {
 		query += " AND prt.deleted_at IS NULL"
 	}
 
