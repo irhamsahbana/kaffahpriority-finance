@@ -49,16 +49,19 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 		return nil, err
 	}
 
-	if err := r.updateRegistrationMetadata(ctx, tx, req, shouldResetFees); err != nil {
+	err = r.updateRegistrationMetadata(ctx, tx, req, shouldResetFees)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := r.updateRegistrationAdditionalStudents(ctx, tx, req); err != nil {
+	err = r.updateRegistrationAdditionalStudents(ctx, tx, req)
+	if err != nil {
 		return nil, err
 	}
 
 	if req.IsUpdateTemplate {
-		if err := r.processTemplatePropagation(ctx, tx, currentReg, req); err != nil {
+		err = r.processTemplatePropagation(ctx, tx, currentReg, req)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -180,12 +183,12 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 	if currentReg.HRFeeForMentor != nil {
 		mentorDetailFee = *currentReg.HRFeeForMentor
 	}
-	
+
 	var hrDetailFee float64
 	if currentReg.HRFeeForHR != nil {
 		hrDetailFee = *currentReg.HRFeeForHR
 	}
-	
+
 	var programAcquisitionRights int64 = int64(currentReg.ProgramAcquisitionRights)
 	if isITPChanged {
 		programAcquisitionRights = multiplier * program.AcquisitionRights
@@ -317,11 +320,22 @@ func (r *reportRepo) processTemplatePropagation(ctx context.Context, tx *sqlx.Tx
 	// If any of these fields changed, create a new template
 	// If none changed, update the existing template
 	currentTemplate, err := r.GetTemplate(ctx, &entity.GetTemplateReq{
-		ID: currentReg.TemplateID,
+		ID:          currentReg.TemplateID,
+		WithDeleted: true,
 	})
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get template core fields")
 		return err
+	}
+
+	if currentTemplate.DeletedAt != nil {
+		// restore template
+		err = r.RestoreTemplate(ctx, &entity.GetTemplateReq{
+			ID: currentReg.TemplateID,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := r.validateTemplateModification(currentTemplate, req); err != nil {
