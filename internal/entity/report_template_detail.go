@@ -1,6 +1,8 @@
 package entity
 
-import "github.com/lib/pq"
+import (
+	"github.com/lib/pq"
+)
 
 type GetTemplateReq struct {
 	UserID string `validate:"required,ulid" json:"user_id"`

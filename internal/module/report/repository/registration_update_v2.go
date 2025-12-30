@@ -320,22 +320,11 @@ func (r *reportRepo) processTemplatePropagation(ctx context.Context, tx *sqlx.Tx
 	// If any of these fields changed, create a new template
 	// If none changed, update the existing template
 	currentTemplate, err := r.GetTemplate(ctx, &entity.GetTemplateReq{
-		ID:          currentReg.TemplateID,
-		WithDeleted: true,
+		ID: currentReg.TemplateID,
 	})
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get template core fields")
 		return err
-	}
-
-	if currentTemplate.DeletedAt != nil {
-		// restore template
-		err = r.RestoreTemplate(ctx, &entity.GetTemplateReq{
-			ID: currentReg.TemplateID,
-		})
-		if err != nil {
-			return err
-		}
 	}
 
 	if err := r.validateTemplateModification(currentTemplate, req); err != nil {
