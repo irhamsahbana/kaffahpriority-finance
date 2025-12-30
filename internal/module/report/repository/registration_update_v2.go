@@ -158,13 +158,45 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 		return err
 	}
 
+	var currentReg *entity.GetRegistrationResp
+	currentReg, err = r.GetRegistration(ctx, &entity.GetRegistrationReq{ID: req.ID})
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get registration")
+		return err
+	}
+
+	// only check this if req.isITP is changed
+	isITPChanged := false
+	if req.IsITP != currentReg.IsITP {
+		isITPChanged = true
+	}
+
 	var multiplier int64 = 1
 	if req.IsITP {
 		multiplier = 2
 	}
-	programAcquisitionRights := multiplier * program.AcquisitionRights
-	hrDetailFee := 40000 * programAcquisitionRights
-	mentorDetailFee := req.HRFee - float64(hrDetailFee)
+	// if category is "additional, skip this and set mentorDetailFee to take all value form req.hrFee"
+	var mentorDetailFee float64
+	if currentReg.HRFeeForMentor != nil {
+		mentorDetailFee = *currentReg.HRFeeForMentor
+	}
+	
+	var hrDetailFee float64
+	if currentReg.HRFeeForHR != nil {
+		hrDetailFee = *currentReg.HRFeeForHR
+	}
+	
+	var programAcquisitionRights int64 = int64(currentReg.ProgramAcquisitionRights)
+	if isITPChanged {
+		programAcquisitionRights = multiplier * program.AcquisitionRights
+		hrDetailFee = 40000 * float64(programAcquisitionRights)
+		if req.Category == "additional" {
+			mentorDetailFee = req.HRFee
+			hrDetailFee = 0
+		} else {
+			mentorDetailFee = req.HRFee - hrDetailFee
+		}
+	}
 
 	query := `
 		UPDATE program_registrations SET

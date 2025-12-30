@@ -28,7 +28,7 @@ type UpdateRegistrationReq struct {
 	Notes                 *string      `json:"notes" validate:"omitempty,max=255"`
 	NotesForCategory      *string      `json:"notes_for_category" validate:"omitempty,max=255"`
 	IsITP                 bool         `json:"is_itp"`
-
+	Category              string       `json:"category"`
 	IsUpdateTemplate bool   `json:"is_update_template"`
 	PaidAt           string `json:"paid_at" validate:"required,datetime=2006-01-02"`
 	PaidAtTime       string `json:"paid_at_time" validate:"required,datetime=15:04:05"`
