@@ -1,11 +1,14 @@
 package entity
 
-import "github.com/lib/pq"
+import (
+	"github.com/lib/pq"
+)
 
 type GetTemplateReq struct {
 	UserID string `validate:"required,ulid" json:"user_id"`
 
-	ID string `params:"id" validate:"ulid" json:"id"`
+	ID          string `params:"id" validate:"ulid" json:"id"`
+	WithDeleted bool   `query:"with_deleted" json:"with_deleted"`
 }
 
 type GetTemplateResp struct {

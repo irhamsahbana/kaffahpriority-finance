@@ -111,9 +111,13 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 
 	// Access log middleware
 	app.Use(middleware.RequestID)
-	app.Use(middleware.WithTracing(envs.App.Name))
-	app.Use(middleware.WithAccessLog(logging.AccessLogger))
 	app.Use(middleware.WithAppLogger(log.Logger))
+	app.Use(middleware.WithTracing(envs.App.Name))
+
+	// Application Recover Middleware
+	// Placed after Tracing to ensure panic is recorded in the span
+	app.Use(middleware.Recover())
+	app.Use(middleware.WithAccessLog(logging.AccessLogger))
 	// End Application Middlewares
 
 	adapter.Adapters.Sync(

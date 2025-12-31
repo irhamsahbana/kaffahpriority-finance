@@ -122,8 +122,8 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 }
 
 // StartSpan starts a new span using the global tracer
-func StartSpan(ctx context.Context, name string) (context.Context, oteltrace.Span) {
-	ctx, span := otel.Tracer(globalServiceName).Start(ctx, name)
+func StartSpan(ctx context.Context, name string, opts ...oteltrace.SpanStartOption) (context.Context, oteltrace.Span) {
+	ctx, span := otel.Tracer(globalServiceName).Start(ctx, name, opts...)
 
 	// Inject logger with trace_id and span_id into context
 	if sc := span.SpanContext(); sc.IsValid() {

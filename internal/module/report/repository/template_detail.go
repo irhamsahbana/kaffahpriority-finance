@@ -71,8 +71,10 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 			ON prt.program_id = p.id
 		WHERE
 			prt.id = ?
-			AND prt.deleted_at IS NULL
 	`
+	if !req.WithDeleted {
+		query += " AND prt.deleted_at IS NULL"
+	}
 
 	err := r.db.GetContext(ctx, resp, r.db.Rebind(query), req.ID)
 	if err != nil {
@@ -107,4 +109,19 @@ func (r *reportRepo) GetTemplate(ctx context.Context, req *entity.GetTemplateReq
 	}
 
 	return resp, nil
+}
+
+func (r *reportRepo) RestoreTemplate(ctx context.Context, req *entity.GetTemplateReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.RestoreTemplate")
+	defer span.End()
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(`
+		UPDATE program_registration_templates SET deleted_at = NULL WHERE id = ?
+	`), req.ID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to restore template")
+		return err
+	}
+
+	return nil
 }

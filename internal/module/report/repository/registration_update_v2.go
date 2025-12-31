@@ -49,16 +49,19 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 		return nil, err
 	}
 
-	if err := r.updateRegistrationMetadata(ctx, tx, req, shouldResetFees); err != nil {
+	err = r.updateRegistrationMetadata(ctx, tx, req, shouldResetFees)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := r.updateRegistrationAdditionalStudents(ctx, tx, req); err != nil {
+	err = r.updateRegistrationAdditionalStudents(ctx, tx, req)
+	if err != nil {
 		return nil, err
 	}
 
 	if req.IsUpdateTemplate {
-		if err := r.processTemplatePropagation(ctx, tx, currentReg, req); err != nil {
+		err = r.processTemplatePropagation(ctx, tx, currentReg, req)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -99,8 +102,10 @@ func (r *reportRepo) fetchProgramDetails(ctx context.Context, tx *sqlx.Tx, progr
 	err := tx.GetContext(ctx, &program, tx.Rebind(queryProgram), programID)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Ctx(ctx).Warn().Err(err).Any("programID", programID).Msgf("program tidak ditemukan")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("program tidak ditemukan")
 		}
+		log.Ctx(ctx).Error().Err(err).Any("programID", programID).Msgf("failed to fetch program details")
 		return nil, err
 	}
 	return &program, nil
@@ -150,14 +155,60 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationMetadata")
 	defer span.End()
 
+	program, err := r.fetchProgramDetails(ctx, tx, req.ProgramId)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get program data")
+		return err
+	}
+
+	var currentReg *entity.GetRegistrationResp
+	currentReg, err = r.GetRegistration(ctx, &entity.GetRegistrationReq{ID: req.ID})
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get registration")
+		return err
+	}
+
+	// only check this if req.isITP is changed
+	isITPChanged := false
+	if req.IsITP != currentReg.IsITP {
+		isITPChanged = true
+	}
+
+	var multiplier int64 = 1
+	if req.IsITP {
+		multiplier = 2
+	}
+	// if category is "additional, skip this and set mentorDetailFee to take all value form req.hrFee"
+	var mentorDetailFee float64
+	if currentReg.HRFeeForMentor != nil {
+		mentorDetailFee = *currentReg.HRFeeForMentor
+	}
+
+	var hrDetailFee float64
+	if currentReg.HRFeeForHR != nil {
+		hrDetailFee = *currentReg.HRFeeForHR
+	}
+
+	var programAcquisitionRights int64 = int64(currentReg.ProgramAcquisitionRights)
+	if isITPChanged {
+		programAcquisitionRights = multiplier * program.AcquisitionRights
+		hrDetailFee = 40000 * float64(programAcquisitionRights)
+		if req.Category == "additional" {
+			mentorDetailFee = req.HRFee
+			hrDetailFee = 0
+		} else {
+			mentorDetailFee = req.HRFee - hrDetailFee
+		}
+	}
+
 	query := `
 		UPDATE program_registrations SET
 			lecturer_id = ?,
 			marketer_id = ?,
-			program_name = (SELECT name FROM programs WHERE id = ?),
-			program_fee_per_meeting = (SELECT price_per_meeting FROM programs WHERE id = ?),
-			full_fee = (SELECT full_fee FROM programs WHERE id = ?),
-			program_acquisition_rights = (CASE WHEN ? THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM programs WHERE id = ?)),
+			program_name = ?,
+			program_fee_per_meeting = ?,
+			full_fee = ?,
+			program_acquisition_rights = ?,
 			program_fee = ?,
 			administration_fee = ?,
 			foreign_learning_fee = ?,
@@ -165,24 +216,8 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
-            mentor_detail_fee = (
-                ? - (
-                    40000 *
-                    CASE
-                        WHEN ? THEN 2
-                        ELSE 1
-                    END *
-                    (SELECT acquisition_rights FROM programs WHERE id = ?)
-                )
-            ),
-			hr_detail_fee = (
-				40000 *
-				CASE
-					WHEN ? THEN 2
-					ELSE 1
-				END *
-				(SELECT acquisition_rights FROM programs WHERE id = ?)
-			),
+            mentor_detail_fee = ?,
+			hr_detail_fee = ?,
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
@@ -226,11 +261,11 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.LecturerId, req.MarketerId,
-		req.ProgramId, req.ProgramId, req.ProgramId, req.IsITP, req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		program.Name, program.PricePerMeeting, program.FullFee, programAcquisitionRights, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
 		req.MarketerCommissionFee, req.OverpaymentFee,
 		req.HRFee,
-		req.HRFee, req.IsITP, req.ProgramId, // calculate mentor_detail_fee
-		req.IsITP, req.ProgramId, // calculate hr_detail_fee
+		mentorDetailFee,
+		hrDetailFee,
 		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes, req.NotesForCategory,
 		req.IsITP,
@@ -353,7 +388,6 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 
 	program, err := r.fetchProgramDetails(ctx, tx, req.ProgramId)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get program data")
 		return err
 	}
 
@@ -432,7 +466,6 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 	newTemplateId := ulid.Make().String()
 	program, err := r.fetchProgramDetails(ctx, tx, req.ProgramId)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get program data")
 		return newTemplateId, err
 	}
 
