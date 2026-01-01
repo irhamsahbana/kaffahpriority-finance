@@ -6,7 +6,9 @@ import (
 	"codebase-app/pkg/errmsg"
 	"context"
 	"database/sql"
+	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -15,39 +17,55 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 	ctx, span := tracing.StartSpan(ctx, "repo.RegistrationMultiAllocation")
 	defer span.End()
 
-	fnName := "repo::RegistrationMultiAllocation"
+	template := req.Template
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback()
 
-	// check if template exists
-	query := `SELECT id, program_id, student_id, lecturer_id FROM program_registration_templates WHERE id = $1 AND deleted_at IS NULL`
-	var templateId, programId, studentId, lecturerId string
-	if err := tx.QueryRowContext(ctx, tx.Rebind(query), req.TemplateId).Scan(&templateId, &programId, &studentId, &lecturerId); err != nil {
-		if err == sql.ErrNoRows {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - template not found", fnName)
-			return errmsg.NewCustomErrors(404, errmsg.WithMessage("Bank data tidak ditemukan"))
-		}
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get template id", fnName)
+	// 1. Check validation (existing allocations)
+	err = r.validateAllocations(ctx, tx, req, template)
+	if err != nil {
 		return err
 	}
 
-	// check if any existing registrations with the same template_id have allocated_at matching any of the sent allocations
+	// 2. Process allocations
+	for _, allocation := range req.Allocations {
+		err = r.processAllocation(ctx, tx, req, template, allocation)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to commit transaction")
+		return err
+	}
+
+	return nil
+}
+
+func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, template *entity.GetTemplateResp) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.validateAllocations")
+	defer span.End()
+
 	for _, allocation := range req.Allocations {
 		var paidAt sql.NullTime
 		checkQuery := `
 			SELECT paid_at
 			FROM program_registrations
 			WHERE template_id = ?
-				AND TO_CHAR(allocated_at AT TIME ZONE 'Asia/Makassar', 'YYYY-MM') = ?
+				AND allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
+				AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
 				AND deleted_at IS NULL
 			LIMIT 1
 		`
-		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), templateId, allocation).Scan(&paidAt)
+		allocationDate := allocation + "-01"
+		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), template.ID, allocationDate, allocationDate).Scan(&paidAt)
 
 		if err == nil {
 			// Registration exists, format the error message with paid_at date
@@ -73,102 +91,106 @@ func (r *reportRepo) RegistrationMultiAllocation(ctx context.Context, req *entit
 				}
 			}
 
-			log.Ctx(ctx).Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("%s - allocation already exists for this template", fnName)
-			return errmsg.NewCustomErrors(400, errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
+			log.Ctx(ctx).Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("allocation already exists for this template")
+			return errmsg.NewCustomErrors(http.StatusUnprocessableEntity,
+				errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
 		} else if err != sql.ErrNoRows {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("%s - failed to check existing allocations", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("failed to check existing allocations")
 			return err
 		}
 	}
+	return nil
+}
 
-	for _, allocation := range req.Allocations {
-		// check if registration already exists
-		type existingData struct {
-			ID     string `db:"id"`
-			IsPaid bool   `db:"is_paid"`
-		}
-		var existing existingData
-		err := tx.GetContext(ctx, &existing,
-			tx.Rebind(queryCheckMultiAllocation),
-			allocation,
-			programId,
-			studentId,
-			lecturerId,
-		)
+func (r *reportRepo) processAllocation(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, template *entity.GetTemplateResp, allocation string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.processAllocation")
+	defer span.End()
 
-		// if registration already exists, skip to the next allocation
-		if err == nil {
-			// if registration is already paid, skip to the next allocation
-			if existing.IsPaid {
-				continue
-			}
+	// check if registration already exists
+	type existingData struct {
+		ID     string `db:"id"`
+		IsPaid bool   `db:"is_paid"`
+	}
+	var existing existingData
+	allocationDate := allocation + "-01"
+	err := tx.GetContext(ctx, &existing,
+		tx.Rebind(queryCheckMultiAllocation),
+		allocationDate,
+		allocationDate,
+		template.ProgramId,
+		template.StudentId,
+		template.LecturerId,
+	)
 
-			// if registration is not paid, update the registration is_paid to TRUE and set paid_at to NOW()
-			if _, err := tx.ExecContext(ctx, tx.Rebind(`
-				UPDATE program_registrations
-				SET
-					is_paid = TRUE,
-					paid_at = (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
-					updated_at = NOW()
-				WHERE id = ?
-				`),
-				req.PaidAt,     // Paid at date
-				req.PaidAtTime, // Paid at time
-				existing.ID,    // Registration ID
-			); err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration is paid", fnName)
-				return err
-			}
-
-			continue
-		} else if err != sql.ErrNoRows {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to check existing registration", fnName)
-			return err
+	// if registration already exists, skip to the next allocation
+	if err == nil {
+		// if registration is already paid, skip to the next allocation
+		if existing.IsPaid {
+			return nil
 		}
 
-		// Generate a new ID for the registration
-		registrationId := ulid.Make().String()
-
-		// Insert the registration using the template
-		if _, err := tx.ExecContext(ctx, tx.Rebind(queryInsertRegistrationMulti),
-			templateId, // Template ID
-
-			registrationId, // New registration ID
-			req.UserID,     // User ID
-
+		// if registration is not paid, update the registration is_paid to TRUE and set paid_at to NOW()
+		_, err = tx.ExecContext(ctx, tx.Rebind(`
+			UPDATE program_registrations
+			SET
+				is_paid = TRUE,
+				paid_at = (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
+				updated_at = NOW()
+			WHERE id = ?
+			`),
 			req.PaidAt,     // Paid at date
 			req.PaidAtTime, // Paid at time
-			allocation,     // Allocation date
-		); err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert registration", fnName)
-			return err
-		}
-
-		// insert additional student data if exists
-
-		// fetch additional students from prt_additional_students
-		var students = make([]entity.AddStudent, 0)
-		err = tx.SelectContext(ctx, &students, tx.Rebind(queryStudents), templateId)
+			existing.ID,    // Registration ID
+		)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to select students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registration is paid")
 			return err
 		}
 
-		// insert into pr_additional_students
-		for _, student := range students {
-			_, err = tx.ExecContext(ctx, tx.Rebind(queryInsertStudents),
-				ulid.Make().String(), registrationId, student.StudentID, student.Name,
-			)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("%s - failed to insert additional students", fnName)
-				return err
-			}
-		}
+		return nil
+	} else if err != sql.ErrNoRows {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to check existing registration")
+		return err
 	}
 
-	if err := tx.Commit(); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to commit transaction", fnName)
+	// Generate a new ID for the registration
+	registrationId := ulid.Make().String()
+
+	// Insert the registration using the template
+	_, err = tx.ExecContext(ctx, tx.Rebind(queryInsertRegistrationMulti),
+		template.ID, // Template ID
+
+		registrationId, // New registration ID
+		req.UserID,     // User ID
+
+		req.PaidAt,     // Paid at date
+		req.PaidAtTime, // Paid at time
+		allocation,     // Allocation date
+	)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to insert registration")
 		return err
+	}
+
+	// insert additional student data if exists
+
+	// fetch additional students from prt_additional_students
+	var students = make([]entity.AddStudent, 0)
+	err = tx.SelectContext(ctx, &students, tx.Rebind(queryStudents), template.ID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to select students")
+		return err
+	}
+
+	// insert into pr_additional_students
+	for _, student := range students {
+		_, err = tx.ExecContext(ctx, tx.Rebind(queryInsertStudents),
+			ulid.Make().String(), registrationId, student.StudentID, student.Name,
+		)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", template.ID).Msgf("failed to insert additional students")
+			return err
+		}
 	}
 
 	return nil
@@ -283,7 +305,8 @@ var queryCheckMultiAllocation = `
 	FROM
 		program_registrations
 	WHERE
-		TO_CHAR(allocated_at AT TIME ZONE 'Asia/Makassar', 'YYYY-MM') = ?
+		allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
+		AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
 		AND program_id = ?
 		AND student_id = ?
 		AND lecturer_id = ?

@@ -701,6 +701,19 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 }
 
 func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {
+	ctx, span := tracing.StartSpan(ctx, "service.RegistrationMultiAllocation")
+	defer span.End()
+
+	template, err := s.repo.GetTemplate(ctx, &entity.GetTemplateReq{
+		UserID: req.UserID,
+		ID:     req.TemplateId,
+	})
+	if err != nil {
+		return err
+	}
+
+	req.Template = template
+
 	return s.repo.RegistrationMultiAllocation(ctx, req)
 }
 
