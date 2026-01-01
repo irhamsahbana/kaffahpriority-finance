@@ -397,10 +397,10 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		entity.RegistrationListPerLecturer
 	}
 
+	// argCombine stores template_id for matching registrations
+	// Using template_id ensures registrations with same template but different program_id are properly aggregated
 	type argCombine struct {
-		LecturerID *string
-		StudentID  string
-		ProgramID  string
+		TemplateID string
 	}
 
 	var (
@@ -415,6 +415,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 	query := `
 		SELECT
 			COUNT(*) OVER () AS total_data,
+			prt.id AS template_id,
 			prt.program_id,
 			prt.lecturer_id,
 			prt.student_id,
@@ -422,7 +423,11 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			s.name AS student_name,
 			p.name AS program_name,
 			l.academic_manager_id,
-			am.name AS academic_manager_name
+			am.name AS academic_manager_name,
+			-- Get FL, NL, ITP from template directly
+			CASE WHEN prt.foreign_learning_fee IS NOT NULL AND prt.foreign_learning_fee > 0 THEN TRUE ELSE FALSE END AS is_fl,
+			CASE WHEN prt.night_learning_fee IS NOT NULL AND prt.night_learning_fee > 0 THEN TRUE ELSE FALSE END AS is_nl,
+			prt.is_itp
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -434,9 +439,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		LEFT JOIN
 			academic_managers am ON l.academic_manager_id = am.id
 		LEFT JOIN
-			program_registrations pr ON prt.program_id = pr.program_id 
-			AND prt.lecturer_id = pr.lecturer_id 
-			AND prt.student_id = pr.student_id
+			program_registrations pr ON prt.id = pr.template_id
 			AND pr.deleted_at IS NULL
 		WHERE prt.deleted_at IS NULL
 			AND prt.lecturer_id IS NOT NULL
@@ -464,6 +467,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 
 	query += `
 		GROUP BY
+			prt.id,
 			prt.program_id,
 			prt.lecturer_id,
 			prt.student_id,
@@ -472,7 +476,10 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			p.name,
 			l.academic_manager_id,
 			am.name,
-			l.id
+			l.id,
+			prt.foreign_learning_fee,
+			prt.night_learning_fee,
+			prt.is_itp
 		ORDER BY
 			l.academic_manager_id ASC,
 			l.id ASC,
@@ -493,10 +500,9 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		resp.Items[len(resp.Items)-1].Year = req.Year
 		resp.Meta.TotalData = item.TotalData
 
+		// Store template_id for matching registrations
 		argsCombine = append(argsCombine, argCombine{
-			LecturerID: item.LecturerID,
-			StudentID:  item.StudentID,
-			ProgramID:  item.ProgramID,
+			TemplateID: item.TemplateID,
 		})
 	}
 
@@ -531,6 +537,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		root_info AS (
 			SELECT
 				p.id AS root_id,
+				p.template_id AS root_template_id,
 				EXTRACT(MONTH FROM (p.allocated_at AT TIME ZONE ?)) AS month_num,
 				EXTRACT(YEAR FROM (p.allocated_at AT TIME ZONE ?)) AS year_num,
 				l.academic_manager_id,
@@ -542,7 +549,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		),
 		combined AS (
 			SELECT b.*, ri.month_num, ri.year_num, ri.academic_manager_id,
-				ri.root_lecturer_id, ri.root_program_id, ri.root_student_id,
+				ri.root_template_id, ri.root_lecturer_id, ri.root_program_id, ri.root_student_id,
 				(
 					SELECT p.is_paid FROM program_registrations p WHERE p.id = ri.root_id
 				) AS root_is_paid,
@@ -555,6 +562,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		SELECT
 			m.month_name AS month,
 			m.month_num,
+			c.root_template_id AS template_id,
 			c.root_id AS registration_id,
 			SUM(c.mentor_detail_fee) AS hr_fee_for_lecturer,
 			SUM(c.mentor_detail_fee_used) AS used_amount,
@@ -602,24 +610,20 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		args = append(args, req.StudentID)
 	}
 
+	// Filter by template_id to match registrations with their templates
+	// This ensures registrations with same template but different program_id are properly aggregated
 	if len(argsCombine) > 0 {
-		query += ` AND (`
+		query += ` AND c.root_template_id IN (`
 
 		for i, item := range argsCombine {
 			if i > 0 {
-				query += ` OR `
+				query += `, `
 			}
-
-			if item.LecturerID != nil {
-				query += ` (c.root_lecturer_id = ? AND c.root_student_id = ? AND c.root_program_id = ?) `
-				args = append(args, *item.LecturerID, item.StudentID, item.ProgramID)
-			} else {
-				query += ` (c.root_student_id = ? AND c.root_program_id = ? AND c.root_lecturer_id IS NULL) `
-				args = append(args, item.StudentID, item.ProgramID)
-			}
+			query += `?`
+			args = append(args, item.TemplateID)
 		}
 
-		query += ` )`
+		query += `)`
 	}
 
 	query += `
@@ -627,6 +631,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			m.month_name,
 			m.month_num,
 			c.root_id,
+			c.root_template_id,
 			c.root_program_id,
 			c.root_lecturer_id,
 			c.root_student_id,
@@ -664,19 +669,9 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 		monthMap := make(map[int]entity.RegistrationListPerLecturerPerMonth)
 
 		// Isi map dengan data hasil query
+		// Match by template_id to ensure registrations with same template but different program_id are properly linked
 		for _, item := range dataPerMonth {
-			var lecturerId1, lecturerId2 string
-			if resp.Items[i].LecturerID != nil {
-				lecturerId1 = *resp.Items[i].LecturerID
-			}
-			if item.LecturerID != nil {
-				lecturerId2 = *item.LecturerID
-			}
-
-			if (resp.Items[i].LecturerID == nil && item.LecturerID == nil) ||
-				(resp.Items[i].LecturerID != nil && item.LecturerID != nil && lecturerId1 == lecturerId2) &&
-					resp.Items[i].StudentID == item.StudentID &&
-					resp.Items[i].ProgramID == item.ProgramID {
+			if resp.Items[i].TemplateID == item.TemplateID {
 				monthMap[item.MonthNum] = item
 			}
 		}
@@ -691,6 +686,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 					IsUsed:     nil, // Nilai default jika tidak ada data
 					UsedAmount: nil, // Nilai default jika tidak ada data
 					Notes:      nil, // Nilai default jika tidak ada data
+					TemplateID: resp.Items[i].TemplateID,
 					ProgramID:  resp.Items[i].ProgramID,
 					LecturerID: resp.Items[i].LecturerID,
 					StudentID:  resp.Items[i].StudentID,
@@ -699,16 +695,7 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 				// Jika bulan sudah ada dalam data, tambahkan ke Registrations
 				resp.Items[i].Registrations = append(resp.Items[i].Registrations, monthMap[m.Num])
 
-				// tambahkan keterangan FL, NL, ITP dan IsStarted pada bulan terakhir
-				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].FL != nil {
-					resp.Items[i].IsFL = true
-				}
-				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].NL != nil {
-					resp.Items[i].IsNL = true
-				}
-				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].IsITP {
-					resp.Items[i].IsITP = true
-				}
+				// IsStarted diambil dari registrasi (FL, NL, ITP sudah diambil dari template)
 				if resp.Items[i].Registrations[len(resp.Items[i].Registrations)-1].IsStarted {
 					resp.Items[i].IsStarted = true
 				}

@@ -38,6 +38,7 @@ type GetRegistrationListPerLecturerResp struct {
 }
 
 type RegistrationListPerLecturer struct {
+	TemplateID          string                                `json:"template_id" db:"template_id"`
 	AcademicManagerID   *string                               `json:"academic_manager_id" db:"academic_manager_id"`
 	LecturerID          *string                               `json:"lecturer_id" db:"lecturer_id"`
 	StudentID           string                                `json:"student_id" db:"student_id"`
@@ -55,6 +56,7 @@ type RegistrationListPerLecturer struct {
 }
 
 type RegistrationListPerLecturerPerMonth struct {
+	TemplateID     string           `json:"template_id" db:"template_id"`
 	RegistrationID *string          `json:"registration_id" db:"registration_id"`
 	Month          string           `json:"month" db:"month"` // indonesia month
 	MonthNum       int              `json:"month_num" db:"month_num"`
