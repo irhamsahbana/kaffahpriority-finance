@@ -44,7 +44,7 @@ func WithAccessLog(logger zerolog.Logger) fiber.Handler {
 			))
 		}
 
-		event.Msg("access log")
+		event.Msgf("access log %s %s", c.Method(), c.Path())
 		return nil
 	}
 }

@@ -1,8 +1,9 @@
 package middleware
 
 import (
+	"codebase-app/internal/infrastructure/tracing"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -13,8 +14,6 @@ import (
 
 // TracingMiddleware returns a Fiber handler that instruments requests with OpenTelemetry
 func WithTracing(serviceName string) fiber.Handler {
-	tracer := otel.Tracer(serviceName)
-
 	return func(c *fiber.Ctx) error {
 		// Manual extraction because HeaderCarrier expects http.Header
 		header := make(propagation.HeaderCarrier)
@@ -26,7 +25,7 @@ func WithTracing(serviceName string) fiber.Handler {
 
 		// Use c.Path() initially as it contains the actual request path
 		spanName := c.Method() + " " + c.Path()
-		ctx, span := tracer.Start(ctx, spanName,
+		ctx, span := tracing.StartSpan(ctx, spanName,
 			oteltrace.WithAttributes(
 				semconv.HTTPMethod(c.Method()),
 				semconv.HTTPTarget(c.Path()),
@@ -37,15 +36,6 @@ func WithTracing(serviceName string) fiber.Handler {
 			oteltrace.WithSpanKind(oteltrace.SpanKindServer),
 		)
 		defer span.End()
-
-		// Inject logger with trace_id and span_id into context
-		if sc := span.SpanContext(); sc.IsValid() {
-			logger := log.With().
-				Str("trace_id", sc.TraceID().String()).
-				Str("span_id", sc.SpanID().String()).
-				Logger()
-			ctx = logger.WithContext(ctx)
-		}
 
 		c.SetUserContext(ctx)
 
@@ -62,7 +52,6 @@ func WithTracing(serviceName string) fiber.Handler {
 			span.SetName(c.Method() + " " + routePath)
 			span.SetAttributes(semconv.HTTPRoute(routePath))
 		}
-
 
 		status := c.Response().StatusCode()
 		span.SetAttributes(semconv.HTTPStatusCode(status))
