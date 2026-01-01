@@ -172,6 +172,16 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		args = append(args, req.Timezone, req.PaidAtFrom, req.Timezone, req.PaidAtTo)
 	}
 
+	if req.AllocatedMonth != "" {
+		allocatedMonthDate := req.AllocatedMonth + "-01"
+		query += `
+			AND pr.allocated_at AT TIME ZONE ? >=
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
+			AND pr.allocated_at AT TIME ZONE ? <
+			(TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')`
+		args = append(args, req.Timezone, allocatedMonthDate, req.Timezone, allocatedMonthDate)
+	}
+
 	// Filter khusus untuk CFO2: exclude registrasi dengan allocated_at di luar range dan mentor_detail_fee_used masih NULL
 	// if req.IsCFO2 == "true" && req.PaidAtFrom != "" && req.PaidAtTo != "" {
 	// 	query += `
