@@ -54,9 +54,11 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 	defer span.End()
 
 	for _, allocation := range req.Allocations {
+		var id string
 		var paidAt sql.NullTime
+		var isPaid bool
 		checkQuery := `
-			SELECT paid_at
+			SELECT id, paid_at, is_paid
 			FROM program_registrations
 			WHERE template_id = ?
 				AND allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
@@ -65,10 +67,21 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 			LIMIT 1
 		`
 		allocationDate := allocation + "-01"
-		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), template.ID, allocationDate, allocationDate).Scan(&paidAt)
+		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), template.ID, allocationDate, allocationDate).Scan(&id, &paidAt, &isPaid)
 
 		if err == nil {
-			// Registration exists, format the error message with paid_at date
+			// Registration exists
+			
+			// If is_paid is false, overwrite the registration instead of returning error
+			if !isPaid {
+				err = r.overwriteRegistration(ctx, tx, req, id)
+				if err != nil {
+					return err
+				}
+				continue // Move to the next allocation
+			}
+
+			// If is_paid is true, return error as before
 			paidAtStr := "tanpa tanggal pembayaran"
 			if paidAt.Valid {
 				paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
@@ -99,6 +112,33 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 			return err
 		}
 	}
+	return nil
+}
+
+func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, registrationId string) error {
+	
+	ctx, span := tracing.StartSpan(ctx, "repo.overwriteRegistration")
+	defer span.End()
+
+	query := `
+		UPDATE program_registrations
+		SET
+			is_paid = TRUE,
+			paid_at = (? || ' ' || ?)::timestamp AT TIME ZONE 'Asia/Makassar',
+			updated_at = NOW()
+		WHERE id = ?
+		`
+
+		_, err := tx.ExecContext(ctx, tx.Rebind(query),
+			req.PaidAt,     // Paid at date
+			req.PaidAtTime, // Paid at time
+			registrationId,    // Registration ID
+		)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registration is paid")
+			return err
+		}
+
 	return nil
 }
 
