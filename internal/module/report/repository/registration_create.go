@@ -15,23 +15,22 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	ctx, span := tracing.StartSpan(ctx, "repo.CreateRegistrations")
 	defer span.End()
 
-	fnName := "repo::CreateRegistrations"
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to begin transaction")
 		return err
 	}
 	defer func() {
 		if err != nil {
 			errRB := tx.Rollback()
 			if errRB != nil {
-				log.Ctx(ctx).Error().Err(errRB).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
+				log.Ctx(ctx).Error().Err(errRB).Any("req", req).Msgf("failed to rollback transaction")
 			}
 			return
 		}
 		errCommit := tx.Commit()
 		if errCommit != nil {
-			log.Ctx(ctx).Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+			log.Ctx(ctx).Error().Err(errCommit).Any("req", req).Msgf("failed to commit transaction")
 		}
 	}()
 
@@ -195,12 +194,12 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		var exist bool
 		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateID)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to check data", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to check data")
 			return err
 		}
 
 		if exist {
-			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - data already exist", fnName)
+			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("data already exist")
 			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateID + ` sudah dibuat di bulan ini`)
 			return err
 		}
@@ -224,11 +223,11 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		var isTemplateValid bool
 		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateID)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to check template", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to check template")
 			return err
 		}
 		if !isTemplateValid {
-			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - template is not valid", fnName)
+			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("template is not valid")
 			err = errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
 			return err
 		}
@@ -239,14 +238,14 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			// item.IsFirstRegistration,
 		)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to insert data", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to insert data")
 			return err
 		}
 
 		// fetch additional students from prt_additional_students
 		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateID)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to fetch additional students", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to fetch additional students")
 			return err
 		}
 
@@ -256,7 +255,7 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 				ulid.Make().String(), prId, student.StudentID, student.Name,
 			)
 			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("%s - failed to insert additional students", fnName)
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to insert additional students")
 				return err
 			}
 		}

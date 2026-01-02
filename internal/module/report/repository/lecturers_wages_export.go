@@ -20,13 +20,11 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedLecturersWages")
 	defer span.End()
 
-	fnName := "repo::GetExportedLecturersWages"
-
 	query, args := r.buildLecturersWagesQuery(req)
 
 	var data []lecturerWageDao
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query lecturers wages")
 		return nil, err
 	}
 
@@ -46,7 +44,7 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	additionalStudentsMap, err := r.fetchAdditionalStudentsMap(ctx, registrationIds)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to fetch additional students")
 		return nil, err
 	}
 
