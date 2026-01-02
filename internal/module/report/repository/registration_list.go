@@ -958,29 +958,28 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 						CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting, -- hitungan
 						CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee, -- ujroh full
 						pr.is_full_fee,
-						COALESCE(pr.initial_fee, (
+						COALESCE(pr.initial_fee,
 							CASE
-								WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
 								WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
 								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
-							)
 						) AS initial_fee, -- ujroh awal
 						pr.foreign_learning_fee, -- fl
 						pr.night_learning_fee, -- nl
-						(CASE
-						WHEN pr.program_meetings < 1 THEN 0
-						ELSE
 						(
-							COALESCE(pr.night_learning_fee, 0) +
-							COALESCE(pr.foreign_learning_fee, 0) +
-							COALESCE(pr.initial_fee,
-								CASE
-									WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-									ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
-								END
-							)
-						) END AS real_fee, -- ujroh real
+							CASE
+								WHEN pr.program_meetings < 1 THEN 0
+								ELSE
+									COALESCE(pr.night_learning_fee, 0) +
+									COALESCE(pr.foreign_learning_fee, 0) +
+									COALESCE(pr.initial_fee,
+										CASE
+											WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+											ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+										END
+									)
+							END
+						) AS real_fee, -- ujroh real
 						CASE
 							WHEN pr.program_meetings < 1 THEN 0
 							WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
