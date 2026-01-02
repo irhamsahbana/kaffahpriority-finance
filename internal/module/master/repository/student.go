@@ -93,7 +93,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 		query := `
 			SELECT
 				student_id,
-				MAX(created_at) AS last_payment_at
+				MAX(CASE WHEN is_paid = TRUE THEN created_at END) AS last_payment_at
 			FROM
 				program_registrations
 			WHERE
