@@ -11,23 +11,52 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type lecturerWageDao struct {
+	TotalData int `db:"total_data"`
+	entity.LecturersWageItem
+}
+
 func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.GetExportedLecturersWagesReq) (*entity.GetExportedLecturersWagesResp, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedLecturersWages")
 	defer span.End()
 
 	fnName := "repo::GetExportedLecturersWages"
-	type dao struct {
-		TotalData int `db:"total_data"`
-		entity.LecturersWageItem
+
+	query, args := r.buildLecturersWagesQuery(req)
+
+	var data []lecturerWageDao
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		return nil, err
 	}
-	var (
-		resp = new(entity.GetExportedLecturersWagesResp)
-		data = make([]dao, 0)
-		args = make([]any, 0, 3)
-	)
 
-	resp.Items = make([]entity.LecturersWageItem, 0)
+	resp := new(entity.GetExportedLecturersWagesResp)
+	resp.Items = make([]entity.LecturersWageItem, 0, len(data))
+	registrationIds := make([]string, 0, len(data))
 
+	for _, d := range data {
+		registrationIds = append(registrationIds, d.RegistrationID)
+		r.formatProgramName(&d)
+		resp.Items = append(resp.Items, d.LecturersWageItem)
+	}
+
+	if len(registrationIds) == 0 {
+		return resp, nil
+	}
+
+	additionalStudentsMap, err := r.fetchAdditionalStudentsMap(ctx, registrationIds)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+		return nil, err
+	}
+
+	r.enrichItemsWithAdditionalStudents(resp.Items, additionalStudentsMap)
+
+	return resp, nil
+}
+
+func (r *reportRepo) buildLecturersWagesQuery(req *entity.GetExportedLecturersWagesReq) (string, []any) {
+	args := make([]any, 0, 3)
 	query := `
 		SELECT
 			COUNT (*) OVER() AS total_data,
@@ -129,35 +158,23 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			l.id ASC,
 			COALESCE(prt.created_at, pr.created_at) ASC
 	`
+	return query, args
+}
 
-	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
-		return nil, err
+func (r *reportRepo) formatProgramName(d *lecturerWageDao) {
+	if d.FL != nil {
+		d.ProgramName = d.ProgramName + " + FL"
 	}
-
-	registrationIds := make([]string, 0)
-
-	for _, d := range data {
-		registrationIds = append(registrationIds, d.RegistrationID)
-		if d.FL != nil {
-			d.ProgramName = d.ProgramName + " + FL"
-		}
-		if d.NL != nil {
-			d.ProgramName = d.ProgramName + " + NL"
-		}
-		if d.IsITP {
-			d.ProgramName = d.ProgramName + " + ITP"
-		}
-
-		resp.Items = append(resp.Items, d.LecturersWageItem)
+	if d.NL != nil {
+		d.ProgramName = d.ProgramName + " + NL"
 	}
-
-	if len(registrationIds) == 0 {
-		return resp, nil
+	if d.IsITP {
+		d.ProgramName = d.ProgramName + " + ITP"
 	}
+}
 
-	// query for additional students
-	query = `
+func (r *reportRepo) fetchAdditionalStudentsMap(ctx context.Context, registrationIds []string) (map[string]map[string]bool, error) {
+	query := `
 		SELECT
 			pr.id,
 			STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
@@ -180,24 +197,20 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 
 	query, args, err := sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query for additional students", fnName)
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &additionalStudentsData, query, args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
 		return nil, err
 	}
 
-	// Kumpulkan additional students per registration untuk menghindari duplikasi
 	additionalStudentsMap := make(map[string]map[string]bool)
 	for _, item := range additionalStudentsData {
 		if additionalStudentsMap[item.RegistrationId] == nil {
 			additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
 		}
-		// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
 		names := strings.Split(item.AdditionalStudents, ", ")
 		for _, name := range names {
 			name = strings.TrimSpace(name)
@@ -206,18 +219,18 @@ func (r *reportRepo) GetExportedLecturersWages(ctx context.Context, req *entity.
 			}
 		}
 	}
+	return additionalStudentsMap, nil
+}
 
-	// Add additional students data to resp.Items field student_name tanpa duplikasi
-	for i, d := range resp.Items {
+func (r *reportRepo) enrichItemsWithAdditionalStudents(items []entity.LecturersWageItem, additionalStudentsMap map[string]map[string]bool) {
+	for i, d := range items {
 		if nameMap, exists := additionalStudentsMap[d.RegistrationID]; exists && len(nameMap) > 0 {
 			names := make([]string, 0, len(nameMap))
 			for name := range nameMap {
 				names = append(names, name)
 			}
 			sort.Strings(names)
-			resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
+			items[i].StudentName += ", " + strings.Join(names, ", ")
 		}
 	}
-
-	return resp, nil
 }
