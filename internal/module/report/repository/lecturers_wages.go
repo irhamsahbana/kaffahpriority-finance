@@ -19,7 +19,6 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturersWages")
 	defer span.End()
 
-	fnName := "repo::GetLecturersWages"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.LecturersWageItem
@@ -160,7 +159,7 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query lecturers wages")
 		return nil, err
 	}
 
@@ -202,14 +201,14 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 
 	query, args, err := sqlx.In(query, registrationIds)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to build query for additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to build query for additional students")
 		return nil, err
 	}
 
 	query = r.db.Rebind(query)
 	err = r.db.SelectContext(ctx, &additionalStudentsData, query, args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to fetch additional students")
 		return nil, err
 	}
 
@@ -245,7 +244,9 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 }
 
 func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error) {
-	fnName := "repo::GetLecturersWagesAggregate"
+	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturersWagesAggregate")
+	defer span.End()
+
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.LecturersWageAggregateItem
@@ -339,7 +340,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers wages", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query lecturers wages")
 		return nil, err
 	}
 
@@ -354,7 +355,8 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 }
 
 func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *entity.GetLecturersWagesAggregateYearlyReq) (*entity.LecturersWageAggregateYearlyResp, error) {
-	fnName := "repo::GetLecturersWagesAggregateYearly"
+	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturersWagesAggregateYearly")
+	defer span.End()
 	type dao struct {
 		TotalData         int    `db:"total_data"`
 		AcademicManagerID string `db:"academic_manager_id"`
@@ -420,7 +422,7 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(lecturerQuery), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query lecturers", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query lecturers")
 		return nil, err
 	}
 
@@ -473,7 +475,7 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 
 		var monthDataList []monthData
 		if err := r.db.SelectContext(ctx, &monthDataList, r.db.Rebind(monthQuery), req.Timezone, lecturer.LecturerID, req.Timezone, req.Year); err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query monthly data for lecturer %s", fnName, lecturer.LecturerID)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query monthly data for lecturer %s", lecturer.LecturerID)
 			return nil, err
 		}
 
@@ -521,13 +523,15 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 }
 
 func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error {
-	fnName := "repo::UpdateLecturersWage"
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateLecturersWage")
+	defer span.End()
+
 	queryParts := []string{}
 	args := []any{}
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback()
@@ -603,7 +607,7 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 
 	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update lecturers wages", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update lecturers wages")
 		return err
 	}
 
@@ -612,23 +616,23 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 	realFee, err := r.GetRealFee(ctx, tx, req.RegistrationID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("real fee not found")
 			return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
 		}
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get real fee", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get real fee")
 		return err
 	}
 
 	// 2. update used_amount menggunakan real fee
 	err = r.UpdateUsedAmountWithRealFee(ctx, tx, req.RegistrationID, realFee)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update used amount with real fee", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update used amount with real fee")
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to commit transaction")
 		return err
 	}
 
@@ -636,11 +640,12 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 }
 
 func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.BulkUpdateLecturersWageReq) error {
-	fnName := "repo::BulkUpdateLecturersWage"
+	ctx, span := tracing.StartSpan(ctx, "repo.BulkUpdateLecturersWage")
+	defer span.End()
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", reqs).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", reqs).Msgf("failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback()
@@ -688,7 +693,7 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 
 		_, err = r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update lecturers wages", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update lecturers wages")
 			return err
 		}
 
@@ -696,24 +701,24 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 		realFee, err := r.GetRealFee(ctx, tx, req.RegistrationID)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - real fee not found", fnName)
+				log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("real fee not found")
 				return errmsg.NewCustomErrors(404).SetMessage("Laporan tidak ditemukan")
 			}
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to get real fee", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to get real fee")
 			return err
 		}
 
 		// 3. update used_amount menggunakan real fee
 		err = r.UpdateUsedAmountWithRealFee(ctx, tx, req.RegistrationID, realFee)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update used amount with real fee", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update used amount with real fee")
 			return err
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", reqs).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", reqs).Msgf("failed to commit transaction")
 		return err
 	}
 
@@ -721,6 +726,9 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 }
 
 func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string) (decimal.Decimal, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetRealFee")
+	defer span.End()
+
 	query := `
 		SELECT
 			COALESCE(pr.night_learning_fee, 0) +
@@ -747,6 +755,9 @@ func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID
 }
 
 func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string, realFee decimal.Decimal) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.UpdateUsedAmountWithRealFee")
+	defer span.End()
+
 	query := `
 		UPDATE program_registrations
 		SET
@@ -764,6 +775,9 @@ func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.T
 
 func (r *reportRepo) GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (
 	*entity.GetAcquisitionRightsAggregateResp, error) {
+	_, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregate")
+	defer span.End()
+
 	switch req.For {
 	case "academic_manager":
 		return r.GetAcquisitionRightsAggregateAcademicManager(ctx, req)
@@ -778,7 +792,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 	ctx context.Context,
 	req *entity.GetAcquisitionRightsAggregateReq,
 ) (*entity.GetAcquisitionRightsAggregateResp, error) {
-	fnName := "repo::GetAcquisitionRightsAggregateStudentManager"
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregateStudentManager")
+	defer span.End()
+
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.AcquisitionRightsAggregate
@@ -839,7 +855,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query acquisition rights", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query acquisition rights")
 		return nil, err
 	}
 
@@ -857,7 +873,9 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 	ctx context.Context,
 	req *entity.GetAcquisitionRightsAggregateReq,
 ) (*entity.GetAcquisitionRightsAggregateResp, error) {
-	fnName := "repo::GetAcquisitionRightsAggregateAcademicManager"
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregateAcademicManager")
+	defer span.End()
+
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.AcquisitionRightsAggregate
@@ -919,7 +937,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to query acquisition rights", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query acquisition rights")
 		return nil, err
 	}
 

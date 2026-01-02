@@ -12,13 +12,9 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 	ctx, span := tracing.StartSpan(ctx, "repo.ImportLecturersWages")
 	defer span.End()
 
-	var (
-		fnName = "repo::ImportedLecturersWages"
-	)
-
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback()
@@ -37,9 +33,10 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 			id = ?
 			AND deleted_at IS NULL
 	`
+	query = r.db.Rebind(query)
 
 	for _, data := range req.Registrations {
-		if _, err := tx.ExecContext(ctx, r.db.Rebind(query),
+		if _, err := tx.ExecContext(ctx, query,
 			data.ProgramMeetings,
 			data.InitialFee,
 			data.FL,
@@ -48,13 +45,13 @@ func (r *reportRepo) ImportLecturersWages(ctx context.Context, req *entity.Impor
 			data.Notes,
 			data.RegistrationID,
 		); err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update registration for id %s", fnName, data.RegistrationID)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registration for id %s", data.RegistrationID)
 			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to commit transaction")
 		return err
 	}
 

@@ -13,23 +13,21 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 	ctx, span := tracing.StartSpan(ctx, "repo.CreateAdditionalRegistration")
 	defer span.End()
 
-	fnName := "repo::CreateAdditionalRegistration"
-
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to begin transaction")
 		return nil, err
 	}
 
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
-				log.Ctx(ctx).Error().Err(rbErr).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
+				log.Ctx(ctx).Error().Err(rbErr).Any("req", req).Msgf("failed to rollback transaction")
 			}
 			return
 		}
 		if cmErr := tx.Commit(); cmErr != nil {
-			log.Ctx(ctx).Error().Err(cmErr).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
+			log.Ctx(ctx).Error().Err(cmErr).Any("req", req).Msgf("failed to commit transaction")
 		}
 	}()
 
@@ -146,7 +144,7 @@ func (r *reportRepo) CreateAdditionalRegistration(ctx context.Context, req *enti
 		req.PaidAt, req.PaidAtTime,
 	)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to insert additional registration", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to insert additional registration")
 		return nil, err
 	}
 
