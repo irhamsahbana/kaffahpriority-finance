@@ -799,6 +799,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateStudentManager(
 			SUM(
 				CASE
 					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
+					WHEN pr.program_meetings <= 0 THEN 0
 					WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
 					ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 				END
@@ -878,6 +879,7 @@ func (r *reportRepo) GetAcquisitionRightsAggregateAcademicManager(
 			SUM(
 				CASE
 					WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
+					WHEN pr.program_meetings <= 0 THEN 0
 					WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
 					ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 				END
