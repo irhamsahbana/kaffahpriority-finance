@@ -330,6 +330,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			am.name,
 			month
 		ORDER BY
+			am.id ASC,
 			l.id ASC,
 			month ASC
 		LIMIT ? OFFSET ?
