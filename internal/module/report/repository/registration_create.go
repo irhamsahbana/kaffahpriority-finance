@@ -5,8 +5,8 @@ import (
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
-	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -15,6 +15,8 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	ctx, span := tracing.StartSpan(ctx, "repo.CreateRegistrations")
 	defer span.End()
 
+	var err error
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msgf("failed to begin transaction")
@@ -22,17 +24,135 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 	}
 	defer func() {
 		if err != nil {
-			errRB := tx.Rollback()
-			if errRB != nil {
+			if errRB := tx.Rollback(); errRB != nil {
 				log.Ctx(ctx).Error().Err(errRB).Any("req", req).Msgf("failed to rollback transaction")
 			}
 			return
 		}
-		errCommit := tx.Commit()
-		if errCommit != nil {
+		if errCommit := tx.Commit(); errCommit != nil {
 			log.Ctx(ctx).Error().Err(errCommit).Any("req", req).Msgf("failed to commit transaction")
 		}
 	}()
+
+	for _, item := range req.Registrations {
+		err = r.processRegistration(ctx, tx, req.UserID, item)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *reportRepo) processRegistration(ctx context.Context, tx *sqlx.Tx, userID string, item entity.RegistrationItem) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.processRegistration")
+	defer span.End()
+
+	if err := r.checkRegistrationExists(ctx, tx, item.TemplateID); err != nil {
+		return err
+	}
+
+	if err := r.validateTemplate(ctx, tx, item.TemplateID); err != nil {
+		return err
+	}
+
+	prID := ulid.Make().String()
+	if err := r.insertRegistration(ctx, tx, userID, item.TemplateID, prID); err != nil {
+		return err
+	}
+
+	if err := r.copyAdditionalStudents(ctx, tx, item.TemplateID, prID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *reportRepo) checkRegistrationExists(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.checkRegistrationExists")
+	defer span.End()
+
+	queryCheck := `
+		SELECT EXISTS (
+			WITH template AS (
+				SELECT
+					prt.program_id,
+					prt.lecturer_id,
+					prt.student_id
+				FROM
+					program_registration_templates prt
+				WHERE
+					prt.id = ?
+					AND prt.deleted_at IS NULL
+			)
+			SELECT
+				1
+			FROM
+				program_registrations pr
+			WHERE
+				pr.program_id = (SELECT program_id FROM template)
+				AND (
+					CASE
+						WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM template) IS NULL
+						ELSE pr.lecturer_id = (SELECT lecturer_id FROM template)
+					END
+				)
+				AND pr.student_id = (SELECT student_id FROM template)
+				AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM NOW())
+				AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM NOW())
+				AND pr.deleted_at IS NULL
+		)
+	`
+
+	var exist bool
+	if err := tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), templateID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("template_id", templateID).Msg("failed to check existing registration")
+		return err
+	}
+
+	if exist {
+		log.Ctx(ctx).Warn().Str("template_id", templateID).Msg("registration already exists")
+		return errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + templateID + ` sudah dibuat di bulan ini`)
+	}
+
+	return nil
+}
+
+func (r *reportRepo) validateTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.validateTemplate")
+	defer span.End()
+
+	queryCheckTemplate := `
+		SELECT EXISTS (
+			SELECT
+				1
+			FROM
+				program_registration_templates prt
+			WHERE
+				prt.id = ?
+				AND prt.deleted_at IS NULL
+				AND prt.lecturer_id IS NOT NULL
+				AND prt.marketer_id IS NOT NULL
+		)
+	`
+
+	var isTemplateValid bool
+	if err := tx.GetContext(ctx, &isTemplateValid, tx.Rebind(queryCheckTemplate), templateID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("template_id", templateID).Msg("failed to validate template")
+		return err
+	}
+
+	if !isTemplateValid {
+		log.Ctx(ctx).Warn().Str("template_id", templateID).Msg("template is incomplete")
+		return errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
+	}
+
+	return nil
+}
+
+func (r *reportRepo) insertRegistration(ctx context.Context, tx *sqlx.Tx, userID, templateID, prID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.insertRegistration")
+	defer span.End()
 
 	query := `
 		WITH template AS (
@@ -69,35 +189,35 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 				AND prt.deleted_at IS NULL
 		)
 		INSERT INTO program_registrations (
-		id,
-		template_id,
-		user_id,
-		program_id,
-		lecturer_id,
-		marketer_id,
-		student_id,
-		program_name,
-		program_fee,
-		program_fee_per_meeting,
-		full_fee,
-		program_meetings,
-		program_acquisition_rights,
-		administration_fee,
-		foreign_learning_fee,
-		night_learning_fee,
-		is_itp,
-		marketer_commission_fee,
-		overpayment_fee,
-		hr_fee,
-		mentor_detail_fee,
-		mentor_detail_fee_used,
-		hr_detail_fee,
-		marketer_gifts_fee,
-		closing_fee_for_office,
-		closing_fee_for_reward,
-		days,
-		notes,
-		allocated_at
+			id,
+			template_id,
+			user_id,
+			program_id,
+			lecturer_id,
+			marketer_id,
+			student_id,
+			program_name,
+			program_fee,
+			program_fee_per_meeting,
+			full_fee,
+			program_meetings,
+			program_acquisition_rights,
+			administration_fee,
+			foreign_learning_fee,
+			night_learning_fee,
+			is_itp,
+			marketer_commission_fee,
+			overpayment_fee,
+			hr_fee,
+			mentor_detail_fee,
+			mentor_detail_fee_used,
+			hr_detail_fee,
+			marketer_gifts_fee,
+			closing_fee_for_office,
+			closing_fee_for_reward,
+			days,
+			notes,
+			allocated_at
 		)
 		SELECT
 			?,
@@ -129,7 +249,20 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 			(SELECT days FROM template),
 			(SELECT notes FROM template),
 			NOW()
-		`
+	`
+
+	_, err := tx.ExecContext(ctx, tx.Rebind(query), templateID, prID, userID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("template_id", templateID).Msg("failed to insert registration")
+		return err
+	}
+
+	return nil
+}
+
+func (r *reportRepo) copyAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateID, prID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.copyAdditionalStudents")
+	defer span.End()
 
 	queryStudents := `
 		SELECT
@@ -140,258 +273,16 @@ func (r *reportRepo) CreateRegistrations(ctx context.Context, req *entity.Create
 		WHERE
 			adds.prt_id = ?
 	`
-	queryStudents = r.db.Rebind(queryStudents)
 
-	queryInsertStudents := `
-		INSERT INTO pr_additional_students (
-			id,
-			pr_id,
-			student_id,
-			name
-		) VALUES (?, ?, ?, ?)
-	`
-	queryInsertStudents = r.db.Rebind(queryInsertStudents)
-
-	for _, item := range req.Registrations {
-		var prId = ulid.Make().String()
-		var students = make([]entity.AddStudent, 0)
-
-		// check if program_id, lecturer_id, and student_id already exist in this month
-
-		queryCheck := `
-			SELECT EXISTS (
-				WITH template AS (
-					SELECT
-						prt.program_id,
-						prt.lecturer_id,
-						prt.student_id
-					FROM
-						program_registration_templates prt
-					WHERE
-						prt.id = ?
-						AND prt.deleted_at IS NULL
-				)
-				SELECT
-					1
-				FROM
-					program_registrations pr
-				WHERE
-					pr.program_id = (SELECT program_id FROM template)
-					-- AND pr.lecturer_id = (SELECT lecturer_id FROM template)
-					AND (
-						CASE
-							WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM template) IS NULL
-							ELSE pr.lecturer_id = (SELECT lecturer_id FROM template)
-						END
-					)
-					AND pr.student_id = (SELECT student_id FROM template)
-					AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM NOW())
-					AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM NOW())
-					AND pr.deleted_at IS NULL
-			)
-		`
-
-		var exist bool
-		err = tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.TemplateID)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to check data")
-			return err
-		}
-
-		if exist {
-			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("data already exist")
-			err = errmsg.NewCustomErrors(403).SetMessage(`Data dengan template id ` + item.TemplateID + ` sudah dibuat di bulan ini`)
-			return err
-		}
-
-		// check if the template's fields (lecturer_id, marketer_id) are null
-		// if so, return error with message "Template perlu dilengkapi (pengajar, marketer)"
-		queryCheckTemplate := `
-			SELECT EXISTS (
-				SELECT
-					1
-				FROM
-					program_registration_templates prt
-				WHERE
-					prt.id = ?
-					AND prt.deleted_at IS NULL
-					AND prt.lecturer_id IS NOT NULL
-					AND prt.marketer_id IS NOT NULL
-			)
-		`
-		queryCheckTemplate = r.db.Rebind(queryCheckTemplate)
-		var isTemplateValid bool
-		err = tx.GetContext(ctx, &isTemplateValid, queryCheckTemplate, item.TemplateID)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to check template")
-			return err
-		}
-		if !isTemplateValid {
-			log.Ctx(ctx).Warn().Any("req", req).Any("template_id", item.TemplateID).Msgf("template is not valid")
-			err = errmsg.NewCustomErrors(403).SetMessage(`Template perlu dilengkapi (pengajar, marketer)`)
-			return err
-		}
-
-		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			item.TemplateID,
-			prId, req.UserID,
-			// item.IsFirstRegistration,
-		)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to insert data")
-			return err
-		}
-
-		// fetch additional students from prt_additional_students
-		err = tx.SelectContext(ctx, &students, queryStudents, item.TemplateID)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to fetch additional students")
-			return err
-		}
-
-		// insert additional students into pr_additional_students
-		for _, student := range students {
-			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), prId, student.StudentID, student.Name,
-			)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", item.TemplateID).Msgf("failed to insert additional students")
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegistrationsReq) error {
-	fnName := "repo::CopyRegistrations"
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - failed to begin transaction", fnName)
+	var students []entity.AddStudent
+	if err := tx.SelectContext(ctx, &students, tx.Rebind(queryStudents), templateID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("template_id", templateID).Msg("failed to fetch additional students")
 		return err
 	}
-	defer func() {
-		if err != nil {
-			errRB := tx.Rollback()
-			if errRB != nil {
-				log.Ctx(ctx).Error().Err(errRB).Any("req", req).Msgf("%s - failed to rollback transaction", fnName)
-			}
-			return
-		}
-		errCommit := tx.Commit()
-		if errCommit != nil {
-			log.Ctx(ctx).Error().Err(errCommit).Any("req", req).Msgf("%s - failed to commit transaction", fnName)
-		}
-	}()
 
-	queryCheck := `
-			SELECT EXISTS (
-				WITH regis AS (
-					SELECT
-						r.program_id,
-						r.lecturer_id,
-						r.student_id
-					FROM
-						program_registrations r
-					WHERE
-						r.id = ?
-						AND r.deleted_at IS NULL
-				)
-				SELECT
-					1
-				FROM
-					program_registrations pr
-				WHERE
-					pr.program_id = (SELECT program_id FROM regis)
-					AND (
-						CASE
-							WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM regis) IS NULL
-							ELSE pr.lecturer_id = (SELECT lecturer_id FROM regis)
-						END
-					)
-					AND pr.student_id = (SELECT student_id FROM regis)
-					AND EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(MONTH FROM ?::timestamptz AT TIME ZONE ?)
-					AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM ?::timestamptz AT TIME ZONE ?)
-					AND pr.deleted_at IS NULL
-			)
-		`
-	queryCheck = r.db.Rebind(queryCheck)
-
-	query := `
-		INSERT INTO program_registrations (
-		id,
-		template_id,
-		user_id,
-		program_id,
-		is_itp,
-		lecturer_id,
-		marketer_id,
-		student_id,
-		program_name,
-		program_fee,
-		program_meetings,
-		program_fee_per_meeting,
-		full_fee,
-		program_acquisition_rights,
-		foreign_learning_fee,
-		night_learning_fee,
-		marketer_commission_fee,
-		overpayment_fee,
-		hr_fee,
-		mentor_detail_fee,
-		mentor_detail_fee_used,
-		hr_detail_fee,
-		days,
-		notes,
-		is_paid,
-		allocated_at
-		)
-		SELECT
-			?,
-			pr.template_id,
-			?,
-			pr.program_id,
-			pr.is_itp,
-			pr.lecturer_id,
-			pr.marketer_id,
-			pr.student_id,
-			pr.program_name,
-			pr.program_fee,
-			pr.program_meetings,
-			pr.program_fee_per_meeting,
-			pr.full_fee,
-			FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000),
-			pr.foreign_learning_fee,
-			pr.night_learning_fee,
-			pr.marketer_commission_fee,
-			pr.overpayment_fee,
-			pr.hr_fee,
-			pr.mentor_detail_fee,
-			NULL,
-			pr.hr_detail_fee,
-			pr.days,
-			pr.notes,
-			pr.is_paid,
-			((?::text || ' 00:00:00')::timestamp AT TIME ZONE ?)::timestamptz
-		FROM
-			program_registrations pr
-		WHERE
-			pr.id = ?
-			AND pr.deleted_at IS NULL
-	`
-
-	queryStudents := `
-		SELECT
-			adds.student_id,
-			adds.name
-		FROM
-			pr_additional_students adds
-		WHERE
-			adds.pr_id = ?
-	`
-	queryStudents = r.db.Rebind(queryStudents)
+	if len(students) == 0 {
+		return nil
+	}
 
 	queryInsertStudents := `
 		INSERT INTO pr_additional_students (
@@ -401,55 +292,15 @@ func (r *reportRepo) CopyRegistrations(ctx context.Context, req *entity.CopyRegi
 			name
 		) VALUES (?, ?, ?, ?)
 	`
-	queryInsertStudents = r.db.Rebind(queryInsertStudents)
 
-	for _, item := range req.Registrations {
-		var prId = ulid.Make().String()
-		var students = make([]entity.AddStudent, 0)
-
-		// check if registration_id already exist in this month
-		var exist bool
-		err = tx.GetContext(ctx, &exist, queryCheck, item.RegisId,
-			item.Timezone, item.AllocatedAt, item.Timezone,
-			item.Timezone, item.AllocatedAt, item.Timezone,
+	for _, student := range students {
+		_, err := tx.ExecContext(ctx, tx.Rebind(queryInsertStudents),
+			ulid.Make().String(), prID, student.StudentID, student.Name,
 		)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to check data", fnName)
-		}
-
-		if exist {
-			log.Ctx(ctx).Warn().Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - data already exist", fnName)
-			err = errmsg.NewCustomErrors(403).SetMessage(fmt.Sprintf(`Data yang sama (program, pengajar dan murid) sudah dialokasikan pada %s (timezone %s)`, item.AllocatedAt, item.Timezone))
+			log.Ctx(ctx).Error().Err(err).Str("template_id", templateID).Msg("failed to insert additional students")
 			return err
 		}
-
-		// create new registration based on existing registration
-		_, err = tx.ExecContext(ctx, tx.Rebind(query),
-			prId, req.UserID,
-			item.AllocatedAt, item.Timezone,
-			item.RegisId,
-		)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to insert data", fnName)
-			return err
-		}
-
-		err = tx.SelectContext(ctx, &students, queryStudents, item.RegisId)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to fetch additional students", fnName)
-			return err
-		}
-
-		for _, student := range students {
-			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), prId, student.StudentID, student.Name,
-			)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("registration_id", item.RegisId).Msgf("%s - failed to insert additional students", fnName)
-				return err
-			}
-		}
-
 	}
 
 	return nil
