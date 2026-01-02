@@ -268,9 +268,12 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 			TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') AS month,
 			COALESCE(
 				SUM(
-					(
-						COALESCE(pr.night_learning_fee, 0) +
-						COALESCE(pr.foreign_learning_fee, 0) +
+					CASE
+						WHEN pr.program_meetings < 1 THEN 0
+						ELSE
+						(
+							COALESCE(pr.night_learning_fee, 0) +
+							COALESCE(pr.foreign_learning_fee, 0) +
 						COALESCE(pr.initial_fee,
 							CASE
 								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
@@ -278,6 +281,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 							END
 						)
 					)
+				END
 				),
 				0
 			) AS total_real_fee,
@@ -285,6 +289,7 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 				SUM(
 					CASE
 						WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
+						WHEN pr.program_meetings < 1 THEN 0
 						WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
 						ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 					END
@@ -425,27 +430,32 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 				EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) AS month,
 				COALESCE(
 					SUM(
-						(
-							COALESCE(pr.night_learning_fee, 0) +
-							COALESCE(pr.foreign_learning_fee, 0) +
-							COALESCE(pr.initial_fee,
-								CASE
-									WHEN pr.is_full_fee THEN pr.full_fee
-									ELSE pr.program_fee_per_meeting * pr.program_meetings
-								END
+						CASE
+							WHEN pr.program_meetings < 1 THEN 0
+							ELSE
+							(
+								COALESCE(pr.night_learning_fee, 0) +
+								COALESCE(pr.foreign_learning_fee, 0) +
+								COALESCE(pr.initial_fee,
+									CASE
+										WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+										ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+									END
 							)
 						)
-					),
-					0
-				) AS used_amount,
-				COALESCE(
-					SUM(
-						CASE
-							WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
-							WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
-							ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 						END
 					),
+					0
+					) AS used_amount,
+					COALESCE(
+						SUM(
+							CASE
+								WHEN (pr.is_paid = FALSE OR pr.mentor_detail_fee_used IS NULL OR pr.mentor_detail_fee_used = 0) THEN 0
+								WHEN pr.program_meetings < 1 THEN 0
+								WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
+								ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
+							END
+						),
 					0
 				) AS total_acquisition_rights
 			FROM
