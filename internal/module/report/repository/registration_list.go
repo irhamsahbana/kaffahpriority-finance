@@ -968,6 +968,9 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 						) AS initial_fee, -- ujroh awal
 						pr.foreign_learning_fee, -- fl
 						pr.night_learning_fee, -- nl
+						(CASE
+						WHEN pr.program_meetings < 1 THEN 0
+						ELSE
 						(
 							COALESCE(pr.night_learning_fee, 0) +
 							COALESCE(pr.foreign_learning_fee, 0) +
@@ -977,7 +980,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 									ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 								END
 							)
-						) AS real_fee, -- ujroh real
+						) END AS real_fee, -- ujroh real
 						CASE
 							WHEN pr.program_meetings < 1 THEN 0
 							WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
