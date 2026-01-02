@@ -44,6 +44,7 @@ type GetRegistrationResp struct {
 	Profit                   float64       `json:"profit" db:"profit"`
 	Notes                    *string       `json:"notes" db:"notes"`
 	NotesForCategory         *string       `json:"notes_for_category" db:"notes_for_category"`
+	Category                 string        `json:"category" db:"category"`
 	Batch                    *string       `json:"batch" db:"batch"`
 	IsPaid                   bool          `json:"is_paid" db:"is_paid"`
 	Students                 []AddStudent  `json:"additional_students"`
