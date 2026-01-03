@@ -11,20 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context, req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
-	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
-	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedRegistrationsForCFO2Monthly")
-	defer span.End()
-
-	var (
-		fnName          = "repo::GetExportedRegistrationsForCFO2Monthly"
-		resp            = new(entity.GetExportedRegistrationsForCFO2MonthlyResp)
-		args            = make([]any, 0, 3)
-		registrationIds = make([]string, 0)
-	)
-	resp.Items = make([]entity.RegisItem, 0)
-
-	query := `
+const queryGetExportedRegistrationsForCFO2Monthly = `
 		SELECT
 			pr.batch,
 			pr.is_paid,
@@ -118,6 +105,53 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 			AND pr.is_paid = TRUE
 	`
 
+func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context, req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
+	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetExportedRegistrationsForCFO2Monthly")
+	defer span.End()
+
+	// 1. Fetch unused registrations
+	respUnused, err := r.GetExportedRegistrationsForCFO2MonthlyUnused(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Fetch main registrations
+	items, err := r.fetchRegistrationsCFO2(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		respUnused.Items = append(respUnused.Items, items...)
+		return respUnused, nil
+	}
+
+	// 3. Enrich items (calculate ITP, modify names, collect IDs)
+	items, totalITP, registrationIds := r.enrichRegistrationsCFO2(items)
+
+	// 4. Fetch and merge additional students
+	if len(registrationIds) > 0 {
+		items, err = r.fetchAndMergeAdditionalStudentsCFO2(ctx, items, registrationIds)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 5. Merge into response
+	respUnused.Items = append(respUnused.Items, items...)
+	respUnused.TotalITP += totalITP
+
+	return respUnused, nil
+}
+
+func (r *reportRepo) fetchRegistrationsCFO2(ctx context.Context, req *entity.GetExportedRegistrationsForCFO2MonthlyReq) ([]entity.RegisItem, error) {
+	var (
+		items = make([]entity.RegisItem, 0)
+		args  = make([]any, 0, 3)
+		query = queryGetExportedRegistrationsForCFO2Monthly
+	)
+
 	if req.PaidAtFrom != "" && req.PaidAtTo != "" {
 		query += `
 				AND pr.paid_at AT TIME ZONE ? BETWEEN
@@ -129,46 +163,43 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 
 	query += ` ORDER BY pr.paid_at ASC`
 
-	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), args...)
+	err := r.db.SelectContext(ctx, &items, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("repo::fetchRegistrationsCFO2 - failed to fetch data")
 		return nil, err
 	}
+	return items, nil
+}
 
-	respUnused, err := r.GetExportedRegistrationsForCFO2MonthlyUnused(ctx, req)
-	if err != nil {
-		return nil, err
-	}
+func (r *reportRepo) enrichRegistrationsCFO2(items []entity.RegisItem) ([]entity.RegisItem, int64, []string) {
+	var (
+		totalITP        int64 = 0
+		registrationIds       = make([]string, 0, len(items))
+	)
 
-	if len(resp.Items) == 0 {
-		respUnused.Items = append(respUnused.Items, resp.Items...)
-		respUnused.TotalITP += resp.TotalITP
+	for i := range items {
+		items[i].Students = make([]entity.AddStudent, 0)
 
-		return respUnused, nil
-	}
-
-	for i := range resp.Items {
-		resp.Items[i].Students = make([]entity.AddStudent, 0)
-
-		if resp.Items[i].FLFee != nil {
-			resp.Items[i].ProgramName += " + FL"
+		if items[i].FLFee != nil {
+			items[i].ProgramName += " + FL"
 		}
 
-		if resp.Items[i].NLFee != nil {
-			resp.Items[i].ProgramName += " + NL"
+		if items[i].NLFee != nil {
+			items[i].ProgramName += " + NL"
 		}
 
-		if resp.Items[i].IsITP {
-			resp.Items[i].ProgramName += " + ITP"
-			resp.TotalITP++
+		if items[i].IsITP {
+			items[i].ProgramName += " + ITP"
+			totalITP++
 		}
 
-		registrationIds = append(registrationIds, resp.Items[i].ID)
+		registrationIds = append(registrationIds, items[i].ID)
 	}
+	return items, totalITP, registrationIds
+}
 
-	// Query additional students if there are registrations
-	if len(registrationIds) > 0 {
-		query = `
+func (r *reportRepo) fetchAndMergeAdditionalStudentsCFO2(ctx context.Context, items []entity.RegisItem, registrationIds []string) ([]entity.RegisItem, error) {
+	query := `
 			SELECT
 				pr.id,
 				STRING_AGG(pras.name, ', ' ORDER BY pras.name) AS additional_students
@@ -182,67 +213,61 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 				pr.id
 		`
 
-		type additionalStudents struct {
-			RegistrationId     string `db:"id"`
-			AdditionalStudents string `db:"additional_students"`
+	type additionalStudents struct {
+		RegistrationId     string `db:"id"`
+		AdditionalStudents string `db:"additional_students"`
+	}
+
+	var additionalStudentsData = make([]additionalStudents, 0)
+
+	query, args, err := sqlx.In(query, registrationIds)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("repo::fetchAndMergeAdditionalStudentsCFO2 - error preparing query")
+		return nil, err
+	}
+
+	err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("repo::fetchAndMergeAdditionalStudentsCFO2 - failed to fetch additional students")
+		return nil, err
+	}
+
+	// Group additional students by registration ID
+	additionalStudentsMap := make(map[string]map[string]bool)
+	additionalStudentsList := make(map[string][]entity.AddStudent)
+
+	for _, item := range additionalStudentsData {
+		if additionalStudentsMap[item.RegistrationId] == nil {
+			additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
+			additionalStudentsList[item.RegistrationId] = make([]entity.AddStudent, 0)
 		}
 
-		var additionalStudentsData = make([]additionalStudents, 0)
-
-		query, args, err := sqlx.In(query, registrationIds)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - error preparing query for additional students", fnName)
-			return nil, err
-		}
-
-		err = r.db.SelectContext(ctx, &additionalStudentsData, r.db.Rebind(query), args...)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch additional students", fnName)
-			return nil, err
-		}
-
-		// Kumpulkan additional students per registration untuk menghindari duplikasi
-		additionalStudentsMap := make(map[string]map[string]bool)
-		additionalStudentsList := make(map[string][]entity.AddStudent)
-		for _, item := range additionalStudentsData {
-			if additionalStudentsMap[item.RegistrationId] == nil {
-				additionalStudentsMap[item.RegistrationId] = make(map[string]bool)
-				additionalStudentsList[item.RegistrationId] = make([]entity.AddStudent, 0)
-			}
-			// Split string dan tambahkan setiap nama ke map untuk menghilangkan duplikasi
-			names := strings.Split(item.AdditionalStudents, ", ")
-			for _, name := range names {
-				name = strings.TrimSpace(name)
-				if name != "" && !additionalStudentsMap[item.RegistrationId][name] {
-					additionalStudentsMap[item.RegistrationId][name] = true
-					// Create AddStudent entity for Students array
-					namePtr := name
-					additionalStudentsList[item.RegistrationId] = append(additionalStudentsList[item.RegistrationId], entity.AddStudent{
-						Name: &namePtr,
-					})
-				}
-			}
-		}
-
-		// Add additional students to resp.Items
-		for i, item := range resp.Items {
-			if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
-				// Tambahkan ke Students array
-				resp.Items[i].Students = append(resp.Items[i].Students, additionalStudentsList[item.ID]...)
-
-				// Tambahkan ke StudentName tanpa duplikasi
-				names := make([]string, 0, len(nameMap))
-				for name := range nameMap {
-					names = append(names, name)
-				}
-				sort.Strings(names)
-				resp.Items[i].StudentName += ", " + strings.Join(names, ", ")
+		names := strings.Split(item.AdditionalStudents, ", ")
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name != "" && !additionalStudentsMap[item.RegistrationId][name] {
+				additionalStudentsMap[item.RegistrationId][name] = true
+				namePtr := name
+				additionalStudentsList[item.RegistrationId] = append(additionalStudentsList[item.RegistrationId], entity.AddStudent{
+					Name: &namePtr,
+				})
 			}
 		}
 	}
 
-	respUnused.Items = append(respUnused.Items, resp.Items...)
-	respUnused.TotalITP += resp.TotalITP
+	// Merge into items
+	for i, item := range items {
+		if nameMap, exists := additionalStudentsMap[item.ID]; exists && len(nameMap) > 0 {
+			items[i].Students = append(items[i].Students, additionalStudentsList[item.ID]...)
 
-	return respUnused, nil
+			names := make([]string, 0, len(nameMap))
+			for name := range nameMap {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			items[i].StudentName += ", " + strings.Join(names, ", ")
+		}
+	}
+
+	return items, nil
 }

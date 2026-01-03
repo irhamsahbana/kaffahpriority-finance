@@ -459,6 +459,9 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 			lastRow++
 			f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), lecturerIndex+1)
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow), lecturer.Name)
+
+			var totalRealFee float64
+
 			for templateIndex, template := range lecturer.Items {
 				f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow), templateIndex+1)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), template.StudentName)
@@ -479,6 +482,7 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 						f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), *data.NL)
 					}
 					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), data.RealFee)
+					totalRealFee += data.RealFee
 					if data.Notes != nil {
 						f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), *data.Notes)
 					}
@@ -493,6 +497,10 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 				}
 
 				if templateIndex == len(lecturer.Items)-1 { // last item in the lecturer.Items
+					lastRow++
+					f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), "TOTAL")
+					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), totalRealFee)
+					f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyle)
 					lastRow++ // add an extra row for the next lecturer
 				}
 			}
