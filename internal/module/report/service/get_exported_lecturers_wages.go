@@ -31,6 +31,10 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 	currencyStyle, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 3,
 	})
+	currencyBoldStyle, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 3,
+		Font:   &excelize.Font{Bold: true},
+	})
 
 	f.NewSheet(sheetName)
 
@@ -97,6 +101,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		if index != 0 && (curLecturer != prevLecturer || curAcademicManager != prevAcademicManager) {
 			if curAcademicManager != prevAcademicManager {
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
+				f.SetCellStyle(sheetName, fmt.Sprintf("M%v", row), fmt.Sprintf("M%v", row), currencyBoldStyle)
 				amTotalRealFee = 0
 			}
 			row++ // spare 1 row kosong
@@ -155,6 +160,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 	}
 
 	f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
+	f.SetCellStyle(sheetName, fmt.Sprintf("M%v", row), fmt.Sprintf("M%v", row), currencyBoldStyle)
 
 	// timestampe in unix
 	tmstmp := time.Now().Unix()
