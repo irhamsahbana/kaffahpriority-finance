@@ -399,6 +399,26 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	// Header biru muda dengan NumFmt
 	HeaderStyle, _ := newHeaderStyle(f, "#3BFFF5", true)
 
+	// Header biru muda dengan NumFmt rata kanan
+	HeaderStyleRight, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:  true,
+			Size:  12,
+			Color: "#000000",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+			Vertical:   "center",
+		},
+		Border: defaultBorderStyle(),
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#3BFFF5"},
+			Pattern: 1,
+		},
+		NumFmt: 3,
+	})
+
 	academicManagerNameStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
@@ -500,7 +520,8 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 					lastRow++
 					f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), "TOTAL")
 					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), totalRealFee)
-					f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyle)
+					f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("K%v", lastRow), HeaderStyle)
+					f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyleRight)
 					lastRow++ // add an extra row for the next lecturer
 				}
 			}
