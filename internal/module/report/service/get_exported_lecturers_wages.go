@@ -77,6 +77,8 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 
 	// data
 	var prevLecturer string
+	var prevAcademicManager string
+	var amTotalRealFee float64
 	var row = 2
 	var seq = 1
 	for index, item := range resp.Items {
@@ -86,8 +88,17 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 			curLecturer = *item.LecturerName
 		}
 
+		curAcademicManager := ""
+		if item.AcademicManagerName != nil {
+			curAcademicManager = *item.AcademicManagerName
+		}
+
 		// kalau ganti lecturer (bukan item pertama), sisip 1 baris kosong
-		if index != 0 && curLecturer != prevLecturer {
+		if index != 0 && (curLecturer != prevLecturer || curAcademicManager != prevAcademicManager) {
+			if curAcademicManager != prevAcademicManager {
+				f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
+				amTotalRealFee = 0
+			}
 			row++ // spare 1 row kosong
 		}
 
@@ -134,11 +145,16 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		f.SetCellValue(sheetName, fmt.Sprintf("P%v", row), item.AccquisitionRights)
 		f.SetCellValue(sheetName, fmt.Sprintf("Q%v", row), item.MarketerName)
 
+		amTotalRealFee += RealFee
+
 		// update prev lecturer & pindah ke baris berikutnya
 		prevLecturer = curLecturer
+		prevAcademicManager = curAcademicManager
 		row++
 		seq++
 	}
+
+	f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
 
 	// timestampe in unix
 	tmstmp := time.Now().Unix()
