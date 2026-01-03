@@ -371,7 +371,6 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 	req *entity.GetExportedRegistrationsForCFO2MonthlyReq) (
 	*entity.GetExportedRegistrationsForCFO2MonthlyResp, error) {
 	var (
-		fnName          = "repo::GetExportedRegistrationsForCFO2MonthlyUnused"
 		resp            = new(entity.GetExportedRegistrationsForCFO2MonthlyResp)
 		registrationIds = make([]string, 0)
 	)
@@ -481,7 +480,7 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 
 	err := r.db.SelectContext(ctx, &resp.Items, r.db.Rebind(query), req.Timezone, req.PaidAtFrom, req.PaidAtTo)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to fetch data")
 		return nil, err
 	}
 
