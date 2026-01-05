@@ -17,7 +17,10 @@ type GetLecturersWagesReq struct {
 	LecturerID                 string `query:"lecturer_id" validate:"omitempty,ulid"`
 	IsMandatoryFieldsCompleted string `query:"is_mandatory_fields_completed" validate:"omitempty,oneof=true false"`
 	Month                      string `query:"month" validate:"omitempty,datetime=2006-01"`
+	AllMonth                   bool   `query:"all_month"`
 	Timezone                   string `query:"timezone" validate:"required,timezone"`
+	TemplateDeletationStatus   string `query:"template_deletation_status" validate:"omitempty,oneof=deleted not_deleted"`
+	PaymentStatus              string `query:"payment_status" validate:"omitempty,oneof=paid not_paid"`
 }
 
 func (r *GetLecturersWagesReq) SetDefault() {
@@ -61,6 +64,7 @@ type LecturersWageItem struct {
 	AllocatedAt          *string          `json:"allocated_at" db:"allocated_at"`
 	Notes                *string          `json:"notes" db:"notes"`
 	TemplateId           string           `json:"template_id" db:"template_id"`
+	TemplateDeletedAt    *time.Time       `json:"template_deleted_at" db:"template_deleted_at"`
 	HasPayment           bool             `json:"has_payment" db:"has_payment"`
 }
 
