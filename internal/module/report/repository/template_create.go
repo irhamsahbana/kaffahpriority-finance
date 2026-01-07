@@ -81,7 +81,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			?,
 			?,
 			?,
-			(SELECT marketer_commission_fee FROM program),
+			?,
 			?,
 			?,
 			?, ?, ?
@@ -97,6 +97,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.FLFee,
 		req.NLFee,
 		req.IsITP,
+		req.MarketerCommissionFee,
 		req.OverpaymentFee,
 		req.HRFee,
 		req.MarketerGiftsFee,

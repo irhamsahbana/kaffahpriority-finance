@@ -100,7 +100,8 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 				ELSE 0
 			END AS mentor_detail_fee_used,
 			pr.allocated_at,
-			pr.notes_for_lecturer_wage AS notes
+			pr.notes_for_lecturer_wage AS notes,
+			prt.deleted_at AS template_deleted_at
 		FROM
 			program_registrations pr
 		JOIN
@@ -120,10 +121,28 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	WHERE
 			pr.deleted_at IS NULL
 			AND pr.category = 'general'
-			AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?
 	`
 
-	args = append(args, req.Timezone, req.Month)
+	if !req.AllMonth {
+		query += ` AND TO_CHAR(pr.allocated_at AT TIME ZONE ?, 'YYYY-MM') = ?`
+		args = append(args, req.Timezone, req.Month)
+	}
+
+	if req.TemplateDeletationStatus != "" {
+		if req.TemplateDeletationStatus == "deleted" {
+			query += ` AND prt.deleted_at IS NOT NULL`
+		} else {
+			query += ` AND prt.deleted_at IS NULL`
+		}
+	}
+
+	if req.PaymentStatus != "" {
+		if req.PaymentStatus == "paid" {
+			query += ` AND pr.is_paid = TRUE`
+		} else {
+			query += ` AND pr.is_paid = FALSE`
+		}
+	}
 
 	if req.AcademicManagerID != "" {
 		query += ` AND am.id = ?`
