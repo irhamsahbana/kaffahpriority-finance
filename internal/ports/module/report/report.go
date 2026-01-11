@@ -3,6 +3,7 @@ package ports
 import (
 	"codebase-app/internal/entity"
 	"context"
+	"time"
 )
 
 // Template-specific operations
@@ -14,6 +15,8 @@ type TemplateRepository interface {
 	CheckTemplateCombinationForCreate(ctx context.Context, req *entity.CreateTemplateReq) (bool, error)
 	CheckTemplateCombinationForUpdate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (bool, error)
 	DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error
+	GetTemplateCreatedAt(ctx context.Context, id string) (time.Time, error)
+	UpdateTemplateCreatedAt(ctx context.Context, id string, createdAt time.Time) error
 }
 
 // Registration management operations
@@ -91,6 +94,7 @@ type TemplateService interface {
 	CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error)
 	UpdateTemplate(ctx context.Context, req *entity.UpdateTemplateGeneralReq) (*entity.UpdateTemplateResp, error)
 	DeleteTemplate(ctx context.Context, req *entity.GetTemplateReq) error
+	UpdateTemplateCreatedAtBetween(ctx context.Context, req *entity.UpdateTemplateCreatedAtBetweenReq) error
 }
 
 type RegistrationService interface {

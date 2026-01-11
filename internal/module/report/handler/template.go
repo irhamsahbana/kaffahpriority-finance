@@ -177,3 +177,35 @@ func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
+
+func (h *reportHandler) updateTemplateCreatedAtBetween(c *fiber.Ctx) error {
+	var (
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateTemplateCreatedAtBetween")
+		fnName    = "handler::updateTemplateCreatedAtBetween"
+		req       = new(entity.UpdateTemplateCreatedAtBetweenReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
+	)
+	defer span.End()
+
+	if err := c.BodyParser(req); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserID = l.GetUserId()
+
+	if err := v.Validate(req); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	err := h.service.UpdateTemplateCreatedAtBetween(ctx, req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(nil, "Template created_at updated successfully"))
+}
