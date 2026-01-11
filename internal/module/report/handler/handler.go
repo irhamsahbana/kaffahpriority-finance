@@ -78,6 +78,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Put("/registrations/:id/is-paid", h.updateRegistrationIsPaid)
 
 	protected.Post("/registrations/:id/additional", h.createAdditionalRegistration)
+	protected.Patch("/templates-created-at-between", h.updateTemplateCreatedAtBetween)
 
 	protected.Get("/registration-per-lecturers", h.getRegistrationListPerLecturer)
 	protected.Patch("/lecturers-wages/:id", h.updateLecturerWages)
