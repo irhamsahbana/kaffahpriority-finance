@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
+	"codebase-app/pkg/errmsg"
 	"context"
 	"time"
 
@@ -15,21 +16,41 @@ func (s *reportService) UpdateTemplateCreatedAtBetween(ctx context.Context, req 
 	ctx, span := tracing.StartSpan(ctx, "service.UpdateTemplateCreatedAtBetween")
 	defer span.End()
 
-	prevTime, err := s.repo.GetTemplateCreatedAt(ctx, req.PrevID)
-	if err != nil {
-		return err
+	var (
+		prevTime, nextTime, newTime time.Time
+		err                         error
+	)
+
+	if req.PrevID != "" {
+		prevTime, err = s.repo.GetTemplateCreatedAt(ctx, req.PrevID)
+		if err != nil {
+			return err
+		}
 	}
 
-	nextTime, err := s.repo.GetTemplateCreatedAt(ctx, req.NextID)
-	if err != nil {
-		return err
+	if req.NextID != "" {
+		nextTime, err = s.repo.GetTemplateCreatedAt(ctx, req.NextID)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Calculate midpoint
-	duration := nextTime.Sub(prevTime)
-	midPoint := prevTime.Add(duration / 2)
+	if req.PrevID != "" && req.NextID != "" {
+		// Case 1: Insert between two items
+		duration := nextTime.Sub(prevTime)
+		newTime = prevTime.Add(duration / 2)
+	} else if req.PrevID == "" && req.NextID != "" {
+		// Case 2: Insert at the beginning (before NextID)
+		newTime = nextTime.Add(-30 * time.Minute)
+	} else if req.PrevID != "" && req.NextID == "" {
+		// Case 3: Insert at the end (after PrevID)
+		newTime = prevTime.Add(30 * time.Minute)
+	} else {
+		// Case 4: Both missing (Invalid)
+		return errmsg.NewCustomErrors(400).SetMessage("At least one of prev_id or next_id must be provided")
+	}
 
-	err = s.repo.UpdateTemplateCreatedAt(ctx, req.TargetID, midPoint)
+	err = s.repo.UpdateTemplateCreatedAt(ctx, req.TargetID, newTime)
 	if err != nil {
 		return err
 	}
@@ -80,7 +101,7 @@ func (s *reportService) UpdateTemplateCreatedAtBetween(ctx context.Context, req 
 		Str("target_id", req.TargetID).
 		Time("prev_time", prevTime).
 		Time("next_time", nextTime).
-		Time("new_target_time", midPoint).
+		Time("new_target_time", newTime).
 		Msg("updated template created_at between")
 
 	return nil
