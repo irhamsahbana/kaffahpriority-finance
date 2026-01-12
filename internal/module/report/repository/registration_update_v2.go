@@ -233,6 +233,8 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 		} else {
 			mentorDetailFee = req.HRFee - hrDetailFee
 		}
+	} else {
+		mentorDetailFee = req.HRFee - hrDetailFee
 	}
 
 	query := `
