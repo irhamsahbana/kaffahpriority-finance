@@ -54,27 +54,17 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 	defer span.End()
 
 	for _, allocation := range req.Allocations {
-		var id string
-		var paidAt sql.NullTime
-		var isPaid bool
-		checkQuery := `
-			SELECT id, paid_at, is_paid
-			FROM program_registrations
-			WHERE template_id = ?
-				AND allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
-				AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
-				AND deleted_at IS NULL
-			LIMIT 1
-		`
-		allocationDate := allocation + "-01"
-		err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), template.ID, allocationDate, allocationDate).Scan(&id, &paidAt, &isPaid)
+		id, paidAt, isPaid, err := r.checkAllocationCollision(ctx, tx, template.ID, allocation, "")
+		if err != nil {
+			return err
+		}
 
-		if err == nil {
+		if id != nil {
 			// Registration exists
 			
 			// If is_paid is false, overwrite the registration instead of returning error
 			if !isPaid {
-				err = r.overwriteRegistration(ctx, tx, req, id)
+				err = r.overwriteRegistration(ctx, tx, req, *id)
 				if err != nil {
 					return err
 				}
@@ -107,12 +97,44 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 			log.Ctx(ctx).Error().Any("req", req).Str("allocation", allocation).Time("paid_at", paidAt.Time).Msgf("allocation already exists for this template")
 			return errmsg.NewCustomErrors(http.StatusUnprocessableEntity,
 				errmsg.WithMessage("Alokasi untuk bulan "+allocationFormatted+" sudah ada untuk template ini (dibayar pada: "+paidAtStr+")"))
-		} else if err != sql.ErrNoRows {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Str("allocation", allocation).Msgf("failed to check existing allocations")
-			return err
 		}
 	}
 	return nil
+}
+
+func (r *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, templateID string, allocationMonth string, excludeDetailsID string) (*string, sql.NullTime, bool, error) {
+	var id string
+	var paidAt sql.NullTime
+	var isPaid bool
+
+	checkQuery := `
+		SELECT id, paid_at, is_paid
+		FROM program_registrations
+		WHERE template_id = ?
+			AND allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
+			AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
+			AND deleted_at IS NULL
+	`
+	
+	args := []interface{}{templateID, allocationMonth + "-01", allocationMonth + "-01"}
+
+	if excludeDetailsID != "" {
+		checkQuery += " AND id != ? "
+		args = append(args, excludeDetailsID)
+	}
+
+	checkQuery += " LIMIT 1"
+
+	err := tx.QueryRowContext(ctx, tx.Rebind(checkQuery), args...).Scan(&id, &paidAt, &isPaid)
+
+	if err == nil {
+		return &id, paidAt, isPaid, nil
+	} else if err != sql.ErrNoRows {
+		log.Ctx(ctx).Error().Err(err).Str("allocation", allocationMonth).Msgf("failed to check existing allocations")
+		return nil, sql.NullTime{}, false, err
+	}
+
+	return nil, sql.NullTime{}, false, nil
 }
 
 func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, registrationId string) error {

@@ -44,6 +44,40 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 		return nil, err
 	}
 
+	// check duplicate allocation
+	if len(req.AllocatedAt) >= 7 {
+		targetMonth := req.AllocatedAt[:7]
+		collisionID, paidAt, _, err := r.checkAllocationCollision(ctx, tx, currentReg.TemplateID, targetMonth, req.ID)
+		if err != nil {
+			return nil, err
+		}
+		if collisionID != nil {
+			// Format allocation from YYYY-MM to MMMM YYYY
+			allocationFormatted := targetMonth
+			if len(targetMonth) == 7 { // YYYY-MM format
+				// convert month to full month name
+				monthNames := map[string]string{
+					"01": "Januari", "02": "Februari", "03": "Maret",
+					"04": "April", "05": "Mei", "06": "Juni",
+					"07": "Juli", "08": "Agustus", "09": "September",
+					"10": "Oktober", "11": "November", "12": "Desember",
+				}
+				month := targetMonth[5:7]
+				year := targetMonth[0:4]
+				if monthName, ok := monthNames[month]; ok {
+					allocationFormatted = monthName + " " + year
+				}
+			}
+
+			paidAtStr := "tanpa tanggal pembayaran"
+			if paidAt.Valid {
+				paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
+			}
+
+			return nil, errmsg.NewCustomErrors(409).SetMessage("Alokasi untuk bulan " + allocationFormatted + " sudah ada untuk template ini (dibayar pada: " + paidAtStr + ")")
+		}
+	}
+
 	shouldResetFees, err := r.shouldResetFees(ctx, currentReg, req)
 	if err != nil {
 		return nil, err
@@ -639,3 +673,5 @@ func (r *reportRepo) archiveTemplate(ctx context.Context, tx *sqlx.Tx, templateI
 	}
 	return nil
 }
+
+

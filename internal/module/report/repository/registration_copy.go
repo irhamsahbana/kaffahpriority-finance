@@ -5,7 +5,6 @@ import (
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg/errmsg"
 	"context"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/oklog/ulid/v2"
@@ -67,51 +66,49 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 	ctx, span := tracing.StartSpan(ctx, "repo.checkCopyRegistrationExists")
 	defer span.End()
 
-	queryCheck := `
-		SELECT EXISTS (
-			WITH regis AS (
-				SELECT
-					r.program_id,
-					r.lecturer_id,
-					r.student_id
-				FROM
-					program_registrations r
-				WHERE
-					r.id = ?
-					AND r.deleted_at IS NULL
-			)
-			SELECT
-				1
-			FROM
-				program_registrations pr
-			WHERE
-				pr.program_id = (SELECT program_id FROM regis)
-				AND (
-					CASE
-						WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM regis) IS NULL
-						ELSE pr.lecturer_id = (SELECT lecturer_id FROM regis)
-					END
-				)
-				AND pr.student_id = (SELECT student_id FROM regis)
-				AND EXTRACT(MONTH FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(MONTH FROM ?::timestamptz AT TIME ZONE ?)
-				AND EXTRACT(YEAR FROM pr.allocated_at AT TIME ZONE ?) = EXTRACT(YEAR FROM ?::timestamptz AT TIME ZONE ?)
-				AND pr.deleted_at IS NULL
-		)
-	`
-
-	var exist bool
-	err := tx.GetContext(ctx, &exist, tx.Rebind(queryCheck), item.RegisId,
-		item.Timezone, item.AllocatedAt, item.Timezone,
-		item.Timezone, item.AllocatedAt, item.Timezone,
-	)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("registration_id", item.RegisId).Msg("failed to check data")
+	// Get template_id and allocated_at month from registration
+	var regisInfo struct {
+		TemplateID string `db:"template_id"`
+	}
+	queryGetInfo := `SELECT template_id FROM program_registrations WHERE id = ?`
+	if err := tx.GetContext(ctx, &regisInfo, tx.Rebind(queryGetInfo), item.RegisId); err != nil {
 		return err
 	}
 
-	if exist {
-		log.Ctx(ctx).Warn().Str("registration_id", item.RegisId).Msg("data already exist")
-		return errmsg.NewCustomErrors(403).SetMessage(fmt.Sprintf(`Data yang sama (program, pengajar dan murid) sudah dialokasikan pada %s (timezone %s)`, item.AllocatedAt, item.Timezone))
+	targetMonth := item.AllocatedAt
+	if len(targetMonth) > 7 {
+		targetMonth = targetMonth[:7]
+	}
+
+	collisionID, paidAt, _, err := r.checkAllocationCollision(ctx, tx, regisInfo.TemplateID, targetMonth, "")
+	if err != nil {
+		return err
+	}
+
+	if collisionID != nil {
+		// Format allocation from YYYY-MM to MMMM YYYY
+		allocationFormatted := targetMonth
+		if len(targetMonth) == 7 { // YYYY-MM format
+			// convert month to full month name
+			monthNames := map[string]string{
+				"01": "Januari", "02": "Februari", "03": "Maret",
+				"04": "April", "05": "Mei", "06": "Juni",
+				"07": "Juli", "08": "Agustus", "09": "September",
+				"10": "Oktober", "11": "November", "12": "Desember",
+			}
+			month := targetMonth[5:7]
+			year := targetMonth[0:4]
+			if monthName, ok := monthNames[month]; ok {
+				allocationFormatted = monthName + " " + year
+			}
+		}
+
+		paidAtStr := "tanpa tanggal pembayaran"
+		if paidAt.Valid {
+			paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
+		}
+
+		return errmsg.NewCustomErrors(409).SetMessage("Alokasi untuk bulan " + allocationFormatted + " sudah ada untuk template ini (dibayar pada: " + paidAtStr + ")")
 	}
 
 	return nil
