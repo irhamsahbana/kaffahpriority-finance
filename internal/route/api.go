@@ -10,6 +10,7 @@ import (
 	m "codebase-app/internal/middleware"
 	activityLogHandler "codebase-app/internal/module/activity_log/handler"
 	masterHandler "codebase-app/internal/module/master/handler"
+	payrollHandler "codebase-app/internal/module/payroll/handler"
 	rbacHandler "codebase-app/internal/module/rbac/handler"
 	reportHandler "codebase-app/internal/module/report/handler"
 	userHandler "codebase-app/internal/module/user/handler"
@@ -29,44 +30,7 @@ func SetupRoutes(app *fiber.App) {
 	masterHandler.NewMasterHandler().Register(app.Group("/masters"))
 	rbacHandler.NewRBACHandler().Register(app.Group("/role-permissions"))
 	activityLogHandler.NewActivityLogHandler().Register(app.Group("/activity-logs"))
-
-	// db := adapter.Adapters.Postgres
-
-	// workerLimit := 15
-
-	// jobs := make(chan string, 1000)
-	// results := make(chan string, 1000)
-	// errors := make(chan error, 1000)
-
-	// var wg sync.WaitGroup
-
-	// for w := 1; w <= workerLimit; w++ {
-	// 	wg.Add(1)
-	// 	go worker(db, jobs, results, errors, &wg)
-	// }
-
-	// for i := 0; i < 1000; i++ {
-	// 	jobs <- `
-	// 		INSERT INTO students (id, identifier, name) VALUES (
-	// 		'` + ulid.Make().String() + `',
-	// 		'` + ulid.Make().String() + `',
-	// 		'` + gofakeit.Name() + `'
-	// 		)
-	// 	`
-	// }
-
-	// close(jobs)
-
-	// wg.Wait()
-	// close(results)
-	// close(errors)
-
-	// for result := range results {
-	// 	log.Info().Str("result", result).Msg("Success")
-	// }
-	// for err := range errors {
-	// 	log.Error().Err(err).Msg("Error")
-	// }
+	payrollHandler.NewPayrollHandler().Register(app.Group("/payrolls"))
 
 	// // fallback route
 	app.Use(func(c *fiber.Ctx) error {

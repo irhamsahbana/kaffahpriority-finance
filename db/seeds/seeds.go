@@ -34,22 +34,11 @@ func (s *Seed) run(table string, total int) {
 	switch table {
 	case "roles":
 		s.rolesSeed()
-	case "potencies":
-		s.potenciesSeed()
-	case "areas":
-		s.areasSeed()
-	case "vehicle_types":
-		s.vehicleTypesSeed()
-	case "branches":
-		s.branchesSeed(total)
+
 	case "users":
 		s.usersSeed(total)
 	case "all":
 		s.rolesSeed()
-		s.areasSeed()
-		s.potenciesSeed()
-		s.vehicleTypesSeed()
-		s.branchesSeed(total)
 		s.usersSeed(total)
 	case "delete-all":
 		s.deleteAll()
@@ -151,138 +140,6 @@ func (s *Seed) deleteAll() {
 	log.Info().Msg("=== All tables deleted successfully ===")
 }
 
-func (s *Seed) areasSeed() {
-	areaMaps := []map[string]any{
-		{"id": ulid.Make().String(), "name": "Kap mesin", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Atap ruang mesin", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kanan depan", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kanan tengah", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kanan belakang", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kiri depan", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kiri tengah", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu kiri belakang", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Pintu belakang", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Bumper depan", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Bumper belakang", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Ban", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Baterai/Aki", "type": "exterior"},
-		{"id": ulid.Make().String(), "name": "Kemudi", "type": "interior"},
-		{"id": ulid.Make().String(), "name": "Penumpang tengah", "type": "interior"},
-		{"id": ulid.Make().String(), "name": "Penumpang belakang", "type": "interior"},
-	}
-
-	tx, err := s.db.BeginTxx(context.Background(), nil)
-	if err != nil {
-		log.Error().Err(err).Msg("Error starting transaction")
-		return
-	}
-	defer func() {
-		if err != nil {
-			err = tx.Rollback()
-			log.Error().Err(err).Msg("Error rolling back transaction")
-			return
-		}
-		err = tx.Commit()
-		if err != nil {
-			log.Error().Err(err).Msg("Error committing transaction")
-		}
-	}()
-
-	_, err = tx.NamedExec(`
-		INSERT INTO areas (id, name, type)
-		VALUES (:id, :name, :type)
-	`, areaMaps)
-	if err != nil {
-		log.Error().Err(err).Msg("Error creating areas")
-		return
-	}
-
-	log.Info().Msg("areas table seeded successfully")
-}
-
-func (s *Seed) potenciesSeed() {
-	potencyMaps := []map[string]any{
-		{"id": ulid.Make().String(), "name": "General Repair"},
-		{"id": ulid.Make().String(), "name": "Body Paint"},
-		{"id": ulid.Make().String(), "name": "OtoXpert"},
-		{"id": ulid.Make().String(), "name": "Used-car"},
-	}
-
-	tx, err := s.db.BeginTxx(context.Background(), nil)
-	if err != nil {
-		log.Error().Err(err).Msg("Error starting transaction")
-		return
-	}
-	defer func() {
-		if err != nil {
-			err = tx.Rollback()
-			log.Error().Err(err).Msg("Error rolling back transaction")
-			return
-		} else {
-			err = tx.Commit()
-			if err != nil {
-				log.Error().Err(err).Msg("Error committing transaction")
-			}
-		}
-	}()
-
-	_, err = tx.NamedExec(`
-		INSERT INTO potencies (id, name)
-		VALUES (:id, :name)
-	`, potencyMaps)
-	if err != nil {
-		log.Error().Err(err).Msg("Error creating potencies")
-		return
-	}
-
-	log.Info().Msg("potencies table seeded successfully")
-}
-
-func (s *Seed) vehicleTypesSeed() {
-	vehicleTypeMaps := []map[string]any{
-		{"id": ulid.Make().String(), "name": "AGYA"},
-		{"id": ulid.Make().String(), "name": "ALPHARD"},
-		{"id": ulid.Make().String(), "name": "AVANZA"},
-		{"id": ulid.Make().String(), "name": "CALYA"},
-		{"id": ulid.Make().String(), "name": "CAMRY"},
-		{"id": ulid.Make().String(), "name": "COROLLA"},
-		{"id": ulid.Make().String(), "name": "DYNA"},
-		{"id": ulid.Make().String(), "name": "FORTUNER"},
-		{"id": ulid.Make().String(), "name": "HIACE"},
-		{"id": ulid.Make().String(), "name": "HILUX"},
-		{"id": ulid.Make().String(), "name": "INNOVA"},
-		{"id": ulid.Make().String(), "name": "KIJANG"},
-	}
-
-	tx, err := s.db.BeginTxx(context.Background(), nil)
-	if err != nil {
-		log.Error().Err(err).Msg("Error starting transaction")
-		return
-	}
-	defer func() {
-		if err != nil {
-			err = tx.Rollback()
-			log.Error().Err(err).Msg("Error rolling back transaction")
-			return
-		}
-		err = tx.Commit()
-		if err != nil {
-			log.Error().Err(err).Msg("Error committing transaction")
-		}
-	}()
-
-	_, err = tx.NamedExec(`
-		INSERT INTO vehicle_types (id, name)
-		VALUES (:id, :name)
-	`, vehicleTypeMaps)
-	if err != nil {
-		log.Error().Err(err).Msg("Error creating vehicle types")
-		return
-	}
-
-	log.Info().Msg("vehicle types table seeded successfully")
-}
-
 // rolesSeed seeds the roles table.
 func (s *Seed) rolesSeed() {
 	roleMaps := []map[string]any{
@@ -365,6 +222,7 @@ func (s *Seed) branchesSeed(total int) {
 
 // users
 func (s *Seed) usersSeed(total int) {
+	panic("TEST PANIC")
 	tx, err := s.db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		log.Error().Err(err).Msg("Error starting transaction")

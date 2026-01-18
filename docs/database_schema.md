@@ -31,6 +31,10 @@ The project uses PostgreSQL. Schema changes are managed via SQL migrations using
 ### System
 - **activity_logs**: Audit logs for system activities.
 
+### Payroll
+- **payroll_runs**: Payroll periods/cycles.
+- **payroll_items**: Individual payroll items for each mentor/program in a cycle.
+
 ## Workflow
 1.  **Create Migration**: `task create-migration name=my_change`
 2.  **Edit SQL**: Write the UP and DOWN SQL in the generated file.
