@@ -14,6 +14,7 @@ type PayrollRun struct {
 	Timezone    string           `json:"timezone" db:"timezone"`
 	Status      PayrollRunStatus `json:"status" db:"status"`
 	CreatedAt   time.Time        `json:"created_at" db:"created_at"`
+	DeletedAt   *time.Time       `json:"deleted_at" db:"deleted_at"`
 }
 
 type PayrollRunStatus string
