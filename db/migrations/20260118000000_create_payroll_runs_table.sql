@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS payroll_runs (
     timezone VARCHAR(255) DEFAULT 'Asia/Makassar' NOT NULL,
     status VARCHAR(50) DEFAULT 'draft' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE,
 
     CONSTRAINT payroll_runs_period_unique UNIQUE (period)
 );

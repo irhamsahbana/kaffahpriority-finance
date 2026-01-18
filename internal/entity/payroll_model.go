@@ -26,6 +26,7 @@ const (
 
 type PayrollItem struct {
 	ID                  string          `json:"id" db:"id"`
+	TemplateID          string          `json:"template_id" db:"template_id"`
 	PayrollRunID        string          `json:"payroll_run_id" db:"payroll_run_id"`
 	AcademicManagerID   string          `json:"academic_manager_id" db:"academic_manager_id"`
 	AcademicManagerName string          `json:"academic_manager_name" db:"academic_manager_name"`

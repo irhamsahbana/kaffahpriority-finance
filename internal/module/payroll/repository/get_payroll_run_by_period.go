@@ -14,7 +14,8 @@ func (r *payrollRepo) GetPayrollRunByPeriod(ctx context.Context, period string) 
 	query := `
 		SELECT *
 		FROM payroll_runs
-		WHERE period = $1 AND deleted_at IS NULL
+		WHERE period = $1
+		AND deleted_at IS NULL
 		LIMIT 1
 	`
 	if err := r.db.GetContext(ctx, &run, query, period); err != nil {

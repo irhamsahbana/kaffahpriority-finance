@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS payroll_items (
     id CHAR(26) PRIMARY KEY,
+    template_id CHAR(26) NOT NULL,
     payroll_run_id CHAR(26) NOT NULL,
     academic_manager_id CHAR(26) NOT NULL,
     academic_manager_name VARCHAR(255) NOT NULL,

@@ -14,6 +14,7 @@ func (r *payrollRepo) GetLatestPayrollRun(ctx context.Context) (*entity.PayrollR
 	query := `
 		SELECT *
 		FROM payroll_runs
+		WHERE deleted_at IS NULL
 		ORDER BY created_at DESC
 		LIMIT 1
 	`
