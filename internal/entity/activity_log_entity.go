@@ -10,6 +10,7 @@ type ActivityLogType string
 const (
 	ActivityLogTypeCreate ActivityLogType = "create"
 	ActivityLogTypeUpdate ActivityLogType = "update"
+	ActivityLogTypeUpsert ActivityLogType = "upsert"
 	ActivityLogTypeDelete ActivityLogType = "delete"
 	// ActivityLogTypeComment ActivityLogType = "comment"
 )
@@ -20,6 +21,8 @@ const (
 	ActivityLogEntityPrograms                     ActivityLogEntity = "programs"
 	ActivityLogEntityProgramRegistrationTemplates ActivityLogEntity = "program_registration_templates"
 	ActivityLogEntityProgramRegistrations         ActivityLogEntity = "program_registrations"
+	ActivityLogEntityPayrollRuns                  ActivityLogEntity = "payroll_runs"
+	ActivityLogEntityPayrollItems                 ActivityLogEntity = "payroll_items"
 )
 
 type ActivityLog struct {

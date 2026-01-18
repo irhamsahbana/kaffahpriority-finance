@@ -32,6 +32,11 @@
     - **Custom Errors**: For business logic rules (e.g., "insufficient balance"), use `errmsg.NewCustomErrors(code, errmsg.WithMessage("..."))` instead of generic Go errors.
     - **Database Errors**: Let the global handler process `pq.Error` (e.g., unique violations, foreign key constraints) automatically; do not manually wrap them unless necessary for context.
     - **Clean Responses**: Ensure error messages are user-friendly (in Indonesian/Bahasa Indonesia as per existing patterns) and do not leak internal details.
+- **Tracing**:
+    - **Implement Tracing**: Implement tracing in all layers (Handler, Service, Repository) using `codebase-app/internal/infrastructure/tracing`.
+    - **Span Naming**: Use `layer.MethodName` (e.g., `handler.CreateUser`, `service.CreateUser`, `repo.CreateUser`).
+    - **Context Propagation**: Always pass `ctx` to the next layer.
+    - **Error Logging**: Log errors in the span using `log.Ctx(ctx).Error().Err(err).Msg("...")`.
 
 # Documentation Index
 

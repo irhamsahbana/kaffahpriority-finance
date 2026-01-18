@@ -1,0 +1,338 @@
+package repository
+
+import (
+	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/tracing"
+	"context"
+	"database/sql"
+	"fmt"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/oklog/ulid/v2"
+	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
+)
+
+func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, timezone string) (*entity.PayrollRun, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GeneratePayrollRun")
+	defer span.End()
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to begin transaction")
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// 1. Check if payroll run exists
+	run, err := r.checkExistingPayrollRun(ctx, tx, period)
+	// 2.1. Check if error is not related to no rows found
+	// If error is not nil and not related to no rows found, return the error
+	if err != nil && err != sql.ErrNoRows {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to check existing payroll run")
+		return nil, err
+	}
+
+	// 2.2. Create Payroll Run if it does not exist
+	if err != nil && err == sql.ErrNoRows {
+		run, err = r.createPayrollRunEntity(ctx, tx, period, timezone)
+		if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == "unique_violation" {
+				log.Ctx(ctx).Info().Msg("Race condition detected: payroll run created concurrently. Fetching existing run.")
+				_ = tx.Rollback()
+
+				var existingRun entity.PayrollRun
+				queryCheck := `SELECT * FROM payroll_runs WHERE period = $1 LIMIT 1`
+				if err := r.db.GetContext(ctx, &existingRun, queryCheck, period); err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("failed to fetch existing payroll run after race condition")
+					return nil, err
+				}
+				return &existingRun, nil
+			}
+			return nil, err
+		}
+	}
+
+	// 3. Sync with templates (Create new items, Delete invalid items)
+	// We only sync if the run is in "draft" status.
+	if run.Status == entity.PayrollRunStatusDraft {
+		templates, err := r.fetchRegistrationTemplates(ctx, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := r.syncPayrollItems(ctx, tx, run.ID, templates); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to commit transaction")
+		return nil, err
+	}
+
+	return run, nil
+}
+
+func (r *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, period string) (*entity.PayrollRun, error) {
+	var existingRun entity.PayrollRun
+	queryCheck := `SELECT id FROM payroll_runs WHERE period = $1 LIMIT 1`
+	err := tx.GetContext(ctx, &existingRun, queryCheck, period)
+	if err != nil {
+		return nil, err
+	}
+
+	return &existingRun, nil
+}
+
+func (r *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, period string, timezone string) (*entity.PayrollRun, error) {
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to load location")
+		return nil, err
+	}
+
+	periodTime, err := time.Parse("2006-01", period)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse period")
+		return nil, err
+	}
+
+	year, month, _ := periodTime.Date()
+	periodStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+	periodEnd := periodStart.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+	runID := ulid.Make().String()
+	run := entity.PayrollRun{
+		ID:          runID,
+		Period:      period,
+		PeriodStart: periodStart,
+		PeriodEnd:   periodEnd,
+		Timezone:    timezone,
+		Status:      "draft",
+		CreatedAt:   time.Now(),
+	}
+
+	queryRun := `
+		INSERT INTO payroll_runs (id, period_start, period_end, period, timezone, status, created_at)
+		VALUES (:id, :period_start, :period_end, :period, :timezone, :status, :created_at)
+	`
+	_, err = tx.NamedExecContext(ctx, queryRun, run)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to insert payroll run")
+		return nil, err
+	}
+
+	return &run, nil
+}
+
+func (r *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx) ([]templateData, error) {
+	var templates []templateData
+	queryTemplates := `
+		SELECT
+			COALESCE(am.id, '') AS academic_manager_id,
+			COALESCE(am.name, '') AS academic_manager_name,
+			COALESCE(l.id, '') AS lecturer_id,
+			COALESCE(l.name, '') AS lecturer_name,
+			s.id AS student_id,
+			s.name AS student_name,
+			p.id AS program_id,
+			p.name AS program_name,
+			m.id AS marketer_id,
+			m.name AS marketer_name,
+			COALESCE(prt.foreign_learning_fee, 0) AS foreign_learning_fee,
+			COALESCE(prt.night_learning_fee, 0) AS night_learning_fee,
+			prt.is_itp,
+			p.price_per_meeting,
+			p.full_fee,
+			p.acquisition_rights
+		FROM
+			program_registration_templates prt
+		JOIN
+			programs p ON prt.program_id = p.id
+		JOIN
+			lecturers l ON prt.lecturer_id = l.id
+		JOIN
+			academic_managers am ON l.academic_manager_id = am.id
+		JOIN
+			students s ON prt.student_id = s.id
+		JOIN
+			marketers m ON prt.marketer_id = m.id
+		WHERE
+			prt.status = 'active'
+			AND prt.deleted_at IS NULL
+	`
+	if err := tx.SelectContext(ctx, &templates, queryTemplates); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch templates")
+		return nil, err
+	}
+	return templates, nil
+}
+
+func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+	var items []entity.PayrollItem
+	for _, t := range templates {
+		wagePerMeeting := t.PricePerMeeting
+		fullWage := t.FullFee
+		acquisitionRights := t.AcquisitionRights
+
+		if t.IsITP {
+			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(2))
+			fullWage = fullWage.Mul(decimal.NewFromInt(2))
+			acquisitionRights = acquisitionRights * 2
+		}
+
+		items = append(items, entity.PayrollItem{
+			ID:                  ulid.Make().String(),
+			PayrollRunID:        runID,
+			AcademicManagerID:   t.AcademicManagerID,
+			AcademicManagerName: t.AcademicManagerName,
+			LecturerID:          t.LecturerID,
+			LecturerName:        t.LecturerName,
+			StudentID:           t.StudentID,
+			StudentName:         t.StudentName,
+			ProgramID:           t.ProgramID,
+			ProgramName:         t.ProgramName,
+			MarketerID:          t.MarketerID,
+			MarketerName:        t.MarketerName,
+			ForeignLearningFee:  t.ForeignLearningFee,
+			NightLearningFee:    t.NightLearningFee,
+			IsITP:               t.IsITP,
+			ProgramMeetings:     0,
+			IsMeetingFull:       false,
+			WagePerMeeting:      wagePerMeeting,
+			FullWage:            fullWage,
+			Wage:                decimal.Zero,
+			AcquisitionRights:   acquisitionRights,
+			CreatedAt:           time.Now(),
+			UpdatedAt:           time.Now(),
+		})
+	}
+
+	queryInsertItems := `
+		INSERT INTO payroll_items (
+			id, payroll_run_id, academic_manager_id, academic_manager_name,
+			lecturer_id, lecturer_name, student_id, student_name,
+			program_id, program_name, marketer_id, marketer_name,
+			foreign_learning_fee, night_learning_fee, is_itp,
+			program_meetings, is_meeting_full, wage_per_meeting,
+			full_wage, wage, acquisition_rights, created_at, updated_at
+		) VALUES (
+			:id, :payroll_run_id, :academic_manager_id, :academic_manager_name,
+			:lecturer_id, :lecturer_name, :student_id, :student_name,
+			:program_id, :program_name, :marketer_id, :marketer_name,
+			:foreign_learning_fee, :night_learning_fee, :is_itp,
+			:program_meetings, :is_meeting_full, :wage_per_meeting,
+			:full_wage, :wage, :acquisition_rights, :created_at, :updated_at
+		)
+	`
+	_, err := tx.NamedExecContext(ctx, queryInsertItems, items)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to insert payroll items")
+		return err
+	}
+	return nil
+}
+
+func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+	// 1. Fetch existing items to compare
+	existingItems, err := r.fetchExistingPayrollItemsLight(ctx, tx, runID)
+	if err != nil {
+		return err
+	}
+
+	// 2. Map existing items for O(1) lookup
+	// Key: StudentID|ProgramID|LecturerID
+	existingMap := make(map[string]entity.PayrollItem)
+	for _, item := range existingItems {
+		key := fmt.Sprintf("%s|%s|%s", item.StudentID, item.ProgramID, item.LecturerID)
+		existingMap[key] = item
+	}
+
+	// 3. Identify items to ADD and DELETE
+	templateMap := make(map[string]bool)
+	var toAdd []templateData
+	var toDeleteIDs []string
+
+	// Find items to ADD (in templates but not in DB)
+	for _, t := range templates {
+		key := fmt.Sprintf("%s|%s|%s", t.StudentID, t.ProgramID, t.LecturerID)
+		templateMap[key] = true
+		if _, exists := existingMap[key]; !exists {
+			toAdd = append(toAdd, t)
+		}
+	}
+
+	// Find items to DELETE (in DB but not in templates)
+	for key, item := range existingMap {
+		if !templateMap[key] {
+			toDeleteIDs = append(toDeleteIDs, item.ID)
+		}
+	}
+
+	// 4. Execute Operations
+	if len(toDeleteIDs) > 0 {
+		log.Ctx(ctx).Info().Int("count", len(toDeleteIDs)).Msg("syncPayrollItems: deleting orphaned items")
+		if err := r.deletePayrollItems(ctx, tx, toDeleteIDs); err != nil {
+			return err
+		}
+	}
+
+	if len(toAdd) > 0 {
+		log.Ctx(ctx).Info().Int("count", len(toAdd)).Msg("syncPayrollItems: adding new items")
+		if err := r.createPayrollItemsFromTemplates(ctx, tx, runID, toAdd); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sqlx.Tx, runID string) ([]entity.PayrollItem, error) {
+	var items []entity.PayrollItem
+	query := `
+		SELECT id, student_id, program_id, lecturer_id
+		FROM payroll_items
+		WHERE payroll_run_id = $1 AND deleted_at IS NULL
+	`
+	if err := tx.SelectContext(ctx, &items, query, runID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch existing payroll items")
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids []string) error {
+	query, args, err := sqlx.In("UPDATE payroll_items SET deleted_at = NOW() WHERE id IN (?)", ids)
+	if err != nil {
+		return err
+	}
+	query = tx.Rebind(query)
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to delete payroll items")
+		return err
+	}
+	return nil
+}
+
+type templateData struct {
+	AcademicManagerID   string          `db:"academic_manager_id"`
+	AcademicManagerName string          `db:"academic_manager_name"`
+	LecturerID          string          `db:"lecturer_id"`
+	LecturerName        string          `db:"lecturer_name"`
+	StudentID           string          `db:"student_id"`
+	StudentName         string          `db:"student_name"`
+	ProgramID           string          `db:"program_id"`
+	ProgramName         string          `db:"program_name"`
+	MarketerID          string          `db:"marketer_id"`
+	MarketerName        string          `db:"marketer_name"`
+	ForeignLearningFee  decimal.Decimal `db:"foreign_learning_fee"`
+	NightLearningFee    decimal.Decimal `db:"night_learning_fee"`
+	IsITP               bool            `db:"is_itp"`
+	PricePerMeeting     decimal.Decimal `db:"price_per_meeting"`
+	FullFee             decimal.Decimal `db:"full_fee"`
+	AcquisitionRights   int             `db:"acquisition_rights"`
+}
