@@ -35,6 +35,7 @@ type GetPayrollRunDetailResp struct {
 }
 
 type GetPayrollItemsReq struct {
+	Q      string `query:"q"`
 	Period string `query:"period"`
 	types.MetaQuery
 }

@@ -132,6 +132,7 @@ func (r *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 	var templates []templateData
 	queryTemplates := `
 		SELECT
+			prt.id AS template_id,
 			COALESCE(am.id, '') AS academic_manager_id,
 			COALESCE(am.name, '') AS academic_manager_name,
 			COALESCE(l.id, '') AS lecturer_id,
@@ -319,6 +320,7 @@ func (r *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids [
 }
 
 type templateData struct {
+	TemplateID          string          `db:"template_id"`
 	AcademicManagerID   string          `db:"academic_manager_id"`
 	AcademicManagerName string          `db:"academic_manager_name"`
 	LecturerID          string          `db:"lecturer_id"`

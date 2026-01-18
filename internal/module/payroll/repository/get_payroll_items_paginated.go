@@ -21,8 +21,15 @@ func (r *payrollRepo) GetPayrollItemsWithPagination(ctx context.Context, payroll
 		SELECT
 			COUNT(*) OVER() as total_data,
 			pi.*
-		FROM payroll_items pi
-		WHERE pi.payroll_run_id = ? AND pi.deleted_at IS NULL
+		FROM
+			payroll_items pi
+		JOIN
+			program_registration_templates prt ON pi.template_id = prt.id
+		WHERE
+			pi.payroll_run_id = ?
+			AND pi.deleted_at IS NULL
+		ORDER BY
+			prt.created_at ASC
 	`
 	args = append(args, payrollRunID)
 
