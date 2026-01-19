@@ -174,6 +174,19 @@ func (r *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 
 func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
 	var items []entity.PayrollItem
+	var additionalStudents []entity.PayrollItemAdditionalStudent
+	var templateIDs []string
+
+	for _, t := range templates {
+		templateIDs = append(templateIDs, t.TemplateID)
+	}
+
+	// Fetch additional students for all templates
+	additionalStudentsMap, err := r.fetchAdditionalStudents(ctx, tx, templateIDs)
+	if err != nil {
+		return err
+	}
+
 	for _, t := range templates {
 		wagePerMeeting := t.PricePerMeeting
 		fullWage := t.FullFee
@@ -185,8 +198,9 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			acquisitionRights = acquisitionRights * 2
 		}
 
-		items = append(items, entity.PayrollItem{
+		item := entity.PayrollItem{
 			ID:                  ulid.Make().String(),
+			TemplateID:          t.TemplateID,
 			PayrollRunID:        runID,
 			AcademicManagerID:   t.AcademicManagerID,
 			AcademicManagerName: t.AcademicManagerName,
@@ -209,19 +223,35 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			AcquisitionRights:   acquisitionRights,
 			CreatedAt:           time.Now(),
 			UpdatedAt:           time.Now(),
-		})
+		}
+
+		items = append(items, item)
+
+		// Add additional students if any
+		if students, ok := additionalStudentsMap[t.TemplateID]; ok {
+			for _, s := range students {
+				additionalStudents = append(additionalStudents, entity.PayrollItemAdditionalStudent{
+					ID:            ulid.Make().String(),
+					PayrollItemID: item.ID,
+					StudentID:     s.StudentID,
+					Name:          s.Name,
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				})
+			}
+		}
 	}
 
 	queryInsertItems := `
 		INSERT INTO payroll_items (
-			id, payroll_run_id, academic_manager_id, academic_manager_name,
+			id, template_id, payroll_run_id, academic_manager_id, academic_manager_name,
 			lecturer_id, lecturer_name, student_id, student_name,
 			program_id, program_name, marketer_id, marketer_name,
 			foreign_learning_fee, night_learning_fee, is_itp,
 			program_meetings, is_meeting_full, wage_per_meeting,
 			full_wage, wage, acquisition_rights, created_at, updated_at
 		) VALUES (
-			:id, :payroll_run_id, :academic_manager_id, :academic_manager_name,
+			:id, :template_id, :payroll_run_id, :academic_manager_id, :academic_manager_name,
 			:lecturer_id, :lecturer_name, :student_id, :student_name,
 			:program_id, :program_name, :marketer_id, :marketer_name,
 			:foreign_learning_fee, :night_learning_fee, :is_itp,
@@ -229,11 +259,27 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			:full_wage, :wage, :acquisition_rights, :created_at, :updated_at
 		)
 	`
-	_, err := tx.NamedExecContext(ctx, queryInsertItems, items)
+	_, err = tx.NamedExecContext(ctx, queryInsertItems, items)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to insert payroll items")
 		return err
 	}
+
+	if len(additionalStudents) > 0 {
+		queryInsertAdditionalStudents := `
+			INSERT INTO payroll_item_addtional_students (
+				id, payroll_item_id, student_id, name, created_at, updated_at
+			) VALUES (
+				:id, :payroll_item_id, :student_id, :name, :created_at, :updated_at
+			)
+		`
+		_, err = tx.NamedExecContext(ctx, queryInsertAdditionalStudents, additionalStudents)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to insert payroll item additional students")
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -317,6 +363,43 @@ func (r *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids [
 		return err
 	}
 	return nil
+}
+
+func (r *payrollRepo) fetchAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateIDs []string) (map[string][]entity.PayrollItemAdditionalStudent, error) {
+	if len(templateIDs) == 0 {
+		return nil, nil
+	}
+
+	var students []struct {
+		TemplateID string  `db:"prt_id"`
+		StudentID  *string `db:"student_id"`
+		Name       string  `db:"name"`
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT prt_id, student_id, name
+		FROM prt_additional_students
+		WHERE prt_id IN (?)
+	`, templateIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	query = tx.Rebind(query)
+	if err := tx.SelectContext(ctx, &students, query, args...); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch additional students")
+		return nil, err
+	}
+
+	result := make(map[string][]entity.PayrollItemAdditionalStudent)
+	for _, s := range students {
+		result[s.TemplateID] = append(result[s.TemplateID], entity.PayrollItemAdditionalStudent{
+			StudentID: s.StudentID,
+			Name:      s.Name,
+		})
+	}
+
+	return result, nil
 }
 
 type templateData struct {

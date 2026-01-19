@@ -12,20 +12,11 @@ func (s *payrollService) GetPayrollRunDetail(ctx context.Context, req *entity.Ge
 	ctx, span := tracing.StartSpan(ctx, "service.GetPayrollRunDetail")
 	defer span.End()
 
-	run, err := s.repo.GetPayrollRun(ctx, req.ID)
+	resp, err := s.repo.GetPayrollRunDetail(ctx, req.ID)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to get payroll run")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to get payroll run detail")
 		return nil, err
 	}
 
-	items, err := s.repo.GetPayrollItems(ctx, req.ID)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to get payroll items")
-		return nil, err
-	}
-
-	return &entity.GetPayrollRunDetailResp{
-		PayrollRun: *run,
-		Items:      items,
-	}, nil
+	return resp, nil
 }

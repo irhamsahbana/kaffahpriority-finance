@@ -51,4 +51,16 @@ type PayrollItem struct {
 	CreatedAt           time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt           time.Time       `json:"updated_at" db:"updated_at"`
 	DeletedAt           *time.Time      `json:"deleted_at" db:"deleted_at"`
+
+	AdditionalStudents []PayrollItemAdditionalStudent `json:"additional_students" db:"-"`
+}
+
+type PayrollItemAdditionalStudent struct {
+	ID            string     `json:"id" db:"id"`
+	PayrollItemID string     `json:"payroll_item_id" db:"payroll_item_id"`
+	StudentID     *string    `json:"student_id" db:"student_id"`
+	Name          string     `json:"name" db:"name"`
+	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt     *time.Time `json:"deleted_at" db:"deleted_at"`
 }
