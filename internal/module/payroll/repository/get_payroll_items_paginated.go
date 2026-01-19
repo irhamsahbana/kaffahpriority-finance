@@ -67,6 +67,7 @@ func (r *payrollRepo) GetPayrollItemsWithPagination(ctx context.Context, payroll
 	query += `
 		ORDER BY
 			pi.academic_manager_id ASC,
+			pi.lecturer_id ASC,
 			prt.created_at ASC
 			LIMIT ? OFFSET ?
 		`
