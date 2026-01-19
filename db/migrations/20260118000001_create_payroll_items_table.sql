@@ -30,10 +30,25 @@ CREATE TABLE IF NOT EXISTS payroll_items (
     FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS payroll_item_addtional_students (
+    id CHAR(26) PRIMARY KEY,
+    payroll_item_id CHAR(26) NOT NULL,
+    student_id CHAR(26),
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+
+    FOREIGN KEY (payroll_item_id) REFERENCES payroll_items (id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students (id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_payroll_items_payroll_run_id ON payroll_items(payroll_run_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_item_addtional_students_payroll_item_id ON payroll_item_addtional_students(payroll_item_id);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE IF EXISTS payroll_item_addtional_students;
 DROP TABLE IF EXISTS payroll_items;
 -- +goose StatementEnd

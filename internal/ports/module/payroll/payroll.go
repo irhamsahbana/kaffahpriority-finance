@@ -19,6 +19,8 @@ type PayrollRepository interface {
 	DeletePayrollItem(ctx context.Context, id string) error
 	GetSourceDataForPayroll(ctx context.Context, period string, timezone string) ([]entity.PayrollItem, error)
 	GeneratePayrollRun(ctx context.Context, period string, timezone string) (*entity.PayrollRun, error)
+	GetPayrollRunDetail(ctx context.Context, id string) (*entity.GetPayrollRunDetailResp, error)
+	GetAdditionalStudents(ctx context.Context, payrollItemIDs []string) (map[string][]entity.PayrollItemAdditionalStudent, error)
 }
 
 type PayrollService interface {
