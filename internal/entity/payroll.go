@@ -52,11 +52,13 @@ type GetPayrollItemsResp struct {
 type UpdatePayrollItemReq struct {
 	ID                 string           `params:"id" validate:"required,ulid"`
 	UserID             string           `json:"user_id"`
-	ProgramMeetings    *int             `json:"program_meetings"`
+	ProgramMeetings    *uint64          `json:"program_meetings"`
+	AcquisitionRights  *uint64          `json:"acquisition_rights"`
 	IsMeetingFull      *bool            `json:"is_meeting_full"`
 	ForeignLearningFee *decimal.Decimal `json:"foreign_learning_fee"`
 	NightLearningFee   *decimal.Decimal `json:"night_learning_fee"`
 	Wage               *decimal.Decimal `json:"wage"`
+	InitialWage        *decimal.Decimal `json:"initial_wage"`
 }
 
 func (u *UpdatePayrollItemReq) Validate() error {

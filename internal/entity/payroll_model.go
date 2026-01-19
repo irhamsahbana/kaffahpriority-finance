@@ -42,12 +42,13 @@ type PayrollItem struct {
 	ForeignLearningFee  decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NightLearningFee    decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP               bool            `json:"is_itp" db:"is_itp"`
-	ProgramMeetings     int             `json:"program_meetings" db:"program_meetings"`
+	ProgramMeetings     uint64          `json:"program_meetings" db:"program_meetings"`
 	IsMeetingFull       bool            `json:"is_meeting_full" db:"is_meeting_full"`
 	WagePerMeeting      decimal.Decimal `json:"wage_per_meeting" db:"wage_per_meeting"`
+	InitialWage         decimal.Decimal `json:"initial_wage" db:"initial_wage"`
 	FullWage            decimal.Decimal `json:"full_wage" db:"full_wage"`
 	Wage                decimal.Decimal `json:"wage" db:"wage"`
-	AcquisitionRights   int             `json:"acquisition_rights" db:"acquisition_rights"`
+	AcquisitionRights   uint64          `json:"acquisition_rights" db:"acquisition_rights"`
 	CreatedAt           time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt           time.Time       `json:"updated_at" db:"updated_at"`
 	DeletedAt           *time.Time      `json:"deleted_at" db:"deleted_at"`
