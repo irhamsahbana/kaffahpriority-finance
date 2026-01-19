@@ -37,15 +37,11 @@ func (s *payrollService) CreatePayrollRun(ctx context.Context, req *entity.Creat
 	// Create a detached context for async logging
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute)
 	go func() {
-		log.Ctx(childCtx).Info().Msgf("Starting async activity log for payroll run: %s, user: %s", run.ID, req.UserID)
-
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).Msg("failed to get user data for activity log")
 			return
 		}
-
-		log.Ctx(childCtx).Info().Msgf("User found for activity log: %s", user.Name)
 
 		err = s.activityLogRepo.CreateActivityLog(childCtx, &entity.ActivityLog{
 			ID:         ulid.Make().String(),
