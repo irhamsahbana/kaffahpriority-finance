@@ -35,8 +35,12 @@ type GetPayrollRunDetailResp struct {
 }
 
 type GetPayrollItemsReq struct {
-	Q      string `query:"q"`
-	Period string `query:"period"`
+	Period     string `query:"period"`
+	Q          string `query:"q"`
+	MarketerID string `query:"marketer_id"`
+	LecturerID string `query:"lecturer_id"`
+	StudentID  string `query:"student_id"`
+	ProgramID  string `query:"program_id"`
 	types.MetaQuery
 }
 
