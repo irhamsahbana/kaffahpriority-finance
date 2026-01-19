@@ -64,7 +64,12 @@ func (r *payrollRepo) GetPayrollItemsWithPagination(ctx context.Context, payroll
 		args = append(args, req.ProgramID)
 	}
 
-	query += ` ORDER BY prt.created_at ASC LIMIT ? OFFSET ?`
+	query += `
+		ORDER BY
+			pi.academic_manager_id ASC,
+			prt.created_at ASC
+			LIMIT ? OFFSET ?
+		`
 	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
