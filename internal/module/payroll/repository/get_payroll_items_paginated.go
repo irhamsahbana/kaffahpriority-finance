@@ -24,6 +24,9 @@ func (r *payrollRepo) GetPayrollItemsWithPagination(ctx context.Context, payroll
 			pi.*
 		FROM
 			payroll_items pi
+		JOIN
+			program_registration_templates prt
+			ON pi.program_id = prt.program_id
 		WHERE
 			pi.payroll_run_id = ?
 			AND pi.deleted_at IS NULL
