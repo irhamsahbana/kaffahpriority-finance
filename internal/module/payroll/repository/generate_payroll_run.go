@@ -220,6 +220,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			WagePerMeeting:      wagePerMeeting,
 			FullWage:            fullWage,
 			Wage:                decimal.Zero,
+			InitialWage:         decimal.Zero,
 			AcquisitionRights:   acquisitionRights,
 			CreatedAt:           time.Now(),
 			UpdatedAt:           time.Now(),
@@ -419,5 +420,5 @@ type templateData struct {
 	IsITP               bool            `db:"is_itp"`
 	PricePerMeeting     decimal.Decimal `db:"price_per_meeting"`
 	FullFee             decimal.Decimal `db:"full_fee"`
-	AcquisitionRights   int             `db:"acquisition_rights"`
+	AcquisitionRights   uint64          `db:"acquisition_rights"`
 }

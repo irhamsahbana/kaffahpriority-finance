@@ -56,6 +56,12 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 			initialFee = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings))).InexactFloat64()
 		}
 
+		initialWageVal := decimal.NewFromFloat(initialFee)
+		if meetings < 1 {
+			initialWageVal = decimal.Zero
+		}
+		req.InitialWage = &initialWageVal
+
 		newWage := nl.Add(fl).Add(decimal.NewFromFloat(initialFee))
 		if meetings < 1 {
 			newWage = decimal.Zero

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS payroll_items (
     program_meetings INTEGER DEFAULT 0 NOT NULL,
     is_meeting_full BOOLEAN DEFAULT false NOT NULL,
     wage_per_meeting DECIMAL(19,4) DEFAULT 0 NOT NULL,
+    initial_wage DECIMAL(19,4) DEFAULT 0 NOT NULL,
     full_wage DECIMAL(19,4) DEFAULT 0 NOT NULL,
     wage DECIMAL(19,4) DEFAULT 0 NOT NULL,
     acquisition_rights INTEGER DEFAULT 0 NOT NULL,
