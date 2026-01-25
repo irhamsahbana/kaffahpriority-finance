@@ -17,7 +17,10 @@ func RunDropboxOAuth(cmd *flag.FlagSet, args []string) {
 	// Parse command line arguments
 	action := cmd.String("action", "auth", "OAuth action: 'auth' to get authorization URL, 'exchange' to exchange code for tokens")
 	code := cmd.String("code", "", "Authorization code received from Dropbox (for exchange action)")
-	cmd.Parse(args)
+	if err := cmd.Parse(args); err != nil {
+		log.Error().Err(err).Msg("failed to parse args")
+		return
+	}
 
 	log.Info().Str("action", *action).Msg("starting Dropbox OAuth process")
 

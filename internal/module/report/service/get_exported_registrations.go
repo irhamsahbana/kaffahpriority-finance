@@ -31,10 +31,10 @@ func (s *reportService) GetExportedRegistrations(ctx context.Context, req *entit
 	penyetoranStyle, _ := newPenyetoranStyle(f)
 	numberFormatStyle, _ := newNumberFormatStyle(f)
 
-	f.NewSheet(sheetName)
+	_, _ = f.NewSheet(sheetName)
 
 	// column width
-	f.SetColWidth(sheetName, "B", "O", 20)
+	_ = f.SetColWidth(sheetName, "B", "O", 20)
 
 	f.SetCellValue(sheetName, "A1", "JURNAL KEUANGAN CFO 1 KP")
 	f.MergeCell(sheetName, "A1", "O2")

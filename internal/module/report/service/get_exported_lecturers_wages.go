@@ -36,7 +36,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		Font:   &excelize.Font{Bold: true},
 	})
 
-	f.NewSheet(sheetName)
+	_, _ = f.NewSheet(sheetName)
 
 	// column width
 	f.SetCellValue(sheetName, "A1", "No.")
@@ -61,7 +61,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 
 	currencyCols := []string{"G", "H", "I", "K", "L", "M", "O"}
 	for _, col := range currencyCols {
-		f.SetColStyle(sheetName, col, currencyStyle)
+		_ = f.SetColStyle(sheetName, col, currencyStyle)
 	}
 
 	f.SetCellStyle(sheetName, "A1", "Q1", headerStyle)
@@ -70,7 +70,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		f.SetCellStyle(sheetName, col+"1", col+"1", headerEditableStyle)
 	}
 
-	f.SetPanes("Sheet1", &excelize.Panes{
+	_ = f.SetPanes("Sheet1", &excelize.Panes{
 		Freeze:      true,
 		Split:       false,
 		XSplit:      5,    // Freeze kolom A-E (5 kolom pertama)
@@ -125,7 +125,7 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		f.SetCellValue(sheetName, fmt.Sprintf("F%v", row), item.ProgramMeetings)
 		f.SetCellValue(sheetName, fmt.Sprintf("G%v", row), ProgramFeePerMeeting)
 		f.SetCellValue(sheetName, fmt.Sprintf("H%v", row), FullFee)
-		f.SetCellFormula(sheetName, fmt.Sprintf("I%v", row), fmt.Sprintf("=F%v*G%v", row, row))
+		_ = f.SetCellFormula(sheetName, fmt.Sprintf("I%v", row), fmt.Sprintf("=F%v*G%v", row, row))
 		if item.IsFullFee {
 			f.SetCellValue(sheetName, fmt.Sprintf("J%v", row), "full")
 		} else {

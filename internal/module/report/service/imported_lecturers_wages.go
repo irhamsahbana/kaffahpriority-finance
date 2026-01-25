@@ -93,30 +93,30 @@ func (s *reportService) ImportLecturersWages(
 		// field RegistrationId
 		_, err := ulid.Parse(registrationId)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("registration_id bukan ULID yang valid: %s", registrationId))
+			_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("registration_id bukan ULID yang valid: %s", registrationId))
 		}
 		data.RegistrationID = registrationId
 
 		// field ProgramMeetings
 		programMeetings, err := strconv.Atoi(jumlahStr)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("jumlah bukan angka yang valid: %s", jumlahStr))
+			_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("jumlah bukan angka yang valid: %s", jumlahStr))
 		}
 		data.ProgramMeetings = programMeetings
 
 		// field InitialFee
 		initialFee, err := decimal.NewFromString(awalStr)
 		if err != nil {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal bukan angka yang valid: %s", awalStr))
+			_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal bukan angka yang valid: %s", awalStr))
 		}
 		if initialFee.LessThan(decimal.Zero) {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal tidak boleh negatif: %s", awalStr))
+			_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("ujroh awal tidak boleh negatif: %s", awalStr))
 		}
 		data.InitialFee = initialFee
 
 		// field IsFullFee
 		if tfFlag != "full" && tfFlag != "tidak full" {
-			errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "TF/F hanya boleh berisi 'full' atau 'tidak full'")
+			_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "TF/F hanya boleh berisi 'full' atau 'tidak full'")
 		}
 		switch tfFlag {
 		case "full":
@@ -129,10 +129,10 @@ func (s *reportService) ImportLecturersWages(
 		if flStr != "" {
 			fl, err := decimal.NewFromString(flStr)
 			if err != nil {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL bukan angka yang valid: %s", flStr))
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL bukan angka yang valid: %s", flStr))
 			}
 			if fl.LessThan(decimal.Zero) {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL tidak boleh negatif: %s", flStr))
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL tidak boleh negatif: %s", flStr))
 			}
 			data.FL = &fl
 		}
@@ -141,10 +141,10 @@ func (s *reportService) ImportLecturersWages(
 		if nlStr != "" {
 			nl, err := decimal.NewFromString(nlStr)
 			if err != nil {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL bukan angka yang valid: %s", nlStr))
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL bukan angka yang valid: %s", nlStr))
 			}
 			if nl.LessThan(decimal.Zero) {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL tidak boleh negatif: %s", nlStr))
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL tidak boleh negatif: %s", nlStr))
 			}
 			data.NL = &nl
 		}
@@ -152,7 +152,7 @@ func (s *reportService) ImportLecturersWages(
 		// field notes
 		if notesStr != "" {
 			if len(notesStr) > 255 {
-				errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "notes tidak boleh lebih dari 255 karakter")
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "notes tidak boleh lebih dari 255 karakter")
 			}
 			data.Notes = &notesStr
 		}

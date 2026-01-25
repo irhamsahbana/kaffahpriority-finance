@@ -325,10 +325,10 @@ func (s *reportService) GetExportedRegistrationsForCFO2Yearly(
 	}
 
 	f.SetCellStyle(sheetName, "A1", "R2", HeaderStyle)
-	f.SetColWidth(sheetName, "B", "B", 20)
-	f.SetColWidth(sheetName, "D", "D", 20)
-	f.SetColWidth(sheetName, "E", "E", 20)
-	f.SetColWidth(sheetName, "F", "F", 20)
+	_ = f.SetColWidth(sheetName, "B", "B", 20)
+	_ = f.SetColWidth(sheetName, "D", "D", 20)
+	_ = f.SetColWidth(sheetName, "E", "E", 20)
+	_ = f.SetColWidth(sheetName, "F", "F", 20)
 	// Headering END
 
 	// section for data
@@ -450,17 +450,17 @@ func (s *reportService) GetExportedRegistrationsForWageRecapMonthly(
 	f.SetCellValue(sheetName, "P1", "PENASEHAT AKADEMIK")
 
 	f.SetCellStyle(sheetName, "A1", "P1", HeaderStyle)
-	f.SetColWidth(sheetName, "B", "B", 20)
-	f.SetColWidth(sheetName, "D", "D", 20)
-	f.SetColWidth(sheetName, "E", "E", 20)
-	f.SetColWidth(sheetName, "G", "I", 20)
-	f.SetColWidth(sheetName, "L", "L", 20)
-	f.SetColWidth(sheetName, "M", "M", 20)
-	f.SetColWidth(sheetName, "N", "O", 20)
-	f.SetColWidth(sheetName, "P", "P", 20)
+	_ = f.SetColWidth(sheetName, "B", "B", 20)
+	_ = f.SetColWidth(sheetName, "D", "D", 20)
+	_ = f.SetColWidth(sheetName, "E", "E", 20)
+	_ = f.SetColWidth(sheetName, "G", "I", 20)
+	_ = f.SetColWidth(sheetName, "L", "L", 20)
+	_ = f.SetColWidth(sheetName, "M", "M", 20)
+	_ = f.SetColWidth(sheetName, "N", "O", 20)
+	_ = f.SetColWidth(sheetName, "P", "P", 20)
 	// Headering END
 
-	f.SetPanes(sheetName, &excelize.Panes{
+	_ = f.SetPanes(sheetName, &excelize.Panes{
 		Freeze: true,
 		XSplit: 5,
 		YSplit: 1,

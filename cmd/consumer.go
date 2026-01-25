@@ -32,7 +32,9 @@ func RunConsumer(_ *flag.FlagSet, _ []string) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize logger")
 	}
-	defer lp.Shutdown(context.Background())
+	defer func() {
+		_ = lp.Shutdown(context.Background())
+	}()
 
 	log.Info().Msg("Running consumer")
 	var (

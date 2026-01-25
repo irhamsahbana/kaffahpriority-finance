@@ -103,7 +103,9 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 		if err != nil {
 			return err
 		}
-		defer Tx.Rollback()
+		defer func() {
+			_ = Tx.Rollback()
+		}()
 
 		ids := make([]string, 0, len(monthlyPool))
 		for _, item := range monthlyPool {
@@ -129,7 +131,9 @@ func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRf
 	if err != nil {
 		return err
 	}
-	defer Tx.Rollback()
+	defer func() {
+		_ = Tx.Rollback()
+	}()
 
 	remainingToAllocate := requestedAmt
 

@@ -77,7 +77,9 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize logger")
 	}
-	defer lp.Shutdown(context.Background())
+	defer func() {
+		_ = lp.Shutdown(context.Background())
+	}()
 
 	quit := make(chan os.Signal, 1)
 

@@ -25,31 +25,31 @@ func (r *UpdateLecturersWageReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
 
 	if r.ProgramMeetings.Present && r.ProgramMeetings.Val < 0 {
-		err.Add("program_meetings", "program_meetings must be greater than or equal to 0")
+		_ = err.Add("program_meetings", "program_meetings must be greater than or equal to 0")
 	}
 
 	if r.InitialFee.Present && r.InitialFee.Val.LessThan(decimal.Zero) {
-		err.Add("initial_fee", "initial_fee must be greater than or equal to 0")
+		_ = err.Add("initial_fee", "initial_fee must be greater than or equal to 0")
 	}
 
 	if r.FL.Present && r.FL.Val.LessThan(decimal.Zero) {
-		err.Add("foreign_learning_fee", "foreign_learning_fee must be greater than or equal to 0")
+		_ = err.Add("foreign_learning_fee", "foreign_learning_fee must be greater than or equal to 0")
 	}
 
 	if r.NL.Present && r.NL.Val.LessThan(decimal.Zero) {
-		err.Add("night_learning_fee", "night_learning_fee must be greater than or equal to 0")
+		_ = err.Add("night_learning_fee", "night_learning_fee must be greater than or equal to 0")
 	}
 
 	if r.IsFullFee.Present && !r.IsFullFee.Valid {
-		err.Add("is_full_fee", "is_full_fee must be a boolean")
+		_ = err.Add("is_full_fee", "is_full_fee must be a boolean")
 	}
 
 	if r.Notes.Present && len(r.Notes.Val) > 255 {
-		err.Add("notes", "notes must be less than or equal to 255 characters")
+		_ = err.Add("notes", "notes must be less than or equal to 255 characters")
 	}
 
 	if r.ProgramFeePerMeeting.Present && r.ProgramFeePerMeeting.Val.LessThan(decimal.Zero) {
-		err.Add("program_fee_per_meeting", "program_fee_per_meeting must be greater than or equal to 0")
+		_ = err.Add("program_fee_per_meeting", "program_fee_per_meeting must be greater than or equal to 0")
 	}
 
 	if err.HasErrors() {
