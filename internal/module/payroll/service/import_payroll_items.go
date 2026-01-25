@@ -23,6 +23,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		sheetName = "Sheet1"
 		// colNo              = "A"
 		colProgramMeetings = "F" // Jumlah Tatap Muka
+		colFullWage        = "H" // Ujroh Full
 		colInitialWage     = "I" // Ujroh Awal
 		colIsMeetingFull   = "J" // TF/F
 		colForeignFee      = "K" // FL
@@ -67,6 +68,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		// no, _ := f.GetCellValue(sheetName, cell(colNo, rowIdx))
 		idStr, _ := f.GetCellValue(sheetName, cell(colID, rowIdx))
 		meetingsStr, _ := f.GetCellValue(sheetName, cell(colProgramMeetings, rowIdx))
+		fullWageStr, _ := f.GetCellValue(sheetName, cell(colFullWage, rowIdx), rawValue)
 		initialWageStr, _ := f.CalcCellValue(sheetName, cell(colInitialWage, rowIdx))
 		isFullStr, _ := f.GetCellValue(sheetName, cell(colIsMeetingFull, rowIdx))
 		flStr, _ := f.GetCellValue(sheetName, cell(colForeignFee, rowIdx), rawValue)
@@ -76,6 +78,8 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 
 		idStr = strings.TrimSpace(idStr)
 		meetingsStr = strings.TrimSpace(meetingsStr)
+		fullWageStr = strings.TrimSpace(fullWageStr)
+		fullWageStr = strings.ReplaceAll(fullWageStr, ",", "")
 		initialWageStr = strings.TrimSpace(initialWageStr)
 		initialWageStr = strings.ReplaceAll(initialWageStr, ",", "")
 		isFullStr = strings.TrimSpace(isFullStr)
@@ -114,6 +118,20 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Ujroh Awal tidak boleh negatif")
 		}
 		item.InitialWage = initialWage
+
+		fullWage := decimal.Zero
+		if fullWageStr != "" {
+			parsedFullWage, err := decimal.NewFromString(fullWageStr)
+			if err != nil {
+				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Ujroh Full tidak valid: %s", fullWageStr))
+			} else {
+				fullWage = parsedFullWage
+			}
+		}
+		if fullWage.LessThan(decimal.Zero) {
+			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Ujroh Full tidak boleh negatif")
+		}
+		item.FullWage = fullWage
 
 		// Is Meeting Full (TF/F)
 		// Logic: "full" or "tidak full" as per Report module
@@ -181,7 +199,6 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Keep Gaji tidak boleh negatif")
 		}
 		item.Wage = keepWage
-		item.FullWage = keepWage
 
 		req.Items = append(req.Items, item)
 	}
