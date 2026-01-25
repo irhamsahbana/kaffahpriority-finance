@@ -34,7 +34,7 @@ func (r *payrollRepo) GetPayrollItemsPeriodically(ctx context.Context, req *enti
 			pi.academic_manager_id,
 			pi.academic_manager_name,
 			pr.period,
-			COALESCE(SUM(pi.wage), 0) as total_real_fee,
+			COALESCE(SUM(pi.wage), 0) as wage,
 			COALESCE(SUM(pi.acquisition_rights), 0) as total_acquisition_rights
 		FROM payroll_items pi
 		JOIN payroll_runs pr ON pi.payroll_run_id = pr.id
