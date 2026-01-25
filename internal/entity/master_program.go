@@ -53,7 +53,7 @@ type CreateProgramReq struct {
 	Price             float64 `json:"price" validate:"required,gte=0"`
 	PricePerMeeting   float64 `json:"price_per_meeting" validate:"required,gte=0"`
 	FullFee           float64 `json:"full_fee" validate:"required,gte=0"`
-	AcquisitionRights *int64   `json:"acquisition_rights" validate:"required,gte=0"`
+	AcquisitionRights *int64  `json:"acquisition_rights" validate:"required,gte=0"`
 	CommissionFee     float64 `json:"commission_fee" validate:"required,gte=0"`
 	LecturerFee       float64 `json:"lecturer_fee" validate:"required,gte=0"`
 	Days              []int64 `json:"days" validate:"required,min=1,dive,min=1,max=7"`
@@ -72,7 +72,7 @@ type UpdateProgramReq struct {
 	Price             float64 `json:"price" validate:"required,gt=0"`
 	PricePerMeeting   float64 `json:"price_per_meeting" validate:"required,gt=0"`
 	FullFee           float64 `json:"full_fee" validate:"required,gt=0"`
-	AcquisitionRights *int64   `json:"acquisition_rights" validate:"required,gte=0"`
+	AcquisitionRights *int64  `json:"acquisition_rights" validate:"required,gte=0"`
 	CommissionFee     float64 `json:"commission_fee" validate:"required,gte=0"`
 	LecturerFee       float64 `json:"lecturer_fee" validate:"required,gte=0"`
 	Days              []int64 `json:"days" validate:"required,min=1,dive,min=1,max=7"`

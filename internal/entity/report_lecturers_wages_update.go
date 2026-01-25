@@ -12,13 +12,13 @@ type UpdateLecturersWageReq struct {
 
 	RegistrationID string `json:"registration_id" validate:"required,ulid"`
 
-	ProgramMeetings gonull.Nullable[int]             `json:"program_meetings"`
-	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
-	FL              gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
-	NL              gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
-	IsFullFee             gonull.Nullable[bool]            `json:"is_full_fee"`
-	ProgramFeePerMeeting  gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
-	Notes                 gonull.Nullable[string]          `json:"notes"`
+	ProgramMeetings      gonull.Nullable[int]             `json:"program_meetings"`
+	InitialFee           gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
+	FL                   gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
+	NL                   gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
+	IsFullFee            gonull.Nullable[bool]            `json:"is_full_fee"`
+	ProgramFeePerMeeting gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
+	Notes                gonull.Nullable[string]          `json:"notes"`
 }
 
 func (r *UpdateLecturersWageReq) Validate() error {
@@ -68,10 +68,10 @@ type BulkUpdateLecturersWageReq struct {
 type UpdateLecturersWageResp struct {
 	RegistrationID string `json:"registration_id"`
 
-	ProgramMeetings gonull.Nullable[int]             `json:"program_meetings"`
-	InitialFee      gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
-	FL              gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
-	NL              gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
+	ProgramMeetings      gonull.Nullable[int]             `json:"program_meetings"`
+	InitialFee           gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
+	FL                   gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
+	NL                   gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
 	IsFullFee            gonull.Nullable[bool]            `json:"is_full_fee"`
 	ProgramFeePerMeeting gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
 }

@@ -50,7 +50,7 @@ type GetPayrollItemsResp struct {
 }
 
 type UpdatePayrollItemReq struct {
-	ID                 string           `params:"id" validate:"required,ulid"`
+	ID                 string           `params:"id" json:"id" validate:"required,ulid"`
 	UserID             string           `json:"user_id"`
 	ProgramMeetings    *uint64          `json:"program_meetings"`
 	AcquisitionRights  *uint64          `json:"acquisition_rights"`
@@ -63,6 +63,11 @@ type UpdatePayrollItemReq struct {
 
 func (_ *UpdatePayrollItemReq) Validate() error {
 	return nil
+}
+
+type BulkUpdatePayrollItemReq struct {
+	UserID string                 `json:"user_id"`
+	Data   []UpdatePayrollItemReq `json:"data" validate:"required,dive"`
 }
 
 type DeletePayrollItemReq struct {

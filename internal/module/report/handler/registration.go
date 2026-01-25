@@ -289,5 +289,3 @@ func (h *reportHandler) registrationsMarkAsUsed(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
 }
-
-

@@ -29,11 +29,11 @@ type UpdateRegistrationReq struct {
 	NotesForCategory      *string      `json:"notes_for_category" validate:"omitempty,max=255"`
 	IsITP                 bool         `json:"is_itp"`
 	Category              string       `json:"category"`
-	IsUpdateTemplate bool   `json:"is_update_template"`
-	PaidAt           string `json:"paid_at" validate:"required,datetime=2006-01-02"`
-	PaidAtTime       string `json:"paid_at_time" validate:"required,datetime=15:04:05"`
-	AllocatedAt      string `json:"allocated_at" validate:"required,datetime=2006-01-02"`
-	AllocatedAtTime  string `json:"allocated_at_time" validate:"required,datetime=15:04:05"`
+	IsUpdateTemplate      bool         `json:"is_update_template"`
+	PaidAt                string       `json:"paid_at" validate:"required,datetime=2006-01-02"`
+	PaidAtTime            string       `json:"paid_at_time" validate:"required,datetime=15:04:05"`
+	AllocatedAt           string       `json:"allocated_at" validate:"required,datetime=2006-01-02"`
+	AllocatedAtTime       string       `json:"allocated_at_time" validate:"required,datetime=15:04:05"`
 }
 
 func (r *UpdateRegistrationReq) Validate() error {
