@@ -27,6 +27,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		colIsMeetingFull   = "J" // TF/F
 		colForeignFee      = "K" // FL
 		colNightFee        = "L" // NL
+		colKeepWage        = "O" // Keep Gaji
 		colAcqRights       = "P" // Hak Akuisisi
 		colID              = "R" // Payroll Item ID
 	)
@@ -70,6 +71,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		isFullStr, _ := f.GetCellValue(sheetName, cell(colIsMeetingFull, rowIdx))
 		flStr, _ := f.GetCellValue(sheetName, cell(colForeignFee, rowIdx), rawValue)
 		nlStr, _ := f.GetCellValue(sheetName, cell(colNightFee, rowIdx), rawValue)
+		keepWageStr, _ := f.GetCellValue(sheetName, cell(colKeepWage, rowIdx), rawValue)
 		acqStr, _ := f.GetCellValue(sheetName, cell(colAcqRights, rowIdx))
 
 		idStr = strings.TrimSpace(idStr)
@@ -79,6 +81,8 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		isFullStr = strings.TrimSpace(isFullStr)
 		flStr = strings.TrimSpace(flStr)
 		nlStr = strings.TrimSpace(nlStr)
+		keepWageStr = strings.TrimSpace(keepWageStr)
+		keepWageStr = strings.ReplaceAll(keepWageStr, ",", "")
 		acqStr = strings.TrimSpace(acqStr)
 
 		if idStr == "" {
@@ -183,6 +187,20 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 
 		item.Wage = totalWage
 		item.FullWage = totalWage // Default behavior as per current logic
+
+		keepWage := decimal.Zero
+		if keepWageStr != "" {
+			parsedKeepWage, err := decimal.NewFromString(keepWageStr)
+			if err != nil {
+				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Keep Gaji tidak valid: %s", keepWageStr))
+			} else {
+				keepWage = parsedKeepWage
+			}
+		}
+		if keepWage.LessThan(decimal.Zero) {
+			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Keep Gaji tidak boleh negatif")
+		}
+		item.Wage = keepWage
 
 		req.Items = append(req.Items, item)
 	}
