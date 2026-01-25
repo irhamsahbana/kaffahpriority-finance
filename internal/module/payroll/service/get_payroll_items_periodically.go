@@ -12,3 +12,10 @@ func (s *payrollService) GetPayrollItemsPeriodically(ctx context.Context, req *e
 
 	return s.repo.GetPayrollItemsPeriodically(ctx, req)
 }
+
+func (s *payrollService) GetPayrollReportsYearly(ctx context.Context, req *entity.GetPayrollReportsYearlyReq) (*entity.PayrollReportsYearlyResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetPayrollReportsYearly")
+	defer span.End()
+
+	return s.repo.GetPayrollReportsYearly(ctx, req)
+}
