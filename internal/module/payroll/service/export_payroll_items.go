@@ -235,8 +235,11 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
 
 				// Notes and MentorDetailFeeUsed are not available in PayrollItem, leaving empty
-				// AcquisitionRights
-				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), item.AcquisitionRights)
+				acquisitionRights := item.AcquisitionRights
+				if wage <= 0 {
+					acquisitionRights = 0
+				}
+				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), acquisitionRights)
 
 				// ID for re-import (Hidden or explicit column R)
 				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.ID)

@@ -199,6 +199,9 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Keep Gaji tidak boleh negatif")
 		}
 		item.Wage = keepWage
+		if keepWage.Equal(decimal.Zero) {
+			item.AcquisitionRights = nil
+		}
 
 		req.Items = append(req.Items, item)
 	}

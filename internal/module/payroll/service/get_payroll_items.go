@@ -77,6 +77,9 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 			if items[i].IsITP {
 				items[i].ProgramName += " + ITP"
 			}
+			if items[i].Wage.LessThanOrEqual(decimal.Zero) {
+				items[i].AcquisitionRights = 0
+			}
 		}
 	}
 
