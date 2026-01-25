@@ -262,7 +262,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 					f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), totalRealFee)
 					f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyle)
 					f.SetCellStyle(sheetName, fmt.Sprintf("M%v", lastRow), fmt.Sprintf("M%v", lastRow), HeaderStyleRight)
-					lastRow++
+					// lastRow++
 				}
 			}
 		}
