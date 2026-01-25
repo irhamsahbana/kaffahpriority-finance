@@ -169,10 +169,11 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	f.SetCellValue(sheetName, "L1", "NL")
 	f.SetCellValue(sheetName, "M1", "UJROH REAL")
 	f.SetCellValue(sheetName, "N1", "KETERANGAN")
-	f.SetCellValue(sheetName, "O1", "HAK AKUISISI")
-	f.SetCellValue(sheetName, "P1", "PENASEHAT AKADEMIK")
+	f.SetCellValue(sheetName, "O1", "KEEP GAJI")
+	f.SetCellValue(sheetName, "P1", "HAK AKUISISI")
+	f.SetCellValue(sheetName, "Q1", "PENASEHAT AKADEMIK")
 
-	f.SetCellStyle(sheetName, "A1", "P1", HeaderStyle)
+	f.SetCellStyle(sheetName, "A1", "Q1", HeaderStyle)
 	f.SetColWidth(sheetName, "B", "B", 20)
 	f.SetColWidth(sheetName, "D", "D", 20)
 	f.SetColWidth(sheetName, "E", "E", 20)
@@ -181,6 +182,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	f.SetColWidth(sheetName, "N", "N", 20)
 	f.SetColWidth(sheetName, "O", "O", 20)
 	f.SetColWidth(sheetName, "P", "P", 20)
+	f.SetColWidth(sheetName, "Q", "Q", 20)
 
 	_ = f.SetPanes(sheetName, &excelize.Panes{
 		Freeze: true,
@@ -193,8 +195,8 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	for _, am := range groupedData {
 		lastRow++
 		f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), am.AcademicManagerName)
-		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("P%v", lastRow+1))
-		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("P%v", lastRow+1), academicManagerNameStyle)
+		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1))
+		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1), academicManagerNameStyle)
 		lastRow++
 
 		for lecturerIndex, lecturer := range am.Lecturers {
@@ -232,9 +234,12 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), wage)
 				totalRealFee += wage
 
+				// Keep gaji
+				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
+
 				// Notes and MentorDetailFeeUsed are not available in PayrollItem, leaving empty
 				// AcquisitionRights
-				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), item.AcquisitionRights)
+				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), item.AcquisitionRights)
 
 				// ID for re-import (Hidden or explicit column R)
 				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.ID)

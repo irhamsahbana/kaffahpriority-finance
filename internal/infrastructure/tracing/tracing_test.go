@@ -67,7 +67,7 @@ func TestInitTracerConfig(t *testing.T) {
 
 	// We can't easily assert that the exporter has the headers without inspecting internal state,
 	// but we can at least ensure InitTracer doesn't panic and returns a provider.
-	
+
 	cfg := &Config{
 		AppName:    "test-app",
 		AppVersion: "1.0.0",
