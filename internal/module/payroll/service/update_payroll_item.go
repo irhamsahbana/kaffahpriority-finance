@@ -4,7 +4,6 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
-	"codebase-app/pkg/errmsg"
 	"context"
 	"time"
 
@@ -60,11 +59,6 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 
 	if req.Wage == nil {
 		req.Wage = &itemBefore.Wage
-	}
-
-	// if AcquisitionRights is not nil, and not equal to 0, then Wage must be greater than 0
-	if req.AcquisitionRights != nil && *req.AcquisitionRights != uint64(0) && req.Wage.LessThanOrEqual(decimal.Zero) {
-		return errmsg.NewCustomErrors(400).SetMessage("Keep Gaji harus terisi jika ingin mnegubah Hak")
 	}
 
 	if err := s.repo.UpdatePayrollItem(ctx, req); err != nil {
