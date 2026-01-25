@@ -67,7 +67,6 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				is_meeting_full = v.is_meeting_full,
 				foreign_learning_fee = v.foreign_learning_fee,
 				night_learning_fee = v.night_learning_fee,
-				acquisition_rights = COALESCE(v.acquisition_rights, p.acquisition_rights),
 				wage = v.wage,
 				full_wage = v.full_wage
 			FROM (
@@ -79,7 +78,6 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				is_meeting_full,
 				foreign_learning_fee,
 				night_learning_fee,
-				acquisition_rights,
 				wage,
 				full_wage
 			)
