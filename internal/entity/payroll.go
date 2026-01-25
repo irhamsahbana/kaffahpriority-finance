@@ -111,7 +111,7 @@ type PayrollItemPeriodically struct {
 	AcademicManagerID      string          `json:"academic_manager_id" db:"academic_manager_id"`
 	AcademicManagerName    string          `json:"academic_manager_name" db:"academic_manager_name"`
 	Period                 string          `json:"period" db:"period"`
-	TotalRealFee           decimal.Decimal `json:"total_real_fee" db:"total_real_fee"`
+	Wage                   decimal.Decimal `json:"wage" db:"wage"`
 	TotalAcquisitionRights uint64          `json:"total_acquisition_rights" db:"total_acquisition_rights"`
 }
 
