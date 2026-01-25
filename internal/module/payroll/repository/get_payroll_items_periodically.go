@@ -35,7 +35,7 @@ func (r *payrollRepo) GetPayrollItemsPeriodically(ctx context.Context, req *enti
 			pi.academic_manager_name,
 			pr.period,
 			COALESCE(SUM(pi.wage), 0) as wage,
-			COALESCE(SUM(pi.acquisition_rights), 0) as total_acquisition_rights
+			COALESCE(SUM(CASE WHEN pi.wage > 0 THEN pi.acquisition_rights ELSE 0 END), 0) as total_acquisition_rights
 		FROM payroll_items pi
 		JOIN payroll_runs pr ON pi.payroll_run_id = pr.id
 		WHERE pi.deleted_at IS NULL
@@ -183,7 +183,7 @@ func (r *payrollRepo) GetPayrollReportsYearly(ctx context.Context, req *entity.G
 			SELECT
 				EXTRACT(MONTH FROM pr.created_at AT TIME ZONE ?) AS month,
 				COALESCE(SUM(pi.wage), 0) AS wage,
-				COALESCE(SUM(pi.acquisition_rights), 0) AS total_acquisition_rights
+				COALESCE(SUM(CASE WHEN pi.wage > 0 THEN pi.acquisition_rights ELSE 0 END), 0) AS total_acquisition_rights
 			FROM
 				payroll_items pi
 			JOIN
