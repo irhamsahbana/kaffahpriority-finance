@@ -61,11 +61,20 @@ type UpdatePayrollItemReq struct {
 	InitialWage        *decimal.Decimal `json:"initial_wage"`
 }
 
-func (u *UpdatePayrollItemReq) Validate() error {
+func (_ *UpdatePayrollItemReq) Validate() error {
 	return nil
 }
 
 type DeletePayrollItemReq struct {
 	ID     string `params:"id" validate:"required,ulid"`
 	UserID string `json:"user_id"`
+}
+
+type ExportPayrollItemsPeriodicallyReq struct {
+	Period string `query:"period" validate:"required,datetime=2006-01"`
+}
+
+type ExportPayrollItemsPeriodicallyResp struct {
+	FilePath string `json:"file_path"`
+	FileName string `json:"file_name"`
 }
