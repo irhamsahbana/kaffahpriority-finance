@@ -76,7 +76,7 @@ func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, tim
 	return run, nil
 }
 
-func (r *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, period string) (*entity.PayrollRun, error) {
+func (_ *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, period string) (*entity.PayrollRun, error) {
 	var existingRun entity.PayrollRun
 	queryCheck := `SELECT id FROM payroll_runs WHERE period = $1 LIMIT 1`
 	err := tx.GetContext(ctx, &existingRun, queryCheck, period)
@@ -87,7 +87,7 @@ func (r *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, 
 	return &existingRun, nil
 }
 
-func (r *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, period string, timezone string) (*entity.PayrollRun, error) {
+func (_ *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, period string, timezone string) (*entity.PayrollRun, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to load location")
@@ -128,7 +128,7 @@ func (r *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, p
 	return &run, nil
 }
 
-func (r *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx) ([]templateData, error) {
+func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx) ([]templateData, error) {
 	var templates []templateData
 	queryTemplates := `
 		SELECT
@@ -338,7 +338,7 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 	return nil
 }
 
-func (r *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sqlx.Tx, runID string) ([]entity.PayrollItem, error) {
+func (_ *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sqlx.Tx, runID string) ([]entity.PayrollItem, error) {
 	var items []entity.PayrollItem
 	query := `
 		SELECT id, student_id, program_id, lecturer_id
@@ -352,7 +352,7 @@ func (r *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sq
 	return items, nil
 }
 
-func (r *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids []string) error {
+func (_ *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids []string) error {
 	query, args, err := sqlx.In("UPDATE payroll_items SET deleted_at = NOW() WHERE id IN (?)", ids)
 	if err != nil {
 		return err
@@ -366,7 +366,7 @@ func (r *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids [
 	return nil
 }
 
-func (r *payrollRepo) fetchAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateIDs []string) (map[string][]entity.PayrollItemAdditionalStudent, error) {
+func (_ *payrollRepo) fetchAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateIDs []string) (map[string][]entity.PayrollItemAdditionalStudent, error) {
 	if len(templateIDs) == 0 {
 		return nil, nil
 	}

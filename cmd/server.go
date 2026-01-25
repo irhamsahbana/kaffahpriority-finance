@@ -46,8 +46,13 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	infrastructure.InitializeMetrics(app)
 
 	// Initialize Logger
+	var otlpEndpoint string
+	if envs.Instrumentation.Enabled {
+		otlpEndpoint = envs.Instrumentation.OtlpEndpoint
+	}
+
 	lp, logWriter, err := logging.InitLogger(&logging.Config{
-		Endpoint:      envs.Instrumentation.OtlpEndpoint,
+		Endpoint:      otlpEndpoint,
 		AppName:       envs.App.Name,
 		AppVersion:    envs.App.Version,
 		AppEnv:        envs.App.Environtment,
@@ -66,21 +71,23 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	}
 
 	// Initialize Tracing
-	tp, err := tracing.InitTracer(&tracing.Config{
-		Endpoint:   envs.Instrumentation.OtlpEndpoint,
-		AppName:    envs.App.Name,
-		AppVersion: envs.App.Version,
-		AppEnv:     envs.App.Environtment,
-		LogWriter:  logWriter,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to initialize tracer")
-	} else {
-		defer func() {
-			if err := tp.Shutdown(context.Background()); err != nil {
-				log.Error().Err(err).Msg("Error shutting down tracer provider")
-			}
-		}()
+	if envs.Instrumentation.Enabled {
+		tp, err := tracing.InitTracer(&tracing.Config{
+			Endpoint:   envs.Instrumentation.OtlpEndpoint,
+			AppName:    envs.App.Name,
+			AppVersion: envs.App.Version,
+			AppEnv:     envs.App.Environtment,
+			LogWriter:  logWriter,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to initialize tracer")
+		} else {
+			defer func() {
+				if err := tp.Shutdown(context.Background()); err != nil {
+					log.Error().Err(err).Msg("Error shutting down tracer provider")
+				}
+			}()
+		}
 	}
 
 	// Application Local Storage
