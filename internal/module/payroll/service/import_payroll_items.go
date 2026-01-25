@@ -168,26 +168,6 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 			item.AcquisitionRights = &zero
 		}
 
-		// CALCULATE WAGE
-		// Logic reused from BulkUpdatePayrollItems / UpdatePayrollItem
-		// Wage = (InitialWage * ProgramMeetings) + FL + NL
-		// FullWage = Wage (assuming no deductions for now, matching bulk update logic)
-
-		// 1. Base Wage
-		baseWage := item.InitialWage.Mul(decimal.NewFromInt(int64(item.ProgramMeetings)))
-
-		// 2. Add Allowances
-		totalWage := baseWage
-		if item.ForeignLearningFee != nil {
-			totalWage = totalWage.Add(*item.ForeignLearningFee)
-		}
-		if item.NightLearningFee != nil {
-			totalWage = totalWage.Add(*item.NightLearningFee)
-		}
-
-		item.Wage = totalWage
-		item.FullWage = totalWage // Default behavior as per current logic
-
 		keepWage := decimal.Zero
 		if keepWageStr != "" {
 			parsedKeepWage, err := decimal.NewFromString(keepWageStr)
@@ -201,6 +181,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Keep Gaji tidak boleh negatif")
 		}
 		item.Wage = keepWage
+		item.FullWage = keepWage
 
 		req.Items = append(req.Items, item)
 	}
