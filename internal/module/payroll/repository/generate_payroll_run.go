@@ -77,6 +77,9 @@ func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, tim
 }
 
 func (_ *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, period string) (*entity.PayrollRun, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.checkExistingPayrollRun")
+	defer span.End()
+
 	var existingRun entity.PayrollRun
 	queryCheck := `SELECT id FROM payroll_runs WHERE period = $1 LIMIT 1`
 	err := tx.GetContext(ctx, &existingRun, queryCheck, period)
@@ -88,6 +91,9 @@ func (_ *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, 
 }
 
 func (_ *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, period string, timezone string) (*entity.PayrollRun, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.createPayrollRunEntity")
+	defer span.End()
+
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to load location")
@@ -129,6 +135,9 @@ func (_ *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, p
 }
 
 func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx) ([]templateData, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.fetchRegistrationTemplates")
+	defer span.End()
+
 	var templates []templateData
 	queryTemplates := `
 		SELECT
@@ -173,6 +182,9 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 }
 
 func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.createPayrollItemsFromTemplates")
+	defer span.End()
+
 	var items []entity.PayrollItem
 	var additionalStudents []entity.PayrollItemAdditionalStudent
 	var templateIDs []string
@@ -285,6 +297,9 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 }
 
 func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.syncPayrollItems")
+	defer span.End()
+
 	// 1. Fetch existing items to compare
 	existingItems, err := r.fetchExistingPayrollItemsLight(ctx, tx, runID)
 	if err != nil {
@@ -353,6 +368,9 @@ func (_ *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sq
 }
 
 func (_ *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids []string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.deletePayrollItems")
+	defer span.End()
+
 	query, args, err := sqlx.In("UPDATE payroll_items SET deleted_at = NOW() WHERE id IN (?)", ids)
 	if err != nil {
 		return err
