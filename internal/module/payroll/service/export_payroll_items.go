@@ -210,7 +210,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow), itemIndex+1)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), item.StudentName)
 				f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), item.ProgramName)
-				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), item.MarketerName)
+				f.SetCellValue(sheetName, fmt.Sprintf("Q%v", lastRow), item.MarketerName)
 
 				f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow), item.ProgramMeetings)
 				f.SetCellValue(sheetName, fmt.Sprintf("G%v", lastRow), item.WagePerMeeting.InexactFloat64())
