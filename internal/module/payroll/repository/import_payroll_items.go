@@ -38,16 +38,27 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 			AND deleted_at IS NULL
 	`
 
-	res, err := tx.NamedExecContext(ctx, query, req.Items)
+	stmt, err := tx.PrepareNamedContext(ctx, query)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to batch update payroll items from import")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to prepare payroll items update statement")
 		return 0, err
 	}
+	defer stmt.Close()
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to get rows affected")
-		return 0, err
+	var rowsAffected int64
+	for _, item := range req.Items {
+		res, execErr := stmt.ExecContext(ctx, item)
+		if execErr != nil {
+			log.Ctx(ctx).Error().Err(execErr).Msg("failed to update payroll item from import")
+			return 0, execErr
+		}
+
+		affected, rowsErr := res.RowsAffected()
+		if rowsErr != nil {
+			log.Ctx(ctx).Error().Err(rowsErr).Msg("failed to get rows affected")
+			return 0, rowsErr
+		}
+		rowsAffected += affected
 	}
 
 	if err := tx.Commit(); err != nil {
