@@ -95,6 +95,8 @@ type Config struct {
 	}
 	Instrumentation struct {
 		OtlpEndpoint         string `env:"INSTRUMENTATION_OTLP_ENDPOINT"`
+		OtlpHeaders          string `env:"INSTRUMENTATION_OTLP_HEADERS"`
+		OtlpInsecure         bool   `env:"INSTRUMENTATION_OTLP_INSECURE" env-default:"true"`
 		MetricsBasicAuthUser string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_USER"`
 		MetricsBasicAuthPass string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_PASS"`
 		Debug                bool   `env:"INSTRUMENTATION_DEBUG" env-default:"false"`
