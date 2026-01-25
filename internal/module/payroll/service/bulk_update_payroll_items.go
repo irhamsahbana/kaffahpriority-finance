@@ -13,59 +13,49 @@ func (s *payrollService) BulkUpdatePayrollItems(ctx context.Context, req *entity
 	ctx, span := tracing.StartSpan(ctx, "service.BulkUpdatePayrollItems")
 	defer span.End()
 
-	// Pre-process items to calculate wages
 	for i, itemReq := range req.Data {
-		// Only fetch and recalculate if wage-affecting fields are present
-		if itemReq.ProgramMeetings != nil || itemReq.IsMeetingFull != nil || itemReq.ForeignLearningFee != nil || itemReq.NightLearningFee != nil {
+		itemBefore, err := s.repo.GetPayrollItem(ctx, itemReq.ID)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("id", itemReq.ID).Msg("failed to get payroll item for bulk update")
+			return err
+		}
 
-			itemBefore, err := s.repo.GetPayrollItem(ctx, itemReq.ID)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Str("id", itemReq.ID).Msg("failed to get payroll item for bulk update")
-				return err
-			}
+		meetings := itemBefore.ProgramMeetings
+		if itemReq.ProgramMeetings != nil {
+			meetings = *itemReq.ProgramMeetings
+		}
 
-			// Apply updates to temp variables
-			meetings := itemBefore.ProgramMeetings
-			if itemReq.ProgramMeetings != nil {
-				meetings = *itemReq.ProgramMeetings
-			}
+		isFull := itemBefore.IsMeetingFull
+		if itemReq.IsMeetingFull != nil {
+			isFull = *itemReq.IsMeetingFull
+		}
 
-			isFull := itemBefore.IsMeetingFull
-			if itemReq.IsMeetingFull != nil {
-				isFull = *itemReq.IsMeetingFull
-			}
+		fl := itemBefore.ForeignLearningFee
+		if itemReq.ForeignLearningFee != nil {
+			fl = *itemReq.ForeignLearningFee
+		}
+		req.Data[i].ForeignLearningFee = &fl
 
-			fl := itemBefore.ForeignLearningFee
-			if itemReq.ForeignLearningFee != nil {
-				fl = *itemReq.ForeignLearningFee
-			}
+		nl := itemBefore.NightLearningFee
+		if itemReq.NightLearningFee != nil {
+			nl = *itemReq.NightLearningFee
+		}
+		req.Data[i].NightLearningFee = &nl
 
-			nl := itemBefore.NightLearningFee
-			if itemReq.NightLearningFee != nil {
-				nl = *itemReq.NightLearningFee
-			}
+		var initialWage decimal.Decimal
+		if isFull {
+			initialWage = itemBefore.FullWage
+		} else {
+			initialWage = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings)))
+		}
 
-			// Recalculate wage
-			var initialFee float64
-			if isFull {
-				initialFee = itemBefore.FullWage.InexactFloat64()
-			} else {
-				initialFee = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings))).InexactFloat64()
-			}
+		if meetings < 1 {
+			initialWage = decimal.Zero
+		}
+		req.Data[i].InitialWage = &initialWage
 
-			initialWageVal := decimal.NewFromFloat(initialFee)
-			if meetings < 1 {
-				initialWageVal = decimal.Zero
-			}
-			// Update the request object in the slice
-			req.Data[i].InitialWage = &initialWageVal
-
-			newWage := nl.Add(fl).Add(decimal.NewFromFloat(initialFee))
-			if meetings < 1 {
-				newWage = decimal.Zero
-			}
-
-			req.Data[i].Wage = &newWage
+		if req.Data[i].Wage == nil {
+			req.Data[i].Wage = &itemBefore.Wage
 		}
 	}
 
