@@ -13,10 +13,10 @@ import (
 
 func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.GetStudentsReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.GetStudentsReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -45,10 +45,10 @@ func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 
 func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.CreateStudentReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.CreateStudentReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -75,10 +75,10 @@ func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.GetStudentReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.GetStudentReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -101,10 +101,10 @@ func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.UpdateStudentReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.UpdateStudentReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -132,10 +132,10 @@ func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 
 func (h *masterHandler) deleteStudent(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.DeleteStudentReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.DeleteStudentReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")

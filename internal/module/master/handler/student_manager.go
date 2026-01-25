@@ -51,9 +51,9 @@ func (h *masterHandler) getStudentManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.GetStudentManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.GetStudentManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -79,9 +79,9 @@ func (h *masterHandler) createStudentManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.CreateStudentManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.CreateStudentManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -111,9 +111,9 @@ func (h *masterHandler) updateStudentManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.UpdateStudentManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.UpdateStudentManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -144,9 +144,9 @@ func (h *masterHandler) deleteStudentManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.DeleteStudentManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.DeleteStudentManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -172,9 +172,9 @@ func (h *masterHandler) getAcademicManagers(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.GetAcademicManagersReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.GetAcademicManagersReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -206,9 +206,9 @@ func (h *masterHandler) getAcademicManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.GetAcademicManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.GetAcademicManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -234,9 +234,9 @@ func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.CreateAcademicManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.CreateAcademicManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.UserID = l.GetUserId()
@@ -263,10 +263,10 @@ func (h *masterHandler) createAcademicManager(c *fiber.Ctx) error {
 
 func (h *masterHandler) updateAcademicManager(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		req    = new(entity.UpdateAcademicManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.UpdateAcademicManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
@@ -297,9 +297,9 @@ func (h *masterHandler) deleteAcademicManager(c *fiber.Ctx) error {
 	defer span.End()
 
 	var (
-		req    = new(entity.DeleteAcademicManagerReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		req = new(entity.DeleteAcademicManagerReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	req.ID = c.Params("id")
