@@ -45,7 +45,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				nl = &val
 			}
 
-			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::bigint, ?::numeric, ?::numeric)")
+			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::numeric, ?::numeric)")
 			args = append(args,
 				item.ID,
 				item.ProgramMeetings,
@@ -53,7 +53,6 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				item.IsMeetingFull,
 				fl,
 				nl,
-				item.AcquisitionRights,
 				item.Wage.InexactFloat64(),
 				item.FullWage.InexactFloat64(),
 			)
