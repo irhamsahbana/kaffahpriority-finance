@@ -23,51 +23,43 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 		return err
 	}
 
-	// If fields that affect wage are updated, recalculate wage
-	if req.ProgramMeetings != nil || req.IsMeetingFull != nil || req.ForeignLearningFee != nil || req.NightLearningFee != nil {
-		// Apply updates to a temp item struct to calculate
-		meetings := itemBefore.ProgramMeetings
-		if req.ProgramMeetings != nil {
-			meetings = *req.ProgramMeetings
-		}
+	meetings := itemBefore.ProgramMeetings
+	if req.ProgramMeetings != nil {
+		meetings = *req.ProgramMeetings
+	}
 
-		isFull := itemBefore.IsMeetingFull
-		if req.IsMeetingFull != nil {
-			isFull = *req.IsMeetingFull
-		}
+	isFull := itemBefore.IsMeetingFull
+	if req.IsMeetingFull != nil {
+		isFull = *req.IsMeetingFull
+	}
 
-		fl := itemBefore.ForeignLearningFee
-		if req.ForeignLearningFee != nil {
-			fl = *req.ForeignLearningFee
-		}
+	fl := itemBefore.ForeignLearningFee
+	if req.ForeignLearningFee != nil {
+		fl = *req.ForeignLearningFee
+	}
+	req.ForeignLearningFee = &fl
 
-		nl := itemBefore.NightLearningFee
-		if req.NightLearningFee != nil {
-			nl = *req.NightLearningFee
-		}
+	nl := itemBefore.NightLearningFee
+	if req.NightLearningFee != nil {
+		nl = *req.NightLearningFee
+	}
+	req.NightLearningFee = &nl
 
-		// Recalculate wage
-		// WagePerMeeting and FullWage in DB already account for ITP multiplier
+	var initialFee float64
+	if isFull {
+		initialFee = itemBefore.FullWage.InexactFloat64()
+	} else {
+		initialFee = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings))).InexactFloat64()
+	}
 
-		var initialFee float64
-		if isFull {
-			initialFee = itemBefore.FullWage.InexactFloat64()
-		} else {
-			initialFee = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings))).InexactFloat64()
-		}
-
-		initialWageVal := decimal.NewFromFloat(initialFee)
-		if meetings < 1 {
-			initialWageVal = decimal.Zero
-		}
-		req.InitialWage = &initialWageVal
-
-		newWage := nl.Add(fl).Add(decimal.NewFromFloat(initialFee))
-		if meetings < 1 {
-			newWage = decimal.Zero
-		}
-
-		req.Wage = &newWage
+	initialWageVal := decimal.NewFromFloat(initialFee)
+	if meetings < 1 {
+		initialWageVal = decimal.Zero
+	}
+	req.InitialWage = &initialWageVal
+	if req.Wage == nil {
+		oldWage := itemBefore.Wage
+		req.Wage = &oldWage
 	}
 
 	if err := s.repo.UpdatePayrollItem(ctx, req); err != nil {
