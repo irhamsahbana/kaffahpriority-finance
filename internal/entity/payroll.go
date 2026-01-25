@@ -3,6 +3,7 @@ package entity
 import (
 	"codebase-app/pkg/types"
 	"io"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -63,6 +64,45 @@ type GetPayrollItemsPeriodicallyReq struct {
 
 func (r *GetPayrollItemsPeriodicallyReq) SetDefault() {
 	r.MetaQuery.SetDefault()
+}
+
+type GetPayrollReportsYearlyReq struct {
+	types.MetaQuery
+	AcademicManagerID string `query:"academic_manager_id" validate:"omitempty,ulid"`
+	LecturerID        string `query:"lecturer_id" validate:"omitempty,ulid"`
+	Year              int    `query:"year" validate:"required,min=1900,max=2100"`
+	Timezone          string `query:"timezone" validate:"required,timezone"`
+}
+
+func (r *GetPayrollReportsYearlyReq) SetDefault() {
+	r.MetaQuery.SetDefault()
+
+	r.Timezone = "Asia/Makassar"
+
+	if r.Year == 0 {
+		loc, _ := time.LoadLocation(r.Timezone)
+		r.Year = time.Now().In(loc).Year()
+	}
+}
+
+type PayrollReportsYearlyResp struct {
+	Items []PayrollReportsYearlyItem `json:"items"`
+	Meta  types.Meta                 `json:"meta"`
+}
+
+type PayrollReportsYearlyItem struct {
+	LecturerID          string                      `json:"lecturer_id" db:"lecturer_id"`
+	LecturerName        string                      `json:"lecturer_name" db:"lecturer_name"`
+	AcademicManagerName string                      `json:"academic_manager_name" db:"academic_manager_name"`
+	Year                int                         `json:"year" db:"year"`
+	Months              []PayrollReportsYearlyMonth `json:"months"`
+}
+
+type PayrollReportsYearlyMonth struct {
+	Month                  string          `json:"month"`
+	Wage                   decimal.Decimal `json:"wage"`
+	Notes                  *string         `json:"notes"`
+	TotalAcquisitionRights int             `json:"total_acquisition_rights"`
 }
 
 type PayrollItemPeriodically struct {
