@@ -81,7 +81,7 @@ func initOtelProvider(cfg *Config) (*logsdk.LoggerProvider, error) {
 		log.Info().Msg("OpenTelemetry stdout log exporter initialized (debug mode)")
 	}
 
-	otlpEndpoint := config.Envs.Instrumentation.OtlpEndpoint
+	otlpEndpoint := cfg.Endpoint
 	if otlpEndpoint != "" {
 		var exporter logsdk.Exporter
 		var err error

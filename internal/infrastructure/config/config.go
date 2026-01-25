@@ -98,6 +98,7 @@ type Config struct {
 		MetricsBasicAuthUser string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_USER"`
 		MetricsBasicAuthPass string `env:"INSTRUMENTATION_METRICS_BASIC_AUTH_PASS"`
 		Debug                bool   `env:"INSTRUMENTATION_DEBUG" env-default:"false"`
+		Enabled              bool   `env:"INSTRUMENTATION_ENABLED" env-default:"true"`
 	}
 }
 

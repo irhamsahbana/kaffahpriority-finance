@@ -13,11 +13,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func RunConsumer(cmd *flag.FlagSet, args []string) {
+func RunConsumer(_ *flag.FlagSet, _ []string) {
 	envs := config.Envs
 
+	var otlpEndpoint string
+	if envs.Instrumentation.Enabled {
+		otlpEndpoint = envs.Instrumentation.OtlpEndpoint
+	}
+
 	lp, _, err := logging.InitLogger(&logging.Config{
-		Endpoint:   envs.Instrumentation.OtlpEndpoint,
+		Endpoint:   otlpEndpoint,
 		AppName:    envs.App.Name,
 		AppVersion: envs.App.Version,
 		AppEnv:     envs.App.Environtment,
