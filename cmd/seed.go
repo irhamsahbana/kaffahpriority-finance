@@ -29,5 +29,7 @@ func RunSeed(cmd *flag.FlagSet, args []string) {
 
 	// seeds.Execute(adapter.Adapters.DigihubPostgres, *table, *total)
 
-	seeds.SeedExcel(adapter.Adapters.Postgres, *table)
+	if err := seeds.SeedExcel(adapter.Adapters.Postgres, *table); err != nil {
+		log.Fatal().Err(err).Msg("failed to seed excel")
+	}
 }

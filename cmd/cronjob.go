@@ -26,7 +26,10 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 	// Parse command line arguments for schedule configuration
 	schedule := cmd.String("schedule", "daily", "Backup schedule: daily, hourly, weekly, or custom cron expression")
 	runOnce := cmd.Bool("once", false, "Run backup once and exit (for testing)")
-	cmd.Parse(args)
+	if err := cmd.Parse(args); err != nil {
+		log.Error().Err(err).Msg("failed to parse args")
+		return
+	}
 
 	log.Info().Str("schedule", *schedule).Bool("runOnce", *runOnce).Msg("starting backup scheduler")
 
@@ -375,7 +378,9 @@ func createBackup() (string, error) {
 	} else {
 		defer logFile.Close()
 		logEntry := fmt.Sprintf("[%s] Backup completed and archived at %s\n", timestamp, finalArchive)
-		logFile.WriteString(logEntry)
+		if _, err := logFile.WriteString(logEntry); err != nil {
+			log.Warn().Err(err).Msg("failed to write backup log")
+		}
 	}
 
 	log.Info().Str("archive", finalArchive).Msg("backup archive created successfully")
