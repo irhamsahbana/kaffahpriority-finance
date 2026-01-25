@@ -12,7 +12,6 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 	ctx, span := tracing.StartSpan(ctx, "repo.GetUsers")
 	defer span.End()
 
-	fnName := "repo::GetUsers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.UserItem
@@ -45,7 +44,7 @@ func (r *userRepo) GetUsers(ctx context.Context, req *entity.GetUsersReq) (*enti
 
 	err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch data", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to fetch data")
 		return nil, err
 	}
 

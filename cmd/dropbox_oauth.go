@@ -14,28 +14,26 @@ import (
 
 // RunDropboxOAuth handles OAuth2 setup for Dropbox integration
 func RunDropboxOAuth(cmd *flag.FlagSet, args []string) {
-	fnName := "cmd::RunDropboxOAuth"
-
 	// Parse command line arguments
 	action := cmd.String("action", "auth", "OAuth action: 'auth' to get authorization URL, 'exchange' to exchange code for tokens")
 	code := cmd.String("code", "", "Authorization code received from Dropbox (for exchange action)")
 	cmd.Parse(args)
 
-	log.Info().Str("action", *action).Msgf("%s - starting Dropbox OAuth process", fnName)
+	log.Info().Str("action", *action).Msg("starting Dropbox OAuth process")
 
 	switch *action {
 	case "auth":
 		generateAuthURL()
 	case "exchange":
 		if *code == "" {
-			log.Error().Msgf("%s - authorization code is required for exchange action", fnName)
+			log.Error().Msg("authorization code is required for exchange action")
 			fmt.Println("Error: Authorization code is required for exchange action")
 			fmt.Println("Usage: ./kaffah-finance dropbox-oauth --action=exchange --code=YOUR_AUTH_CODE")
 			os.Exit(1)
 		}
 		exchangeCodeForTokens(*code)
 	default:
-		log.Error().Str("action", *action).Msgf("%s - invalid action", fnName)
+		log.Error().Str("action", *action).Msg("invalid action")
 		fmt.Printf("Error: Invalid action '%s'. Use 'auth' or 'exchange'\n", *action)
 		os.Exit(1)
 	}
@@ -43,11 +41,9 @@ func RunDropboxOAuth(cmd *flag.FlagSet, args []string) {
 
 // generateAuthURL generates and displays the OAuth2 authorization URL
 func generateAuthURL() {
-	fnName := "cmd::generateAuthURL"
-
 	// Check if required configuration is present
 	if config.Envs.Dropbox.AppKey == "" {
-		log.Error().Msgf("%s - DROPBOX_APP_KEY is not configured", fnName)
+		log.Error().Msg("DROPBOX_APP_KEY is not configured")
 		fmt.Println("Error: DROPBOX_APP_KEY environment variable is required")
 		fmt.Println("Please set your Dropbox app key in the environment variables")
 		os.Exit(1)
@@ -77,16 +73,14 @@ func generateAuthURL() {
 	fmt.Printf("    ./kaffah-finance dropbox-oauth --action=exchange --code=YOUR_AUTH_CODE\n")
 	fmt.Println()
 
-	log.Info().Str("authURL", authURL).Msgf("%s - authorization URL generated", fnName)
+	log.Info().Str("authURL", authURL).Msg("authorization URL generated")
 }
 
 // exchangeCodeForTokens exchanges the authorization code for access and refresh tokens
 func exchangeCodeForTokens(authCode string) {
-	fnName := "cmd::exchangeCodeForTokens"
-
 	// Check if required configuration is present
 	if config.Envs.Dropbox.AppKey == "" || config.Envs.Dropbox.AppSecret == "" {
-		log.Error().Msgf("%s - DROPBOX_APP_KEY or DROPBOX_APP_SECRET is not configured", fnName)
+		log.Error().Msg("DROPBOX_APP_KEY or DROPBOX_APP_SECRET is not configured")
 		fmt.Println("Error: DROPBOX_APP_KEY and DROPBOX_APP_SECRET environment variables are required")
 		os.Exit(1)
 	}
@@ -96,7 +90,7 @@ func exchangeCodeForTokens(authCode string) {
 		redirectURL = "http://localhost:8080/auth/dropbox/callback"
 	}
 
-	log.Info().Str("authCode", authCode).Msgf("%s - exchanging authorization code for tokens", fnName)
+	log.Info().Str("authCode", authCode).Msg("exchanging authorization code for tokens")
 
 	// Exchange code for tokens
 	tokenResp, err := adapter.ExchangeCodeForToken(
@@ -106,7 +100,7 @@ func exchangeCodeForTokens(authCode string) {
 		redirectURL,
 	)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to exchange code for tokens", fnName)
+		log.Error().Err(err).Msg("failed to exchange code for tokens")
 		fmt.Printf("Error: Failed to exchange code for tokens: %v\n", err)
 		os.Exit(1)
 	}
@@ -138,7 +132,7 @@ func exchangeCodeForTokens(authCode string) {
 	reader := bufio.NewReader(os.Stdin)
 	response, err := reader.ReadString('\n')
 	if err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to read user input", fnName)
+		log.Warn().Err(err).Msg("failed to read user input")
 		return
 	}
 
@@ -149,23 +143,21 @@ func exchangeCodeForTokens(authCode string) {
 		fmt.Println("Please manually add the environment variables to your .env file")
 	}
 
-	log.Info().Msgf("%s - token exchange completed successfully", fnName)
+	log.Info().Msg("token exchange completed successfully")
 }
 
 // updateEnvFile updates the .env file with new tokens
 func updateEnvFile(accessToken, refreshToken string) {
-	fnName := "cmd::updateEnvFile"
-
 	envFile := ".env"
 
 	// Check if .env file exists
 	if _, err := os.Stat(envFile); os.IsNotExist(err) {
-		log.Warn().Msgf("%s - .env file not found, creating new one", fnName)
+		log.Warn().Msg(".env file not found, creating new one")
 
 		// Create new .env file
 		file, err := os.Create(envFile)
 		if err != nil {
-			log.Error().Err(err).Msgf("%s - failed to create .env file", fnName)
+			log.Error().Err(err).Msg("failed to create .env file")
 			fmt.Printf("Error: Failed to create .env file: %v\n", err)
 			return
 		}
@@ -178,13 +170,13 @@ func updateEnvFile(accessToken, refreshToken string) {
 		}
 
 		if _, err := file.WriteString(content); err != nil {
-			log.Error().Err(err).Msgf("%s - failed to write to .env file", fnName)
+			log.Error().Err(err).Msg("failed to write to .env file")
 			fmt.Printf("Error: Failed to write to .env file: %v\n", err)
 			return
 		}
 
 		fmt.Printf("Created .env file with Dropbox tokens\n")
-		log.Info().Msgf("%s - created new .env file with tokens", fnName)
+		log.Info().Msg("created new .env file with tokens")
 		return
 	}
 
@@ -196,5 +188,5 @@ func updateEnvFile(accessToken, refreshToken string) {
 		fmt.Printf("DROPBOX_REFRESH_TOKEN=%s\n", refreshToken)
 	}
 
-	log.Info().Msgf("%s - .env file update instructions provided", fnName)
+	log.Info().Msg(".env file update instructions provided")
 }

@@ -22,14 +22,13 @@ import (
 
 // RunCronjob starts the gocron scheduler for automated backup jobs
 func RunCronjob(cmd *flag.FlagSet, args []string) {
-	fnName := "cmd::RunCronjob"
 
 	// Parse command line arguments for schedule configuration
 	schedule := cmd.String("schedule", "daily", "Backup schedule: daily, hourly, weekly, or custom cron expression")
 	runOnce := cmd.Bool("once", false, "Run backup once and exit (for testing)")
 	cmd.Parse(args)
 
-	log.Info().Str("schedule", *schedule).Bool("runOnce", *runOnce).Msgf("%s - starting backup scheduler", fnName)
+	log.Info().Str("schedule", *schedule).Bool("runOnce", *runOnce).Msg("starting backup scheduler")
 
 	// Initialize Dropbox adapter
 	adapter.Adapters.Sync(
@@ -38,30 +37,30 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 
 	// If run once flag is set, execute backup immediately and exit
 	if *runOnce {
-		log.Info().Msgf("%s - running backup once", fnName)
+		log.Info().Msg("running backup once")
 		if err := executeBackupJob(); err != nil {
-			log.Error().Err(err).Msgf("%s - backup job failed", fnName)
+			log.Error().Err(err).Msg("backup job failed")
 			os.Exit(1)
 		}
-		log.Info().Msgf("%s - backup job completed successfully", fnName)
+		log.Info().Msg("backup job completed successfully")
 		return
 	}
 
 	// Create scheduler with Asia/Makassar timezone
 	makassarTZ, err := time.LoadLocation("Asia/Makassar")
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to load Asia/Makassar timezone", fnName)
+		log.Error().Err(err).Msg("failed to load Asia/Makassar timezone")
 		return
 	}
 
 	s, err := gocron.NewScheduler(gocron.WithLocation(makassarTZ))
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to create scheduler", fnName)
+		log.Error().Err(err).Msg("failed to create scheduler")
 		return
 	}
 	defer func() {
 		if err := s.Shutdown(); err != nil {
-			log.Error().Err(err).Msgf("%s - failed to shutdown scheduler", fnName)
+			log.Error().Err(err).Msg("failed to shutdown scheduler")
 		}
 	}()
 
@@ -100,15 +99,15 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 	}
 
 	if err != nil {
-		log.Error().Err(err).Str("schedule", *schedule).Msgf("%s - failed to create backup job", fnName)
+		log.Error().Err(err).Str("schedule", *schedule).Msg("failed to create backup job")
 		return
 	}
 
-	log.Info().Str("jobID", job.ID().String()).Str("schedule", *schedule).Str("timezone", "Asia/Makassar").Msgf("%s - backup job scheduled successfully", fnName)
+	log.Info().Str("jobID", job.ID().String()).Str("schedule", *schedule).Str("timezone", "Asia/Makassar").Msg("backup job scheduled successfully")
 
 	// Start the scheduler
 	s.Start()
-	log.Info().Msgf("%s - scheduler started, waiting for jobs", fnName)
+	log.Info().Msg("scheduler started, waiting for jobs")
 
 	// Set up signal handling for graceful shutdown
 	c := make(chan os.Signal, 1)
@@ -116,14 +115,12 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 
 	// Wait for interrupt signal
 	<-c
-	log.Info().Msgf("%s - received shutdown signal, stopping scheduler", fnName)
+	log.Info().Msg("received shutdown signal, stopping scheduler")
 }
 
 // executeBackupJob performs the actual backup operation
 func executeBackupJob() error {
-	fnName := "cmd::executeBackupJob"
-
-	log.Info().Msgf("%s - starting backup job execution", fnName)
+	log.Info().Msg("starting backup job execution")
 
 	// Clean up any leftover backup files from previous runs
 	cleanupOldBackupFiles()
@@ -131,19 +128,19 @@ func executeBackupJob() error {
 	// Execute the backup and get the generated backup file path
 	backupFilePath, err := createBackup()
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to create backup", fnName)
+		log.Error().Err(err).Msg("failed to create backup")
 		return err
 	}
 
 	dropboxPath := "/" + filepath.Base(backupFilePath)
-	log.Info().Str("localPath", backupFilePath).Str("dropboxPath", dropboxPath).Msgf("%s - uploading file to Dropbox", fnName)
+	log.Info().Str("localPath", backupFilePath).Str("dropboxPath", dropboxPath).Msg("uploading file to Dropbox")
 
 	dbx := adapter.Adapters.DropboxFiles
 
 	// Open file and check file size
 	f, err := os.Open(backupFilePath)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to open backup file", fnName)
+		log.Error().Err(err).Msg("failed to open backup file")
 		return err
 	}
 	defer f.Close()
@@ -151,11 +148,11 @@ func executeBackupJob() error {
 	// Get file size
 	fileInfo, err := f.Stat()
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to get file info", fnName)
+		log.Error().Err(err).Msg("failed to get file info")
 		return err
 	}
 
-	log.Info().Int64("fileSize", fileInfo.Size()).Msgf("%s - backup file size", fnName)
+	log.Info().Int64("fileSize", fileInfo.Size()).Msg("backup file size")
 
 	// Determine upload method based on file size
 	if fileInfo.Size() < 150*1024*1024 { // If less than 150MB
@@ -165,30 +162,29 @@ func executeBackupJob() error {
 	}
 
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to upload backup to Dropbox", fnName)
+		log.Error().Err(err).Msg("failed to upload backup to Dropbox")
 		return err
 	}
 
 	// Cleanup local backup file after successful upload
-	log.Info().Str("file", backupFilePath).Msgf("%s - cleaning up local backup file after successful upload", fnName)
+	log.Info().Str("file", backupFilePath).Msg("cleaning up local backup file after successful upload")
 	if err := os.Remove(backupFilePath); err != nil {
-		log.Warn().Err(err).Str("file", backupFilePath).Msgf("%s - failed to cleanup local backup file", fnName)
+		log.Warn().Err(err).Str("file", backupFilePath).Msg("failed to cleanup local backup file")
 		// Don't return error as upload was successful
 	} else {
-		log.Info().Str("file", backupFilePath).Msgf("%s - local backup file successfully deleted", fnName)
+		log.Info().Str("file", backupFilePath).Msg("local backup file successfully deleted")
 	}
 
-	log.Info().Msgf("%s - backup job execution completed successfully", fnName)
+	log.Info().Msg("backup job execution completed successfully")
 	return nil
 }
 
 // uploadSmallFile uploads small files (<150MB) in a single request
 func uploadSmallFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPath string) error {
-	fnName := "cmd::uploadSmallFile"
 
 	// Reset file pointer to beginning
 	if _, err := file.Seek(0, 0); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to reset file pointer", fnName)
+		log.Error().Err(err).Msg("failed to reset file pointer")
 		return err
 	}
 
@@ -204,33 +200,32 @@ func uploadSmallFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPa
 	// Upload file
 	_, err := dbx.Upload(uploadArg, file)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to upload small file", fnName)
+		log.Error().Err(err).Msg("failed to upload small file")
 		return err
 	}
 
-	log.Info().Str("path", dropboxPath).Msgf("%s - small file successfully uploaded to Dropbox", fnName)
+	log.Info().Str("path", dropboxPath).Msg("small file successfully uploaded to Dropbox")
 	return nil
 }
 
 // uploadLargeFile uploads large files (>=150MB) in chunks
 func uploadLargeFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPath string) error {
-	fnName := "cmd::uploadLargeFile"
 	const chunkSize = 8 * 1024 * 1024 // 8 MB
 
 	// Reset file pointer to beginning
 	if _, err := file.Seek(0, 0); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to reset file pointer", fnName)
+		log.Error().Err(err).Msg("failed to reset file pointer")
 		return err
 	}
 
 	// Start upload session with first chunk
 	sessionRes, err := dbx.UploadSessionStart(files.NewUploadSessionStartArg(), io.LimitReader(file, chunkSize))
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to start upload session", fnName)
+		log.Error().Err(err).Msg("failed to start upload session")
 		return err
 	}
 
-	log.Info().Str("sessionId", sessionRes.SessionId).Msgf("%s - upload session started", fnName)
+	log.Info().Str("sessionId", sessionRes.SessionId).Msg("upload session started")
 
 	offset := int64(chunkSize)
 	chunkNumber := 1
@@ -241,7 +236,7 @@ func uploadLargeFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPa
 		buf := make([]byte, chunkSize)
 		n, err := file.Read(buf)
 		if err != nil && err != io.EOF {
-			log.Error().Err(err).Msgf("%s - error reading file chunk", fnName)
+			log.Error().Err(err).Msg("error reading file chunk")
 			return err
 		}
 		if n == 0 {
@@ -257,11 +252,11 @@ func uploadLargeFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPa
 		// Upload chunk
 		err = dbx.UploadSessionAppendV2(&files.UploadSessionAppendArg{Cursor: &cursor}, reader)
 		if err != nil {
-			log.Error().Err(err).Int("chunkNumber", chunkNumber).Msgf("%s - failed during upload session append", fnName)
+			log.Error().Err(err).Int("chunkNumber", chunkNumber).Msg("failed during upload session append")
 			return err
 		}
 
-		log.Info().Int("chunkNumber", chunkNumber).Int64("offset", offset).Msgf("%s - chunk uploaded successfully", fnName)
+		log.Info().Int("chunkNumber", chunkNumber).Int64("offset", offset).Msg("chunk uploaded successfully")
 
 		// Increase offset after successful append
 		offset += int64(n)
@@ -282,17 +277,16 @@ func uploadLargeFile(dbx *adapter.DynamicDropboxClient, file *os.File, dropboxPa
 	}, nil)
 
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to finish upload session", fnName)
+		log.Error().Err(err).Msg("failed to finish upload session")
 		return err
 	}
 
-	log.Info().Str("path", dropboxPath).Int("totalChunks", chunkNumber).Msgf("%s - large file successfully uploaded to Dropbox in chunks", fnName)
+	log.Info().Str("path", dropboxPath).Int("totalChunks", chunkNumber).Msg("large file successfully uploaded to Dropbox in chunks")
 	return nil
 }
 
 // createBackup creates a backup archive and returns the path to the final archive
 func createBackup() (string, error) {
-	fnName := "cmd::createBackup"
 
 	// Configuration variables
 	dbUser := config.Envs.Postgres.Username
@@ -310,7 +304,7 @@ func createBackup() (string, error) {
 
 	// Ensure the backup directory exists
 	if err := os.MkdirAll(backupDir, os.ModePerm); err != nil {
-		log.Error().Err(err).Str("dir", backupDir).Msgf("%s - failed to create backup directory", fnName)
+		log.Error().Err(err).Str("dir", backupDir).Msg("failed to create backup directory")
 		return "", fmt.Errorf("failed to create backup directory: %w", err)
 	}
 
@@ -320,54 +314,54 @@ func createBackup() (string, error) {
 	storageArchive := filepath.Join(backupDir, fmt.Sprintf("storage_%s.tar.gz", timestamp))
 	finalArchive := filepath.Join(backupDir, fmt.Sprintf("%s_backup_%s.tar.gz", dbName, timestamp))
 
-	log.Info().Str("sqlFile", sqlFile).Str("dumpFile", dumpFile).Str("storageArchive", storageArchive).Str("finalArchive", finalArchive).Msgf("%s - backup file paths", fnName)
+	log.Info().Str("sqlFile", sqlFile).Str("dumpFile", dumpFile).Str("storageArchive", storageArchive).Str("finalArchive", finalArchive).Msg("backup file paths")
 
 	// Set PGPASSWORD environment variable for authentication
 	os.Setenv("PGPASSWORD", dbPassword)
 	defer os.Unsetenv("PGPASSWORD")
 
 	// Backup database in SQL format
-	log.Info().Msgf("%s - creating SQL backup", fnName)
+	log.Info().Msg("creating SQL backup")
 	if err := execCommand("pg_dump", "-U", dbUser, "-h", dbHost, "-p", dbPort, "-f", sqlFile, dbName); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to backup database in SQL format", fnName)
+		log.Error().Err(err).Msg("failed to backup database in SQL format")
 		return "", fmt.Errorf("failed to backup database in SQL format: %w", err)
 	}
 
 	// Backup database in custom format
-	log.Info().Msgf("%s - creating custom format backup", fnName)
+	log.Info().Msg("creating custom format backup")
 	if err := execCommand("pg_dump", "-U", dbUser, "-h", dbHost, "-p", dbPort, "-Fc", "-f", dumpFile, dbName); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to backup database in custom format", fnName)
+		log.Error().Err(err).Msg("failed to backup database in custom format")
 		return "", fmt.Errorf("failed to backup database in custom format: %w", err)
 	}
 
 	// Compress the storage folder if it exists
 	storagePath := filepath.Join(binariesDir, "storage")
 	if _, err := os.Stat(storagePath); err == nil {
-		log.Info().Msgf("%s - compressing storage folder", fnName)
+		log.Info().Msg("compressing storage folder")
 		if err := execCommand("tar", "-czvf", storageArchive, "-C", binariesDir, "storage"); err != nil {
-			log.Warn().Err(err).Msgf("%s - failed to compress storage folder, continuing without it", fnName)
+			log.Warn().Err(err).Msg("failed to compress storage folder, continuing without it")
 			// Don't return error, continue without storage backup
 			storageArchive = ""
 		}
 	} else {
-		log.Info().Msgf("%s - storage folder not found, skipping storage backup", fnName)
+		log.Info().Msg("storage folder not found, skipping storage backup")
 		storageArchive = ""
 	}
 
 	// Combine all backup files into a single archive
-	log.Info().Msgf("%s - creating final archive", fnName)
+	log.Info().Msg("creating final archive")
 	archiveArgs := []string{"-czvf", finalArchive, "-C", backupDir, filepath.Base(sqlFile), filepath.Base(dumpFile)}
 	if storageArchive != "" {
 		archiveArgs = append(archiveArgs, filepath.Base(storageArchive))
 	}
 
 	if err := execCommand("tar", archiveArgs...); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to create final archive", fnName)
+		log.Error().Err(err).Msg("failed to create final archive")
 		return "", fmt.Errorf("failed to create final archive: %w", err)
 	}
 
 	// Remove temporary files
-	log.Info().Msgf("%s - cleaning up temporary files", fnName)
+	log.Info().Msg("cleaning up temporary files")
 	os.Remove(sqlFile)
 	os.Remove(dumpFile)
 	if storageArchive != "" {
@@ -377,20 +371,19 @@ func createBackup() (string, error) {
 	// Log the backup completion
 	logFile, err := os.OpenFile(filepath.Join(backupDir, "backup_log.txt"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Warn().Err(err).Msgf("%s - failed to open log file", fnName)
+		log.Warn().Err(err).Msg("failed to open log file")
 	} else {
 		defer logFile.Close()
 		logEntry := fmt.Sprintf("[%s] Backup completed and archived at %s\n", timestamp, finalArchive)
 		logFile.WriteString(logEntry)
 	}
 
-	log.Info().Str("archive", finalArchive).Msgf("%s - backup archive created successfully", fnName)
+	log.Info().Str("archive", finalArchive).Msg("backup archive created successfully")
 	return finalArchive, nil
 }
 
 // execCommand runs a command with the given arguments and logs the output
 func execCommand(name string, args ...string) error {
-	fnName := "cmd::execCommand"
 
 	// Log command execution (without sensitive information)
 	logArgs := make([]string, len(args))
@@ -402,24 +395,23 @@ func execCommand(name string, args ...string) error {
 		}
 	}
 
-	log.Info().Str("command", name).Strs("args", logArgs).Msgf("%s - executing command", fnName)
+	log.Info().Str("command", name).Strs("args", logArgs).Msg("executing command")
 
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Error().Err(err).Str("command", name).Msgf("%s - command execution failed", fnName)
+		log.Error().Err(err).Str("command", name).Msg("command execution failed")
 		return err
 	}
 
-	log.Info().Str("command", name).Msgf("%s - command executed successfully", fnName)
+	log.Info().Str("command", name).Msg("command executed successfully")
 	return nil
 }
 
 // cleanupOldBackupFiles removes any leftover backup files from previous runs
 func cleanupOldBackupFiles() {
-	fnName := "cmd::cleanupOldBackupFiles"
 	backupDir := "./backups"
 
 	// Check if backup directory exists
@@ -430,7 +422,7 @@ func cleanupOldBackupFiles() {
 	// Read directory contents
 	files, err := os.ReadDir(backupDir)
 	if err != nil {
-		log.Warn().Err(err).Str("dir", backupDir).Msgf("%s - failed to read backup directory", fnName)
+		log.Warn().Err(err).Str("dir", backupDir).Msg("failed to read backup directory")
 		return
 	}
 
@@ -450,16 +442,16 @@ func cleanupOldBackupFiles() {
 		// Remove backup files (typically .tar.gz, .sql, .dump files)
 		filePath := filepath.Join(backupDir, filename)
 		if err := os.Remove(filePath); err != nil {
-			log.Warn().Err(err).Str("file", filePath).Msgf("%s - failed to remove old backup file", fnName)
+			log.Warn().Err(err).Str("file", filePath).Msg("failed to remove old backup file")
 		} else {
-			log.Info().Str("file", filePath).Msgf("%s - removed old backup file", fnName)
+			log.Info().Str("file", filePath).Msg("removed old backup file")
 			cleanedCount++
 		}
 	}
 
 	if cleanedCount > 0 {
-		log.Info().Int("filesRemoved", cleanedCount).Msgf("%s - cleanup completed", fnName)
+		log.Info().Int("filesRemoved", cleanedCount).Msg("cleanup completed")
 	} else {
-		log.Info().Msgf("%s - no old backup files found to clean", fnName)
+		log.Info().Msg("no old backup files found to clean")
 	}
 }

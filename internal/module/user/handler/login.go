@@ -13,25 +13,24 @@ import (
 func (h *userHandler) login(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.Login")
-		fnName    = "handler::login"
 		req       = new(entity.LoginReq)
 		v         = adapter.Adapters.Validator
 	)
 	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msg("Invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msg("Invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	resp, err := h.service.Login(ctx, req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Service error", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msg("Service error")
 		return c.Status(fiber.StatusInternalServerError).JSON(response.Error(err))
 	}
 

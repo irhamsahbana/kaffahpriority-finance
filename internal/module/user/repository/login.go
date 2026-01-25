@@ -17,7 +17,6 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 	ctx, span := tracing.StartSpan(ctx, "repo.Login")
 	defer span.End()
 
-	fnName := "repo::Login"
 	type user struct {
 		Id       string `db:"id"`
 		Email    string `db:"email"`
@@ -47,15 +46,15 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 	err := r.db.GetContext(ctx, result, r.db.Rebind(query), req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - User not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msg("User not found")
 			return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 		}
-		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to get user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msg("Failed to get user")
 		return nil, err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(req.Password)); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msgf("%s - Password not match", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req.Log()).Msg("Password not match")
 		return nil, errmsg.NewCustomErrors(400).SetMessage("Kredensial yang Anda masukkan salah")
 	}
 
@@ -69,7 +68,7 @@ func (r *userRepo) Login(ctx context.Context, req *entity.LoginReq) (*entity.Log
 
 	token, err := jwthandler.GenerateTokenString(payload)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msgf("%s - Failed to generate token", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req.Log()).Msg("Failed to generate token")
 		return nil, errmsg.NewCustomErrors(500).SetMessage("Gagal membuat token")
 	}
 

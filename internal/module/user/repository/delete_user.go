@@ -12,7 +12,6 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 	ctx, span := tracing.StartSpan(ctx, "repo.DeleteUser")
 	defer span.End()
 
-	fnName := "repo::DeleteUser"
 	query := `
 		UPDATE
 			users
@@ -26,7 +25,7 @@ func (r *userRepo) DeleteUser(ctx context.Context, req *entity.DeleteUserReq) er
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to delete user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to delete user")
 		return err
 	}
 

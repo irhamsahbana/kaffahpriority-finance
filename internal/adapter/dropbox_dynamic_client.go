@@ -28,11 +28,9 @@ func NewDynamicDropboxClient(tokenManager *DropboxTokenManager) *DynamicDropboxC
 
 // refreshClient refreshes the underlying client with a new valid token
 func (dc *DynamicDropboxClient) refreshClient() error {
-	fnName := "adapter::refreshClient"
-
 	validToken, err := dc.tokenManager.GetValidToken()
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to get valid token", fnName)
+		log.Error().Err(err).Msg("failed to get valid token")
 		return err
 	}
 
@@ -44,11 +42,9 @@ func (dc *DynamicDropboxClient) refreshClient() error {
 
 // Upload wraps the files.Upload method with automatic token refresh
 func (dc *DynamicDropboxClient) Upload(arg *files.UploadArg, content io.Reader) (*files.FileMetadata, error) {
-	fnName := "adapter::Upload"
-
 	// Ensure we have a valid token
 	if err := dc.refreshClient(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to refresh client before upload", fnName)
+		log.Error().Err(err).Msg("failed to refresh client before upload")
 		return nil, err
 	}
 
@@ -57,11 +53,9 @@ func (dc *DynamicDropboxClient) Upload(arg *files.UploadArg, content io.Reader) 
 
 // UploadSessionStart wraps the UploadSessionStart method with automatic token refresh
 func (dc *DynamicDropboxClient) UploadSessionStart(arg *files.UploadSessionStartArg, content io.Reader) (*files.UploadSessionStartResult, error) {
-	fnName := "adapter::UploadSessionStart"
-
 	// Ensure we have a valid token
 	if err := dc.refreshClient(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to refresh client before upload session start", fnName)
+		log.Error().Err(err).Msg("failed to refresh client before upload session start")
 		return nil, err
 	}
 
@@ -70,11 +64,9 @@ func (dc *DynamicDropboxClient) UploadSessionStart(arg *files.UploadSessionStart
 
 // UploadSessionAppendV2 wraps the UploadSessionAppendV2 method with automatic token refresh
 func (dc *DynamicDropboxClient) UploadSessionAppendV2(arg *files.UploadSessionAppendArg, content io.Reader) error {
-	fnName := "adapter::UploadSessionAppendV2"
-
 	// Ensure we have a valid token
 	if err := dc.refreshClient(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to refresh client before upload session append", fnName)
+		log.Error().Err(err).Msg("failed to refresh client before upload session append")
 		return err
 	}
 
@@ -83,11 +75,9 @@ func (dc *DynamicDropboxClient) UploadSessionAppendV2(arg *files.UploadSessionAp
 
 // UploadSessionFinish wraps the UploadSessionFinish method with automatic token refresh
 func (dc *DynamicDropboxClient) UploadSessionFinish(arg *files.UploadSessionFinishArg, content io.Reader) (*files.FileMetadata, error) {
-	fnName := "adapter::UploadSessionFinish"
-
 	// Ensure we have a valid token
 	if err := dc.refreshClient(); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to refresh client before upload session finish", fnName)
+		log.Error().Err(err).Msg("failed to refresh client before upload session finish")
 		return nil, err
 	}
 

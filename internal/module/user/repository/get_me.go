@@ -14,7 +14,6 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 	ctx, span := tracing.StartSpan(ctx, "repo.GetMe")
 	defer span.End()
 
-	fnName := "repo::GetMe"
 	var (
 		resp entity.GetMeResp
 	)
@@ -39,10 +38,10 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 	err := r.db.GetContext(ctx, &resp, r.db.Rebind(query), req.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - user not found", fnName)
+			log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("user not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Data tidak ditemukan")
 		}
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to fetch user")
 		return nil, err
 	}
 
@@ -67,12 +66,12 @@ func (r *userRepo) GetMe(ctx context.Context, req *entity.GetMeReq) (*entity.Get
 
 	err = r.db.SelectContext(ctx, &resp.Permissions, r.db.Rebind(query), req.UserID)
 	if err != nil && err != sql.ErrNoRows {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to fetch permissions", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to fetch permissions")
 		return nil, err
 	}
 
 	if len(resp.Permissions) == 0 {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - permissions not found", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("permissions not found")
 	}
 
 	return &resp, nil

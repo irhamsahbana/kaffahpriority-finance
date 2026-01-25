@@ -14,7 +14,6 @@ import (
 func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 	var (
 		ctx    = c.UserContext()
-		fnName = "handler::getStudents"
 		req    = new(entity.GetStudentsReq)
 		v      = adapter.Adapters.Validator
 		l      = m.GetLocals(c)
@@ -23,14 +22,14 @@ func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("failed to parse request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -47,7 +46,6 @@ func (h *masterHandler) getStudents(c *fiber.Ctx) error {
 func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 	var (
 		ctx    = c.UserContext()
-		fnName = "handler::createStudent"
 		req    = new(entity.CreateStudentReq)
 		v      = adapter.Adapters.Validator
 		l      = m.GetLocals(c)
@@ -56,12 +54,12 @@ func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("failed to parse request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -78,7 +76,6 @@ func (h *masterHandler) createStudent(c *fiber.Ctx) error {
 func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 	var (
 		ctx    = c.UserContext()
-		fnName = "handler::getStudent"
 		req    = new(entity.GetStudentReq)
 		v      = adapter.Adapters.Validator
 		l      = m.GetLocals(c)
@@ -88,7 +85,7 @@ func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -105,7 +102,6 @@ func (h *masterHandler) getStudent(c *fiber.Ctx) error {
 func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 	var (
 		ctx    = c.UserContext()
-		fnName = "handler::updateStudent"
 		req    = new(entity.UpdateStudentReq)
 		v      = adapter.Adapters.Validator
 		l      = m.GetLocals(c)
@@ -115,12 +111,12 @@ func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - failed to parse request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("failed to parse request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -137,7 +133,6 @@ func (h *masterHandler) updateStudent(c *fiber.Ctx) error {
 func (h *masterHandler) deleteStudent(c *fiber.Ctx) error {
 	var (
 		ctx    = c.UserContext()
-		fnName = "handler::deleteStudent"
 		req    = new(entity.DeleteStudentReq)
 		v      = adapter.Adapters.Validator
 		l      = m.GetLocals(c)
@@ -147,7 +142,7 @@ func (h *masterHandler) deleteStudent(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

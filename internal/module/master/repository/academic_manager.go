@@ -13,7 +13,6 @@ func (r *masterRepo) GetAcademicManagers(ctx context.Context, req *entity.GetAca
 	ctx, span := tracing.StartSpan(ctx, "repo.GetAcademicManagers")
 	defer span.End()
 
-	fnName := "repo::GetAcademicManagers"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.AcademicManager
@@ -38,7 +37,7 @@ func (r *masterRepo) GetAcademicManagers(ctx context.Context, req *entity.GetAca
 	`
 
 	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), req.Paginate, (req.Page-1)*req.Paginate); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query academic managers", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to query academic managers")
 		return nil, err
 	}
 
@@ -56,7 +55,6 @@ func (r *masterRepo) CreateAcademicManager(ctx context.Context, req *entity.Crea
 	ctx, span := tracing.StartSpan(ctx, "repo.CreateAcademicManager")
 	defer span.End()
 
-	fnName := "repo::CreateAcademicManager"
 	query := `
 		INSERT INTO academic_managers (
 			id,
@@ -70,7 +68,7 @@ func (r *masterRepo) CreateAcademicManager(ctx context.Context, req *entity.Crea
 	)
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), id, req.Name); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create academic manager", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to create academic manager")
 		return nil, err
 	}
 
@@ -83,7 +81,6 @@ func (r *masterRepo) GetAcademicManager(ctx context.Context, req *entity.GetAcad
 	ctx, span := tracing.StartSpan(ctx, "repo.GetAcademicManager")
 	defer span.End()
 
-	fnName := "repo::GetAcademicManager"
 	var (
 		resp = new(entity.GetAcademicManagerResp)
 		data = new(entity.AcademicManager)
@@ -100,7 +97,7 @@ func (r *masterRepo) GetAcademicManager(ctx context.Context, req *entity.GetAcad
 	`
 
 	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query academic manager", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to query academic manager")
 		return nil, err
 	}
 
@@ -113,7 +110,6 @@ func (r *masterRepo) UpdateAcademicManager(ctx context.Context, req *entity.Upda
 	ctx, span := tracing.StartSpan(ctx, "repo.UpdateAcademicManager")
 	defer span.End()
 
-	fnName := "repo::UpdateAcademicManager"
 	query := `
 		UPDATE academic_managers
 		SET
@@ -123,7 +119,7 @@ func (r *masterRepo) UpdateAcademicManager(ctx context.Context, req *entity.Upda
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.Name, req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update academic manager", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to update academic manager")
 		return err
 	}
 
@@ -134,7 +130,6 @@ func (r *masterRepo) DeleteAcademicManager(ctx context.Context, req *entity.Dele
 	ctx, span := tracing.StartSpan(ctx, "repo.DeleteAcademicManager")
 	defer span.End()
 
-	fnName := "repo::DeleteAcademicManager"
 	query := `
 		UPDATE academic_managers
 		SET
@@ -145,7 +140,7 @@ func (r *masterRepo) DeleteAcademicManager(ctx context.Context, req *entity.Dele
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete academic manager", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to delete academic manager")
 		return err
 	}
 

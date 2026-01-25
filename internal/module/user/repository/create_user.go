@@ -14,13 +14,12 @@ func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*
 	ctx, span := tracing.StartSpan(ctx, "repo.CreateUser")
 	defer span.End()
 
-	fnName := "repo::CreateUser"
 	var resp entity.CreateUserResp
 	resp.ID = ulid.Make().String()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to hash password")
 		return nil, err
 	}
 
@@ -40,7 +39,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *entity.CreateUserReq) (*
 
 	_, err = r.db.ExecContext(ctx, r.db.Rebind(query), resp.ID, req.RoleID, req.Name, req.Email, hashedPassword)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to create user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to create user")
 		return nil, err
 	}
 
