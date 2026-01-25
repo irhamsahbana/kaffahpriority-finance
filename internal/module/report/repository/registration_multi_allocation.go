@@ -61,7 +61,7 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 
 		if id != nil {
 			// Registration exists
-			
+
 			// If is_paid is false, overwrite the registration instead of returning error
 			if !isPaid {
 				err = r.overwriteRegistration(ctx, tx, req, *id)
@@ -115,7 +115,7 @@ func (r *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, 
 			AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
 			AND deleted_at IS NULL
 	`
-	
+
 	args := []interface{}{templateID, allocationMonth + "-01", allocationMonth + "-01"}
 
 	if excludeDetailsID != "" {
@@ -138,7 +138,7 @@ func (r *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, 
 }
 
 func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, registrationId string) error {
-	
+
 	ctx, span := tracing.StartSpan(ctx, "repo.overwriteRegistration")
 	defer span.End()
 
@@ -151,15 +151,15 @@ func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req
 		WHERE id = ?
 		`
 
-		_, err := tx.ExecContext(ctx, tx.Rebind(query),
-			req.PaidAt,     // Paid at date
-			req.PaidAtTime, // Paid at time
-			registrationId,    // Registration ID
-		)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registration is paid")
-			return err
-		}
+	_, err := tx.ExecContext(ctx, tx.Rebind(query),
+		req.PaidAt,     // Paid at date
+		req.PaidAtTime, // Paid at time
+		registrationId, // Registration ID
+	)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to update registration is paid")
+		return err
+	}
 
 	return nil
 }

@@ -675,5 +675,3 @@ func (r *reportRepo) archiveTemplate(ctx context.Context, tx *sqlx.Tx, templateI
 	}
 	return nil
 }
-
-
