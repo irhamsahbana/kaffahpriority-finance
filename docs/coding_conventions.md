@@ -24,6 +24,14 @@
 - **Custom Errors**: Use `pkg/errmsg` for domain-specific errors.
 - **Wrapping**: Wrap errors with context when appropriate, but ensure the root cause is preserved for logging.
 
+## Logging & Tracing
+- **Tracing**: Implement tracing in all layers using `codebase-app/internal/infrastructure/tracing`.
+- **Span Naming**: Use `layer.MethodName` (e.g., `service.GetPayrollRuns`).
+- **Context Propagation**: Always pass `ctx` to the next layer.
+- **Logging**: Use `log.Ctx(ctx)` (zerolog) which integrates with tracing.
+  - **Pattern**: `log.Ctx(ctx).Error().Err(err).Msg("message")`
+  - **No Function Name**: Do NOT include the function name in the log message manually (e.g., avoid `Msgf("%s - error", fnName)`). The tracing context already captures the span/function info.
+
 ## Database & SQL
 - **Library**: Use `sqlx`.
 - **Placeholders**: Use `$` (Postgres) for parameters (e.g., `$1`, `$2`).
