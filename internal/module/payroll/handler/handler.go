@@ -39,6 +39,7 @@ func (h *payrollHandler) Register(router fiber.Router) {
 	protected.Get("/items", h.GetPayrollItems)
 	protected.Get("/export-payroll-items-periodically", h.ExportPayrollItemsPeriodically)
 	protected.Patch("/items/bulk", h.BulkUpdatePayrollItems)
+	protected.Post("/items/import", h.ImportPayrollItems)
 	protected.Patch("/items/:id", h.UpdatePayrollItem)
 	protected.Delete("/items/:id", h.DeletePayrollItem)
 }
