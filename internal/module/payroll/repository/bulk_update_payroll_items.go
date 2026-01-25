@@ -16,7 +16,9 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	for _, item := range req.Data {
 		setParts := []string{}
