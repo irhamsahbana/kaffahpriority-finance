@@ -16,7 +16,6 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 	ctx, span := tracing.StartSpan(ctx, "repo.GetStudents")
 	defer span.End()
 
-	fnName := "repo::GetStudents"
 	type dao struct {
 		TotalData int `db:"total_data"`
 		entity.Student
@@ -71,7 +70,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 
 	if err := r.db.SelectContext(ctx, &data,
 		r.db.Rebind(query), args...); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to query students", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to query students")
 		return nil, err
 	}
 
@@ -105,7 +104,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 
 		query, args, err := sqlx.In(query, StudentIds)
 		if err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to query last payment at", fnName)
+			log.Error().Err(err).Any("req", req).Msg("failed to query last payment at")
 			return nil, err
 		}
 
@@ -117,7 +116,7 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 		}, 0)
 
 		if err := r.db.SelectContext(ctx, &lastPaymentAtData, query, args...); err != nil {
-			log.Error().Err(err).Any("req", req).Msgf("%s - failed to query last payment at", fnName)
+			log.Error().Err(err).Any("req", req).Msg("failed to query last payment at")
 			return nil, err
 		}
 
@@ -136,7 +135,6 @@ func (r *masterRepo) GetStudents(ctx context.Context, req *entity.GetStudentsReq
 }
 
 func (r *masterRepo) CreateStudent(ctx context.Context, req *entity.CreateStudentReq) (*entity.CreateStudentResp, error) {
-	fnName := "repo::CreateStudent"
 	query := `
 		INSERT INTO students (
 			id,
@@ -154,7 +152,7 @@ func (r *masterRepo) CreateStudent(ctx context.Context, req *entity.CreateStuden
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
 		Id, req.Identifier, req.Name, req.RegisteredAt); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to create student", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to create student")
 		return nil, err
 	}
 
@@ -164,7 +162,6 @@ func (r *masterRepo) CreateStudent(ctx context.Context, req *entity.CreateStuden
 }
 
 func (r *masterRepo) GetStudent(ctx context.Context, req *entity.GetStudentReq) (*entity.GetStudentResp, error) {
-	fnName := "repo::GetStudent"
 	var (
 		resp = new(entity.GetStudentResp)
 		data = new(entity.Student)
@@ -189,10 +186,10 @@ func (r *masterRepo) GetStudent(ctx context.Context, req *entity.GetStudentReq) 
 
 	if err := r.db.GetContext(ctx, data, r.db.Rebind(query), req.ID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Warn().Any("req", req).Msgf("%s - student not found", fnName)
+			log.Warn().Any("req", req).Msg("student not found")
 			return nil, errmsg.NewCustomErrors(404).SetMessage("Santri tidak ditemukan")
 		}
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to get student", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to get student")
 		return nil, err
 	}
 
@@ -202,7 +199,6 @@ func (r *masterRepo) GetStudent(ctx context.Context, req *entity.GetStudentReq) 
 }
 
 func (r *masterRepo) UpdateStudent(ctx context.Context, req *entity.UpdateStudentReq) error {
-	fnName := "repo::UpdateStudent"
 	query := `
 		UPDATE students
 		SET
@@ -218,7 +214,7 @@ func (r *masterRepo) UpdateStudent(ctx context.Context, req *entity.UpdateStuden
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query),
 		req.Identifier, req.Name, req.RegisteredAt, req.IsActive, req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to update student", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to update student")
 		return err
 	}
 
@@ -226,7 +222,6 @@ func (r *masterRepo) UpdateStudent(ctx context.Context, req *entity.UpdateStuden
 }
 
 func (r *masterRepo) DeleteStudent(ctx context.Context, req *entity.DeleteStudentReq) error {
-	fnName := "repo::DeleteStudent"
 	query := `
 		UPDATE students
 		SET
@@ -237,7 +232,7 @@ func (r *masterRepo) DeleteStudent(ctx context.Context, req *entity.DeleteStuden
 	`
 
 	if _, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.ID); err != nil {
-		log.Error().Err(err).Any("req", req).Msgf("%s - failed to delete student", fnName)
+		log.Error().Err(err).Any("req", req).Msg("failed to delete student")
 		return err
 	}
 

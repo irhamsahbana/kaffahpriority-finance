@@ -15,7 +15,6 @@ import (
 func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateUser")
-		fnName    = "handler::updateUser"
 		req       = new(entity.UpdateUserReq)
 		v         = adapter.Adapters.Validator
 		l         = middleware.GetLocals(c)
@@ -26,12 +25,12 @@ func (h *userHandler) updateUser(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("Invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - Invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("Invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}

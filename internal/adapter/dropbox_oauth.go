@@ -47,8 +47,6 @@ func NewDropboxTokenManager(accessToken, refreshToken, appKey, appSecret string)
 
 // GetValidToken returns a valid access token, refreshing if necessary
 func (tm *DropboxTokenManager) GetValidToken() (string, error) {
-	fnName := "adapter::GetValidToken"
-
 	tm.mu.RLock()
 	// Check if current token is still valid (with 5 minute buffer)
 	if time.Now().Before(tm.expiresAt.Add(-5 * time.Minute)) {
@@ -59,14 +57,12 @@ func (tm *DropboxTokenManager) GetValidToken() (string, error) {
 	tm.mu.RUnlock()
 
 	// Token is expired or about to expire, refresh it
-	log.Info().Msgf("%s - access token expired or about to expire, refreshing", fnName)
+	log.Info().Msg("access token expired or about to expire, refreshing")
 	return tm.refreshAccessToken()
 }
 
 // refreshAccessToken refreshes the access token using the refresh token
 func (tm *DropboxTokenManager) refreshAccessToken() (string, error) {
-	fnName := "adapter::refreshAccessToken"
-
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -76,11 +72,11 @@ func (tm *DropboxTokenManager) refreshAccessToken() (string, error) {
 	}
 
 	if tm.refreshToken == "" {
-		log.Error().Msgf("%s - no refresh token available", fnName)
+		log.Error().Msg("no refresh token available")
 		return "", fmt.Errorf("no refresh token available")
 	}
 
-	log.Info().Msgf("%s - refreshing Dropbox access token", fnName)
+	log.Info().Msg("refreshing Dropbox access token")
 
 	// Prepare the refresh request
 	data := url.Values{
@@ -90,7 +86,7 @@ func (tm *DropboxTokenManager) refreshAccessToken() (string, error) {
 
 	req, err := http.NewRequest("POST", "https://api.dropboxapi.com/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to create refresh request", fnName)
+		log.Error().Err(err).Msg("failed to create refresh request")
 		return "", fmt.Errorf("failed to create refresh request: %w", err)
 	}
 
@@ -100,26 +96,26 @@ func (tm *DropboxTokenManager) refreshAccessToken() (string, error) {
 	// Make the refresh request
 	resp, err := tm.client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to send refresh request", fnName)
+		log.Error().Err(err).Msg("failed to send refresh request")
 		return "", fmt.Errorf("failed to send refresh request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to read refresh response", fnName)
+		log.Error().Err(err).Msg("failed to read refresh response")
 		return "", fmt.Errorf("failed to read refresh response: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error().Int("statusCode", resp.StatusCode).Str("response", string(body)).Msgf("%s - token refresh failed", fnName)
+		log.Error().Int("statusCode", resp.StatusCode).Str("response", string(body)).Msg("token refresh failed")
 		return "", fmt.Errorf("token refresh failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse the response
 	var tokenResp TokenResponse
 	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to parse token response", fnName)
+		log.Error().Err(err).Msg("failed to parse token response")
 		return "", fmt.Errorf("failed to parse token response: %w", err)
 	}
 
@@ -136,7 +132,7 @@ func (tm *DropboxTokenManager) refreshAccessToken() (string, error) {
 	}
 	tm.expiresAt = time.Now().Add(time.Duration(expiresIn) * time.Second)
 
-	log.Info().Time("expiresAt", tm.expiresAt).Msgf("%s - access token refreshed successfully", fnName)
+	log.Info().Time("expiresAt", tm.expiresAt).Msg("access token refreshed successfully")
 	return tm.accessToken, nil
 }
 
@@ -154,8 +150,6 @@ func GetDropboxAuthURL(appKey, redirectURL string) string {
 
 // ExchangeCodeForToken exchanges authorization code for access and refresh tokens
 func ExchangeCodeForToken(code, appKey, appSecret, redirectURL string) (*TokenResponse, error) {
-	fnName := "adapter::ExchangeCodeForToken"
-
 	data := url.Values{
 		"grant_type":   {"authorization_code"},
 		"code":         {code},
@@ -164,7 +158,7 @@ func ExchangeCodeForToken(code, appKey, appSecret, redirectURL string) (*TokenRe
 
 	req, err := http.NewRequest("POST", "https://api.dropboxapi.com/oauth2/token", strings.NewReader(data.Encode()))
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to create token exchange request", fnName)
+		log.Error().Err(err).Msg("failed to create token exchange request")
 		return nil, fmt.Errorf("failed to create token exchange request: %w", err)
 	}
 
@@ -174,28 +168,28 @@ func ExchangeCodeForToken(code, appKey, appSecret, redirectURL string) (*TokenRe
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to send token exchange request", fnName)
+		log.Error().Err(err).Msg("failed to send token exchange request")
 		return nil, fmt.Errorf("failed to send token exchange request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error().Err(err).Msgf("%s - failed to read token exchange response", fnName)
+		log.Error().Err(err).Msg("failed to read token exchange response")
 		return nil, fmt.Errorf("failed to read token exchange response: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error().Int("statusCode", resp.StatusCode).Str("response", string(body)).Msgf("%s - token exchange failed", fnName)
+		log.Error().Int("statusCode", resp.StatusCode).Str("response", string(body)).Msg("token exchange failed")
 		return nil, fmt.Errorf("token exchange failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var tokenResp TokenResponse
 	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		log.Error().Err(err).Msgf("%s - failed to parse token exchange response", fnName)
+		log.Error().Err(err).Msg("failed to parse token exchange response")
 		return nil, fmt.Errorf("failed to parse token exchange response: %w", err)
 	}
 
-	log.Info().Msgf("%s - token exchange completed successfully", fnName)
+	log.Info().Msg("token exchange completed successfully")
 	return &tokenResp, nil
 }

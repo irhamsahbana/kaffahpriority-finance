@@ -15,7 +15,6 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 	ctx, span := tracing.StartSpan(ctx, "repo.UpdateUser")
 	defer span.End()
 
-	fnName := "repo::UpdateUser"
 	var (
 		resp       entity.UpdateUserResp
 		queryParts = []string{}
@@ -33,7 +32,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to hash password", fnName)
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to hash password")
 			return nil, err
 		}
 
@@ -56,7 +55,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, req *entity.UpdateUserReq) (*
 
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), args...)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("%s - failed to update user", fnName)
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to update user")
 		return nil, err
 	}
 
