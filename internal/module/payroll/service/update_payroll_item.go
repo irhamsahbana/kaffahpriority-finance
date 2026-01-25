@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
+	"codebase-app/pkg/errmsg"
 	"context"
 	"time"
 
@@ -45,21 +46,25 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 	}
 	req.NightLearningFee = &nl
 
-	var initialFee float64
+	var initialWage decimal.Decimal
 	if isFull {
-		initialFee = itemBefore.FullWage.InexactFloat64()
+		initialWage = itemBefore.FullWage
 	} else {
-		initialFee = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings))).InexactFloat64()
+		initialWage = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings)))
 	}
 
-	initialWageVal := decimal.NewFromFloat(initialFee)
 	if meetings < 1 {
-		initialWageVal = decimal.Zero
+		initialWage = decimal.Zero
 	}
-	req.InitialWage = &initialWageVal
+	req.InitialWage = &initialWage
+
 	if req.Wage == nil {
-		oldWage := itemBefore.Wage
-		req.Wage = &oldWage
+		req.Wage = &itemBefore.Wage
+	}
+
+	// if AcquisitionRights is not nil, and not equal to 0, then Wage must be greater than 0
+	if req.AcquisitionRights != nil && *req.AcquisitionRights != uint64(0) && req.Wage.LessThanOrEqual(decimal.Zero) {
+		return errmsg.NewCustomErrors(400).SetMessage("Keep Gaji harus terisi jika ingin mnegubah Hak")
 	}
 
 	if err := s.repo.UpdatePayrollItem(ctx, req); err != nil {
