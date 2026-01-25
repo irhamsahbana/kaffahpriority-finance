@@ -5,7 +5,6 @@ import (
 	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -147,6 +146,13 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 			Vertical:   "center",
 		},
 	})
+	editableStyle, _ := f.NewStyle(&excelize.Style{
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#FFF2CC"},
+			Pattern: 1,
+		},
+	})
 
 	// Headering
 	f.SetCellValue(sheetName, "A1", "NO")
@@ -158,12 +164,12 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	f.SetCellValue(sheetName, "G1", "HITUNGAN")
 	f.SetCellValue(sheetName, "H1", "UJROH FULL")
 	f.SetCellValue(sheetName, "I1", "UJROH AWAL")
-	f.SetCellValue(sheetName, "J1", "FL")
-	f.SetCellValue(sheetName, "K1", "NL")
-	f.SetCellValue(sheetName, "L1", "UJROH REAL")
-	f.SetCellValue(sheetName, "M1", "KETERANGAN")
-	f.SetCellValue(sheetName, "N1", "KEEP GAJI")
-	f.SetCellValue(sheetName, "O1", "ANGKA")
+	f.SetCellValue(sheetName, "J1", "TF/F")
+	f.SetCellValue(sheetName, "K1", "FL")
+	f.SetCellValue(sheetName, "L1", "NL")
+	f.SetCellValue(sheetName, "M1", "UJROH REAL")
+	f.SetCellValue(sheetName, "N1", "KETERANGAN")
+	f.SetCellValue(sheetName, "O1", "HAK AKUISISI")
 	f.SetCellValue(sheetName, "P1", "PENASEHAT AKADEMIK")
 
 	f.SetCellStyle(sheetName, "A1", "P1", HeaderStyle)
@@ -171,12 +177,12 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	f.SetColWidth(sheetName, "D", "D", 20)
 	f.SetColWidth(sheetName, "E", "E", 20)
 	f.SetColWidth(sheetName, "G", "I", 20)
-	f.SetColWidth(sheetName, "L", "L", 20)
 	f.SetColWidth(sheetName, "M", "M", 20)
-	f.SetColWidth(sheetName, "N", "O", 20)
+	f.SetColWidth(sheetName, "N", "N", 20)
+	f.SetColWidth(sheetName, "O", "O", 20)
 	f.SetColWidth(sheetName, "P", "P", 20)
 
-	f.SetPanes(sheetName, &excelize.Panes{
+	_ = f.SetPanes(sheetName, &excelize.Panes{
 		Freeze: true,
 		XSplit: 5,
 		YSplit: 1,
@@ -209,20 +215,37 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellValue(sheetName, fmt.Sprintf("H%v", lastRow), item.FullWage.InexactFloat64())
 				f.SetCellValue(sheetName, fmt.Sprintf("I%v", lastRow), item.InitialWage.InexactFloat64())
 
+				isFullStr := "TF"
+				if item.IsMeetingFull {
+					isFullStr = "F"
+				}
+				f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow), isFullStr)
+
 				if !item.ForeignLearningFee.IsZero() {
-					f.SetCellValue(sheetName, fmt.Sprintf("J%v", lastRow), item.ForeignLearningFee.InexactFloat64())
+					f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), item.ForeignLearningFee.InexactFloat64())
 				}
 				if !item.NightLearningFee.IsZero() {
-					f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), item.NightLearningFee.InexactFloat64())
+					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), item.NightLearningFee.InexactFloat64())
 				}
 
 				wage := item.Wage.InexactFloat64()
-				f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), wage)
+				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), wage)
 				totalRealFee += wage
 
 				// Notes and MentorDetailFeeUsed are not available in PayrollItem, leaving empty
 				// AcquisitionRights
 				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), item.AcquisitionRights)
+
+				// ID for re-import (Hidden or explicit column R)
+				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.ID)
+
+				// Apply styles to editable columns
+				f.SetCellStyle(sheetName, fmt.Sprintf("F%v", lastRow), fmt.Sprintf("F%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("I%v", lastRow), fmt.Sprintf("I%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("J%v", lastRow), fmt.Sprintf("J%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("K%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("O%v", lastRow), fmt.Sprintf("O%v", lastRow), editableStyle)
 
 				if itemIndex+1 != len(lecturer.Items) {
 					lastRow++
@@ -230,10 +253,10 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 
 				if itemIndex == len(lecturer.Items)-1 {
 					lastRow++
-					f.SetCellValue(sheetName, fmt.Sprintf("K%v", lastRow), "TOTAL")
-					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), totalRealFee)
-					f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("K%v", lastRow), HeaderStyle)
-					f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyleRight)
+					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), "TOTAL")
+					f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), totalRealFee)
+					f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyle)
+					f.SetCellStyle(sheetName, fmt.Sprintf("M%v", lastRow), fmt.Sprintf("M%v", lastRow), HeaderStyleRight)
 					lastRow++
 				}
 			}
@@ -286,25 +309,4 @@ func newHeaderStyle(f *excelize.File, fillColor string, withNumFmt bool) (int, e
 		style.NumFmt = 3
 	}
 	return f.NewStyle(style)
-}
-
-func hariTanggalString(htd time.Time) string {
-	hariTanggal := htd.Format("Monday, 02/01/2006")
-	if strings.Contains(hariTanggal, "Monday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Monday", "Senin")
-	} else if strings.Contains(hariTanggal, "Tuesday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Tuesday", "Selasa")
-	} else if strings.Contains(hariTanggal, "Wednesday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Wednesday", "Rabu")
-	} else if strings.Contains(hariTanggal, "Thursday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Thursday", "Kamis")
-	} else if strings.Contains(hariTanggal, "Friday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Friday", "Jumat")
-	} else if strings.Contains(hariTanggal, "Saturday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Saturday", "Sabtu")
-	} else if strings.Contains(hariTanggal, "Sunday") {
-		hariTanggal = strings.ReplaceAll(hariTanggal, "Sunday", "Minggu")
-	}
-
-	return hariTanggal
 }

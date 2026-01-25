@@ -2,6 +2,7 @@ package entity
 
 import (
 	"codebase-app/pkg/types"
+	"io"
 
 	"github.com/shopspring/decimal"
 )
@@ -82,4 +83,28 @@ type ExportPayrollItemsPeriodicallyReq struct {
 type ExportPayrollItemsPeriodicallyResp struct {
 	FilePath string `json:"file_path"`
 	FileName string `json:"file_name"`
+}
+
+type ImportPayrollItemsReq struct {
+	UserID   string    `json:"user_id"`
+	File     io.Reader `json:"-"`
+	FileName string    `json:"file_name"`
+	Items    []ImportedPayrollItems
+}
+
+type ImportPayrollItemsResp struct {
+	TotalProcessed int `json:"total_processed"`
+	TotalUpdated   int `json:"total_updated"`
+}
+
+type ImportedPayrollItems struct {
+	ID                 string           `json:"id" db:"id"`
+	ProgramMeetings    int              `json:"program_meetings" db:"program_meetings"`
+	InitialWage        decimal.Decimal  `json:"initial_wage" db:"initial_wage"`
+	IsMeetingFull      bool             `json:"is_meeting_full" db:"is_meeting_full"`
+	ForeignLearningFee *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
+	NightLearningFee   *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
+	AcquisitionRights  *uint64          `json:"acquisition_rights" db:"acquisition_rights"`
+	Wage               decimal.Decimal  `json:"wage" db:"wage"`
+	FullWage           decimal.Decimal  `json:"full_wage" db:"full_wage"`
 }
