@@ -133,7 +133,6 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 			}
 
 			if len(headers) > 0 {
-				log.Info().Int("header_count", len(headers)).Msg("Attaching OTLP headers")
 				opts = append(opts, otlptracegrpc.WithHeaders(headers))
 			}
 

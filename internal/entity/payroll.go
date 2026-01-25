@@ -50,6 +50,36 @@ type GetPayrollItemsResp struct {
 	Meta  types.Meta    `json:"meta"`
 }
 
+type GetPayrollItemsPeriodicallyReq struct {
+	Period            string `query:"period"`
+	Q                 string `query:"q"`
+	MarketerID        string `query:"marketer_id"`
+	LecturerID        string `query:"lecturer_id"`
+	StudentID         string `query:"student_id"`
+	ProgramID         string `query:"program_id"`
+	AcademicManagerID string `query:"academic_manager_id"`
+	types.MetaQuery
+}
+
+func (r *GetPayrollItemsPeriodicallyReq) SetDefault() {
+	r.MetaQuery.SetDefault()
+}
+
+type PayrollItemPeriodically struct {
+	LecturerID             string          `json:"lecturer_id" db:"lecturer_id"`
+	LecturerName           string          `json:"lecturer_name" db:"lecturer_name"`
+	AcademicManagerID      string          `json:"academic_manager_id" db:"academic_manager_id"`
+	AcademicManagerName    string          `json:"academic_manager_name" db:"academic_manager_name"`
+	Period                 string          `json:"period" db:"period"`
+	TotalRealFee           decimal.Decimal `json:"total_real_fee" db:"total_real_fee"`
+	TotalAcquisitionRights uint64          `json:"total_acquisition_rights" db:"total_acquisition_rights"`
+}
+
+type GetPayrollItemsPeriodicallyResp struct {
+	Items []PayrollItemPeriodically `json:"items"`
+	Meta  types.Meta                `json:"meta"`
+}
+
 type UpdatePayrollItemReq struct {
 	ID                 string           `params:"id" json:"id" validate:"required,ulid"`
 	UserID             string           `json:"user_id"`
