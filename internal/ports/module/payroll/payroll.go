@@ -24,6 +24,7 @@ type PayrollRepository interface {
 	GetPayrollItemsForExport(ctx context.Context, payrollRunID string) ([]entity.PayrollItem, error)
 	BulkUpdatePayrollItems(ctx context.Context, req *entity.BulkUpdatePayrollItemReq) error
 	ImportPayrollItems(ctx context.Context, req *entity.ImportPayrollItemsReq) (int64, error)
+	GetPayrollItemsPeriodically(ctx context.Context, req *entity.GetPayrollItemsPeriodicallyReq) (*entity.GetPayrollItemsPeriodicallyResp, error)
 }
 
 type PayrollService interface {
@@ -31,6 +32,7 @@ type PayrollService interface {
 	GetPayrollRuns(ctx context.Context, req *entity.GetPayrollRunsReq) (*entity.GetPayrollRunsResp, error)
 	GetPayrollRunDetail(ctx context.Context, req *entity.GetPayrollRunDetailReq) (*entity.GetPayrollRunDetailResp, error)
 	GetPayrollItems(ctx context.Context, req *entity.GetPayrollItemsReq) (*entity.GetPayrollItemsResp, error)
+	GetPayrollItemsPeriodically(ctx context.Context, req *entity.GetPayrollItemsPeriodicallyReq) (*entity.GetPayrollItemsPeriodicallyResp, error)
 	UpdatePayrollItem(ctx context.Context, req *entity.UpdatePayrollItemReq) error
 	BulkUpdatePayrollItems(ctx context.Context, req *entity.BulkUpdatePayrollItemReq) error
 	ImportPayrollItems(ctx context.Context, req *entity.ImportPayrollItemsReq) (*entity.ImportPayrollItemsResp, error)
