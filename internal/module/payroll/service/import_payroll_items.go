@@ -29,8 +29,8 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		colForeignFee      = "K" // FL
 		colNightFee        = "L" // NL
 		colKeepWage        = "O" // Keep Gaji
-		colAcqRights       = "P" // Hak Akuisisi
-		colID              = "R" // Payroll Item ID
+		// colAcqRights       = "P" // Hak Akuisisi
+		colID = "R" // Payroll Item ID
 	)
 
 	var errs = errmsg.NewCustomErrors(400)
@@ -74,7 +74,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		flStr, _ := f.GetCellValue(sheetName, cell(colForeignFee, rowIdx), rawValue)
 		nlStr, _ := f.GetCellValue(sheetName, cell(colNightFee, rowIdx), rawValue)
 		keepWageStr, _ := f.GetCellValue(sheetName, cell(colKeepWage, rowIdx), rawValue)
-		acqStr, _ := f.GetCellValue(sheetName, cell(colAcqRights, rowIdx))
+		// acqStr, _ := f.GetCellValue(sheetName, cell(colAcqRights, rowIdx))
 
 		idStr = strings.TrimSpace(idStr)
 		meetingsStr = strings.TrimSpace(meetingsStr)
@@ -87,7 +87,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		nlStr = strings.TrimSpace(nlStr)
 		keepWageStr = strings.TrimSpace(keepWageStr)
 		keepWageStr = strings.ReplaceAll(keepWageStr, ",", "")
-		acqStr = strings.TrimSpace(acqStr)
+		// acqStr = strings.TrimSpace(acqStr)
 
 		if idStr == "" {
 			continue
@@ -171,19 +171,6 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		} else {
 			zero := decimal.Zero
 			item.NightLearningFee = &zero
-		}
-
-		// Acquisition Rights
-		if acqStr != "" {
-			acq, err := strconv.ParseUint(acqStr, 10, 64)
-			if err != nil {
-				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Hak Akuisisi tidak valid: %s", acqStr))
-			} else {
-				item.AcquisitionRights = &acq
-			}
-		} else {
-			zero := uint64(0)
-			item.AcquisitionRights = &zero
 		}
 
 		keepWage := decimal.Zero

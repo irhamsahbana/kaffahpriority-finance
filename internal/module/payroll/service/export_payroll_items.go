@@ -232,14 +232,10 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				totalRealFee += wage
 
 				// Keep gaji
-				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
+				_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
 
-				// Notes and MentorDetailFeeUsed are not available in PayrollItem, leaving empty
-				acquisitionRights := item.AcquisitionRights
-				if wage <= 0 {
-					acquisitionRights = 0
-				}
-				f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), acquisitionRights)
+				// Hak akuisisi
+				_ = f.SetCellFormula(sheetName, fmt.Sprintf("P%v", lastRow), fmt.Sprintf(`IF(O%v=0,"",%d)`, lastRow, item.AcquisitionRights))
 
 				// ID for re-import (Hidden or explicit column R)
 				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.ID)
