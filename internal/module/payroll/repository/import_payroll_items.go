@@ -4,6 +4,7 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"context"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -21,35 +22,76 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 		_ = tx.Rollback()
 	}()
 
-	query := `
-		UPDATE payroll_items
-		SET
-			updated_at = NOW(),
-			program_meetings = :program_meetings,
-			initial_wage = :initial_wage,
-			is_meeting_full = :is_meeting_full,
-			foreign_learning_fee = :foreign_learning_fee,
-			night_learning_fee = :night_learning_fee,
-			acquisition_rights = :acquisition_rights,
-			wage = :wage,
-			full_wage = :full_wage
-		WHERE
-			id = :id
-			AND deleted_at IS NULL
-	`
-
-	stmt, err := tx.PrepareNamedContext(ctx, query)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to prepare payroll items update statement")
-		return 0, err
-	}
-	defer stmt.Close()
-
+	const chunkSize = 500
 	var rowsAffected int64
-	for _, item := range req.Items {
-		res, execErr := stmt.ExecContext(ctx, item)
+	for start := 0; start < len(req.Items); start += chunkSize {
+		end := start + chunkSize
+		if end > len(req.Items) {
+			end = len(req.Items)
+		}
+
+		items := req.Items[start:end]
+		values := make([]string, 0, len(items))
+		args := make([]any, 0, len(items)*9)
+		for _, item := range items {
+			var fl *float64
+			if item.ForeignLearningFee != nil {
+				val := item.ForeignLearningFee.InexactFloat64()
+				fl = &val
+			}
+			var nl *float64
+			if item.NightLearningFee != nil {
+				val := item.NightLearningFee.InexactFloat64()
+				nl = &val
+			}
+
+			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::bigint, ?::numeric, ?::numeric)")
+			args = append(args,
+				item.ID,
+				item.ProgramMeetings,
+				item.InitialWage.InexactFloat64(),
+				item.IsMeetingFull,
+				fl,
+				nl,
+				item.AcquisitionRights,
+				item.Wage.InexactFloat64(),
+				item.FullWage.InexactFloat64(),
+			)
+		}
+
+		query := `
+			UPDATE payroll_items AS p
+			SET
+				updated_at = NOW(),
+				program_meetings = v.program_meetings,
+				initial_wage = v.initial_wage,
+				is_meeting_full = v.is_meeting_full,
+				foreign_learning_fee = v.foreign_learning_fee,
+				night_learning_fee = v.night_learning_fee,
+				acquisition_rights = v.acquisition_rights,
+				wage = v.wage,
+				full_wage = v.full_wage
+			FROM (
+				VALUES ` + strings.Join(values, ",") + `
+			) AS v(
+				id,
+				program_meetings,
+				initial_wage,
+				is_meeting_full,
+				foreign_learning_fee,
+				night_learning_fee,
+				acquisition_rights,
+				wage,
+				full_wage
+			)
+			WHERE
+				p.id = v.id
+				AND p.deleted_at IS NULL
+		`
+
+		res, execErr := tx.ExecContext(ctx, r.db.Rebind(query), args...)
 		if execErr != nil {
-			log.Ctx(ctx).Error().Err(execErr).Msg("failed to update payroll item from import")
+			log.Ctx(ctx).Error().Err(execErr).Msg("failed to bulk update payroll items from import")
 			return 0, execErr
 		}
 
