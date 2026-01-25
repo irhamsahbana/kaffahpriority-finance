@@ -9,6 +9,9 @@
 - **Task Runner**: Taskfile (and Makefile)
 - **Validation**: go-playground/validator
 - **Logging**: zerolog
+- **Tracing**: OpenTelemetry (OTel) with support for:
+  - OTLP Exporters (HTTP/gRPC)
+  - Signoz, Jaeger, New Relic, etc.
 - **Testing**: testify
 - **Utilities**:
   - `gocron` for cron jobs

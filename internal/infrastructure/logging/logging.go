@@ -3,6 +3,7 @@ package logging
 import (
 	"codebase-app/internal/infrastructure/config"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"os"
@@ -21,6 +22,7 @@ import (
 	logsdk "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -105,10 +107,25 @@ func initOtelProvider(cfg *Config) (*logsdk.LoggerProvider, error) {
 			}
 		} else {
 			// Use OTLP gRPC exporter
-			exporter, err = otlploggrpc.New(context.Background(),
-				otlploggrpc.WithInsecure(),
+			opts := []otlploggrpc.Option{
 				otlploggrpc.WithEndpoint(otlpEndpoint),
-			)
+			}
+
+			if config.Envs.Instrumentation.OtlpInsecure {
+				opts = append(opts, otlploggrpc.WithInsecure())
+			} else {
+				tlsConfig := &tls.Config{
+					MinVersion: tls.VersionTLS12,
+				}
+				opts = append(opts, otlploggrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
+			}
+
+			headers := parseHeaders(config.Envs.Instrumentation.OtlpHeaders)
+			if len(headers) > 0 {
+				opts = append(opts, otlploggrpc.WithHeaders(headers))
+			}
+
+			exporter, err = otlploggrpc.New(context.Background(), opts...)
 			if err == nil {
 				log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry logger initialized (OTLP gRPC exporter)")
 			}
@@ -244,4 +261,19 @@ func handleLogRotation(l *lumberjack.Logger) {
 			log.Info().Msg("Rotating logs ...")
 		}
 	}()
+}
+
+func parseHeaders(headersStr string) map[string]string {
+	headers := make(map[string]string)
+	if headersStr == "" {
+		return headers
+	}
+	pairs := strings.Split(headersStr, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 {
+			headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		}
+	}
+	return headers
 }

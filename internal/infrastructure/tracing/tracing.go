@@ -3,6 +3,7 @@ package tracing
 import (
 	"codebase-app/internal/infrastructure/config"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/credentials"
 )
 
 var globalServiceName string
@@ -72,6 +74,8 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 		var exporter sdktrace.SpanExporter
 		var err error
 
+		headers := parseHeaders(config.Envs.Instrumentation.OtlpHeaders)
+
 		if strings.HasPrefix(otlpEndpoint, "http://") || strings.HasPrefix(otlpEndpoint, "https://") {
 			// Use OTLP HTTP exporter
 			// Strip scheme and trailing slash
@@ -87,16 +91,53 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 				opts = append(opts, otlptracehttp.WithInsecure())
 			}
 
+			if len(headers) > 0 {
+				opts = append(opts, otlptracehttp.WithHeaders(headers))
+			}
+
 			exporter, err = otlptracehttp.New(context.Background(), opts...)
 			if err == nil {
 				log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry tracer initialized (OTLP HTTP exporter)")
 			}
 		} else {
 			// Use OTLP gRPC exporter
-			exporter, err = otlptracegrpc.New(context.Background(),
-				otlptracegrpc.WithInsecure(),
+			opts := []otlptracegrpc.Option{
 				otlptracegrpc.WithEndpoint(otlpEndpoint),
-			)
+			}
+
+			if config.Envs.Instrumentation.OtlpInsecure {
+				log.Info().Msg("Using Insecure connection for OTLP gRPC")
+				opts = append(opts, otlptracegrpc.WithInsecure())
+			} else {
+				log.Info().Msg("Using Secure (TLS) connection for OTLP gRPC")
+				// When connecting to public endpoints like New Relic (e.g. otlp.nr-data.net:4317),
+				// we must use system certs but NOT WithInsecure().
+				// WithTLSCredentials() enables TLS.
+				// IMPORTANT: Do not mix WithInsecure() with WithTLSCredentials()
+
+				// New Relic specifically requires TLS for gRPC on port 4317.
+				// The error "frame too large, note that the frame header looked like an HTTP/1.1 header"
+				// usually means we are sending non-TLS (HTTP/2 Cleartext) to a TLS-expecting server,
+				// OR we are talking to an HTTP/1.1 server (like a proxy) instead of gRPC.
+
+				// Ensure we are using system certs.
+				// NOTE: We use &tls.Config{} to be explicit.
+				// We also set InsecureSkipVerify to true ONLY for debugging if system roots are missing.
+				// In production, this should be false.
+				// Given the 'frame too large' error and openssl 'verify error: 20', it suggests a certificate issue.
+				tlsConfig := &tls.Config{
+					MinVersion: tls.VersionTLS12,
+					// InsecureSkipVerify: true, // Uncomment if you have certificate issues (e.g. missing roots)
+				}
+				opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
+			}
+
+			if len(headers) > 0 {
+				log.Info().Int("header_count", len(headers)).Msg("Attaching OTLP headers")
+				opts = append(opts, otlptracegrpc.WithHeaders(headers))
+			}
+
+			exporter, err = otlptracegrpc.New(context.Background(), opts...)
 			if err == nil {
 				log.Info().Str("endpoint", otlpEndpoint).Msg("OpenTelemetry tracer initialized (OTLP gRPC exporter)")
 			}
@@ -119,6 +160,21 @@ func InitTracer(cfg *Config) (*sdktrace.TracerProvider, error) {
 	))
 
 	return tp, nil
+}
+
+func parseHeaders(headersStr string) map[string]string {
+	headers := make(map[string]string)
+	if headersStr == "" {
+		return headers
+	}
+	pairs := strings.Split(headersStr, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 {
+			headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		}
+	}
+	return headers
 }
 
 // StartSpan starts a new span using the global tracer
