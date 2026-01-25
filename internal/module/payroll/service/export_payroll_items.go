@@ -110,10 +110,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 
 	// 5. Generate Excel
 	f := excelize.NewFile()
-	var (
-		fnName    = "service::ExportPayrollItemsPeriodically"
-		sheetName = "Sheet1"
-	)
+	var sheetName = "Sheet1"
 
 	// Styles
 	HeaderStyle, _ := newHeaderStyle(f, "#3BFFF5", true)
@@ -273,7 +270,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	filepath := "./" + filename
 
 	if err := f.SaveAs(filepath); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("%s - error saving file", fnName)
+		log.Ctx(ctx).Error().Err(err).Msg("error saving file")
 		return nil, err
 	}
 

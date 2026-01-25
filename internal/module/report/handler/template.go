@@ -15,7 +15,6 @@ import (
 func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getTemplates")
-		fnName    = "handler::getTemplates"
 		req       = new(entity.GetTemplatesReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -25,14 +24,14 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 	req.UserID = l.GetUserId()
 
 	if err := c.QueryParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.SetDefault()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -49,7 +48,6 @@ func (h *reportHandler) getTemplates(c *fiber.Ctx) error {
 func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getTemplate")
-		fnName    = "handler::getTemplate"
 		req       = new(entity.GetTemplateReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -60,7 +58,7 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -77,7 +75,6 @@ func (h *reportHandler) getTemplate(c *fiber.Ctx) error {
 func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.createTemplate")
-		fnName    = "handler::createTemplate"
 		req       = new(entity.CreateTemplateReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -85,20 +82,20 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -114,15 +111,14 @@ func (h *reportHandler) createTemplate(c *fiber.Ctx) error {
 
 func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	var (
-		ctx    = c.UserContext()
-		fnName = "handler::updateTemplate"
-		req    = new(entity.UpdateTemplateGeneralReq)
-		v      = adapter.Adapters.Validator
-		l      = m.GetLocals(c)
+		ctx = c.UserContext()
+		req = new(entity.UpdateTemplateGeneralReq)
+		v   = adapter.Adapters.Validator
+		l   = m.GetLocals(c)
 	)
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
@@ -130,13 +126,13 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
 
 	if err := req.Validate(); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -153,7 +149,6 @@ func (h *reportHandler) updateTemplate(c *fiber.Ctx) error {
 func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.deleteTemplate")
-		fnName    = "handler::deleteTemplate"
 		req       = new(entity.GetTemplateReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -164,7 +159,7 @@ func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 	req.ID = c.Params("id")
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
@@ -181,7 +176,6 @@ func (h *reportHandler) deleteTemplate(c *fiber.Ctx) error {
 func (h *reportHandler) updateTemplateCreatedAtBetween(c *fiber.Ctx) error {
 	var (
 		ctx, span = tracing.StartSpan(c.UserContext(), "handler.updateTemplateCreatedAtBetween")
-		fnName    = "handler::updateTemplateCreatedAtBetween"
 		req       = new(entity.UpdateTemplateCreatedAtBetweenReq)
 		v         = adapter.Adapters.Validator
 		l         = m.GetLocals(c)
@@ -189,14 +183,14 @@ func (h *reportHandler) updateTemplateCreatedAtBetween(c *fiber.Ctx) error {
 	defer span.End()
 
 	if err := c.BodyParser(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid request")
 		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
 	}
 
 	req.UserID = l.GetUserId()
 
 	if err := v.Validate(req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msgf("%s - invalid request", fnName)
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
 		code, errs := errmsg.Errors(err, req)
 		return c.Status(code).JSON(response.Error(errs))
 	}
