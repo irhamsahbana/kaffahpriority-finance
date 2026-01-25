@@ -114,7 +114,7 @@ type programDetails struct {
 	CommissionFee     float64 `db:"commission_fee"`
 }
 
-func (r *reportRepo) fetchProgramDetails(ctx context.Context, tx *sqlx.Tx, programID string) (*programDetails, error) {
+func (_ *reportRepo) fetchProgramDetails(ctx context.Context, tx *sqlx.Tx, programID string) (*programDetails, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.fetchProgramDetails")
 	defer span.End()
 
@@ -145,7 +145,7 @@ func (r *reportRepo) fetchProgramDetails(ctx context.Context, tx *sqlx.Tx, progr
 	return &program, nil
 }
 
-func (r *reportRepo) shouldResetFees(ctx context.Context, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) (bool, error) {
+func (_ *reportRepo) shouldResetFees(ctx context.Context, currentReg *entity.GetRegistrationResp, req *entity.UpdateRegistrationReq) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.shouldResetFees")
 	defer span.End()
 
@@ -318,7 +318,7 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 	return nil
 }
 
-func (r *reportRepo) updateRegistrationAdditionalStudents(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) error {
+func (_ *reportRepo) updateRegistrationAdditionalStudents(ctx context.Context, tx *sqlx.Tx, req *entity.UpdateRegistrationReq) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.updateRegistrationAdditionalStudents")
 	defer span.End()
 	query := `
@@ -374,7 +374,7 @@ func (r *reportRepo) processTemplatePropagation(ctx context.Context, tx *sqlx.Tx
 	return r.executeUpdateExistingTemplate(ctx, tx, currentReg.TemplateID, req)
 }
 
-func (r *reportRepo) validateTemplateModification(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) error {
+func (_ *reportRepo) validateTemplateModification(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) error {
 	changeLecturer := currentTemplate.LecturerId != nil && req.LecturerId != nil && *currentTemplate.LecturerId != *req.LecturerId
 	if changeLecturer {
 		return errmsg.NewCustomErrors(http.StatusUnprocessableEntity).SetMessage("Tidak dapat mengubah mentor atau sudah ada registrasi yang menggunakan mentor tersebut, silahkan buat bank data baru")
@@ -382,7 +382,7 @@ func (r *reportRepo) validateTemplateModification(currentTemplate *entity.GetTem
 	return nil
 }
 
-func (r *reportRepo) requiresNewTemplateStrategy(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) bool {
+func (_ *reportRepo) requiresNewTemplateStrategy(currentTemplate *entity.GetTemplateResp, req *entity.UpdateRegistrationReq) bool {
 	// lecturer_id is changed from NULL to non-NULL
 	if (currentTemplate.LecturerId == nil && req.LecturerId != nil) ||
 		// lecturer_id is changed from non-NULL to NULL
@@ -584,7 +584,7 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 	return newTemplateId, nil
 }
 
-func (r *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx.Tx, templateID string, req *entity.UpdateRegistrationReq) error {
+func (_ *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx.Tx, templateID string, req *entity.UpdateRegistrationReq) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.executeUpdateExistingTemplate")
 	defer span.End()
 	// Update existing template
@@ -656,7 +656,7 @@ func (r *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx
 	return nil
 }
 
-func (r *reportRepo) archiveTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+func (_ *reportRepo) archiveTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.archiveTemplate")
 	defer span.End()
 

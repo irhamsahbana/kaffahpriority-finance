@@ -744,7 +744,7 @@ func (r *reportRepo) BulkUpdateLecturersWage(ctx context.Context, reqs *entity.B
 	return nil
 }
 
-func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string) (decimal.Decimal, error) {
+func (_ *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string) (decimal.Decimal, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.GetRealFee")
 	defer span.End()
 
@@ -773,7 +773,7 @@ func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID
 	return realFee, nil
 }
 
-func (r *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string, realFee decimal.Decimal) error {
+func (_ *reportRepo) UpdateUsedAmountWithRealFee(ctx context.Context, tx *sqlx.Tx, registrationID string, realFee decimal.Decimal) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.UpdateUsedAmountWithRealFee")
 	defer span.End()
 

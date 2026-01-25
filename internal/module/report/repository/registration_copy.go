@@ -114,7 +114,7 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 	return nil
 }
 
-func (r *reportRepo) insertCopyRegistration(ctx context.Context, tx *sqlx.Tx, userID string, item entity.CopyRegisItem, prID string) error {
+func (_ *reportRepo) insertCopyRegistration(ctx context.Context, tx *sqlx.Tx, userID string, item entity.CopyRegisItem, prID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.insertCopyRegistration")
 	defer span.End()
 
@@ -194,7 +194,7 @@ func (r *reportRepo) insertCopyRegistration(ctx context.Context, tx *sqlx.Tx, us
 	return nil
 }
 
-func (r *reportRepo) copyAdditionalStudentsForRegistration(ctx context.Context, tx *sqlx.Tx, regisID, prID string) error {
+func (_ *reportRepo) copyAdditionalStudentsForRegistration(ctx context.Context, tx *sqlx.Tx, regisID, prID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.copyAdditionalStudentsForRegistration")
 	defer span.End()
 

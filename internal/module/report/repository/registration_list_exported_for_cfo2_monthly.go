@@ -171,7 +171,7 @@ func (r *reportRepo) fetchRegistrationsCFO2(ctx context.Context, req *entity.Get
 	return items, nil
 }
 
-func (r *reportRepo) enrichRegistrationsCFO2(items []entity.RegisItem) ([]entity.RegisItem, int64, []string) {
+func (_ *reportRepo) enrichRegistrationsCFO2(items []entity.RegisItem) ([]entity.RegisItem, int64, []string) {
 	var (
 		totalITP        int64 = 0
 		registrationIds       = make([]string, 0, len(items))

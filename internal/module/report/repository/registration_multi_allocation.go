@@ -102,7 +102,7 @@ func (r *reportRepo) validateAllocations(ctx context.Context, tx *sqlx.Tx, req *
 	return nil
 }
 
-func (r *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, templateID string, allocationMonth string, excludeDetailsID string) (*string, sql.NullTime, bool, error) {
+func (_ *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, templateID string, allocationMonth string, excludeDetailsID string) (*string, sql.NullTime, bool, error) {
 	var id string
 	var paidAt sql.NullTime
 	var isPaid bool
@@ -137,7 +137,7 @@ func (r *reportRepo) checkAllocationCollision(ctx context.Context, tx *sqlx.Tx, 
 	return nil, sql.NullTime{}, false, nil
 }
 
-func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, registrationId string) error {
+func (_ *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, registrationId string) error {
 
 	ctx, span := tracing.StartSpan(ctx, "repo.overwriteRegistration")
 	defer span.End()
@@ -164,7 +164,7 @@ func (r *reportRepo) overwriteRegistration(ctx context.Context, tx *sqlx.Tx, req
 	return nil
 }
 
-func (r *reportRepo) processAllocation(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, template *entity.GetTemplateResp, allocation string) error {
+func (_ *reportRepo) processAllocation(ctx context.Context, tx *sqlx.Tx, req *entity.RegistrationMuliAllocationReq, template *entity.GetTemplateResp, allocation string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.processAllocation")
 	defer span.End()
 
@@ -373,4 +373,23 @@ var queryCheckMultiAllocation = `
 		AND student_id = ?
 		AND lecturer_id = ?
 		AND deleted_at IS NULL
+`
+
+var queryStudents = `
+	SELECT
+		adds.student_id,
+		adds.name
+	FROM
+		prt_additional_students adds
+	WHERE
+		adds.prt_id = ?
+`
+
+var queryInsertStudents = `
+	INSERT INTO pr_additional_students (
+		id,
+		pr_id,
+		student_id,
+		name
+	) VALUES (?, ?, ?, ?)
 `

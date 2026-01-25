@@ -4,9 +4,10 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"context"
-	"database/sql"
 	"fmt"
+	"strings"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog/log"
@@ -83,76 +84,269 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		}
 	}
 
-	// setup create registration batch
 	batchId := ulid.Make().String()
-	queryInsertRegistration := r.db.Rebind(queryInsertRegistration)
-	queryStudents := r.db.Rebind(queryStudents)
-	queryInsertStudents := r.db.Rebind(queryInsertStudents)
+	const chunkSize = 500
+	totalTemplates := len(templateIds)
+	totalChunks := (totalTemplates + chunkSize - 1) / chunkSize
 
-	for i, templateId := range templateIds {
-		ctx, spanTemplate := tracing.StartSpan(ctx, fmt.Sprintf("repo.GenerateRegistrationReports:templateId:%s", templateId))
-		defer spanTemplate.End()
-
-		// Ambil data dari template untuk pengecekan
-		var studentId, programId string
-		var lecturerId *string
-		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
-			templateId).Scan(&lecturerId, &studentId, &programId)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("failed to get template data")
-			return err
+	for start := 0; start < len(templateIds); start += chunkSize {
+		end := start + chunkSize
+		if end > len(templateIds) {
+			end = len(templateIds)
 		}
 
-		// check if registration already exists
-		var programName, studentName string
-		var lecturerName *string
-		err = tx.QueryRowxContext(ctx, r.db.Rebind(queryCheckRegistrationExists),
-			lecturerId, lecturerId,
-			studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
-		).Scan(&programName, &lecturerName, &studentName)
-
-		// if registration already exists, skip this template
-		if err == nil {
-			continue
-		} else if err != sql.ErrNoRows {
-			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("failed to check if registration exists")
-			return err
+		chunk := templateIds[start:end]
+		log.Ctx(ctx).Info().
+			Str("batch_id", batchId).
+			Int("chunk_total", totalChunks).
+			Int("chunk_size", len(chunk)).
+			Int("total_templates", totalTemplates).
+			Msg("processing registration generation chunk")
+		values := make([]string, 0, len(chunk))
+		args := make([]any, 0, len(chunk)*2+6)
+		for _, templateId := range chunk {
+			values = append(values, "(?, ?)")
+			args = append(args, templateId, ulid.Make().String())
 		}
 
-		// if registration does not exist, proceed to insert
-		fmt.Printf("[INFO] %d/%d - Template %s: GENERATING...\n", i+1, len(templateIds), templateId)
-
-		// insert into program_registrations
-		programRegistrationId := ulid.Make().String()
-		var students = make([]entity.AddStudent, 0)
-
-		args := []any{
-			templateId,
-			programRegistrationId,
-			req.UserID,
-			batchId,
-		}
-
-		// insert into program_registrations
-		if _, err := tx.ExecContext(ctx, queryInsertRegistration, args...); err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to insert program registration")
-			return err
-		}
-
-		// fetch additional students from prt_additional_students
-		err = tx.SelectContext(ctx, &students, queryStudents, templateId)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to select additional students")
-			return err
-		}
-
-		// insert into pr_additional_students
-		for _, student := range students {
-			_, err = tx.ExecContext(ctx, queryInsertStudents,
-				ulid.Make().String(), programRegistrationId, student.StudentID, student.Name,
+		queryInsert := `
+			WITH mapping(template_id, registration_id) AS (
+				VALUES ` + strings.Join(values, ",") + `
+			),
+			template AS (
+				SELECT
+					prt.id,
+					prt.program_id,
+					prt.lecturer_id,
+					prt.marketer_id,
+					prt.student_id,
+					prt.is_itp,
+					p.name AS program_name,
+					p.acquisition_rights,
+					p.full_fee,
+					prt.program_fee,
+					p.price_per_meeting AS program_fee_per_meeting,
+					prt.administration_fee,
+					prt.foreign_learning_fee,
+					prt.night_learning_fee,
+					prt.marketer_commission_fee,
+					prt.overpayment_fee,
+					prt.hr_fee,
+					prt.marketer_gifts_fee,
+					prt.closing_fee_for_office,
+					prt.closing_fee_for_reward,
+					prt.days,
+					prt.notes
+				FROM
+					program_registration_templates prt
+				JOIN
+					programs p
+					ON prt.program_id = p.id
+				JOIN
+					mapping m
+					ON m.template_id = prt.id
+				WHERE
+					prt.deleted_at IS NULL
+			),
+			inserted AS (
+				INSERT INTO program_registrations (
+					id,
+					template_id,
+					user_id,
+					program_id,
+					lecturer_id,
+					marketer_id,
+					student_id,
+					batch,
+					program_name,
+					program_fee,
+					program_fee_per_meeting,
+					full_fee,
+					program_meetings,
+					program_acquisition_rights,
+					administration_fee,
+					foreign_learning_fee,
+					night_learning_fee,
+					is_itp,
+					marketer_commission_fee,
+					overpayment_fee,
+					hr_fee,
+					mentor_detail_fee,
+					mentor_detail_fee_used,
+					hr_detail_fee,
+					marketer_gifts_fee,
+					closing_fee_for_office,
+					closing_fee_for_reward,
+					days,
+					notes,
+					notes_for_lecturer_wage,
+					allocated_at
+				)
+				SELECT
+					m.registration_id,
+					t.id,
+					?,
+					t.program_id,
+					t.lecturer_id,
+					t.marketer_id,
+					t.student_id,
+					?,
+					t.program_name,
+					t.program_fee,
+					t.program_fee_per_meeting,
+					t.full_fee,
+					0,
+					(CASE WHEN t.is_itp THEN 2 ELSE 1 END * t.acquisition_rights),
+					t.administration_fee,
+					t.foreign_learning_fee,
+					t.night_learning_fee,
+					t.is_itp,
+					t.marketer_commission_fee,
+					t.overpayment_fee,
+					t.hr_fee,
+					(t.hr_fee - (40000 * CASE WHEN t.is_itp THEN 2 ELSE 1 END * t.acquisition_rights)),
+					NULL,
+					(40000 * CASE WHEN t.is_itp THEN 2 ELSE 1 END * t.acquisition_rights),
+					t.marketer_gifts_fee,
+					t.closing_fee_for_office,
+					t.closing_fee_for_reward,
+					t.days,
+					t.notes,
+					(
+						SELECT
+							COALESCE(prr.notes_for_lecturer_wage, '')
+						FROM
+							program_registrations prr
+						WHERE
+							prr.program_id = t.program_id
+							AND prr.lecturer_id = t.lecturer_id
+							AND prr.student_id = t.student_id
+							AND prr.deleted_at IS NULL
+						ORDER BY
+							prr.id DESC
+							LIMIT 1
+					),
+					NOW()
+				FROM
+					template t
+				JOIN
+					mapping m
+					ON m.template_id = t.id
+				WHERE
+					NOT EXISTS (
+						SELECT 1
+						FROM program_registrations pr
+						WHERE
+							pr.deleted_at IS NULL
+							AND (
+								(pr.lecturer_id IS NULL AND t.lecturer_id IS NULL)
+								OR (pr.lecturer_id = t.lecturer_id)
+							)
+							AND pr.student_id = t.student_id
+							AND pr.program_id = t.program_id
+							AND pr.allocated_at AT TIME ZONE ? >= date_trunc('month', NOW() AT TIME ZONE ?)
+							AND pr.allocated_at AT TIME ZONE ? < date_trunc('month', NOW() AT TIME ZONE ?) + interval '1 month'
+					)
+				RETURNING id, template_id
 			)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Any("req", req).Any("template_id", templateId).Msgf("failed to insert additional students")
+			SELECT id, template_id FROM inserted
+		`
+
+		args = append(args, req.UserID, batchId, req.Timezone, req.Timezone, req.Timezone, req.Timezone)
+		rows, err := tx.QueryxContext(ctx, r.db.Rebind(queryInsert), args...)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to insert program registrations")
+			return err
+		}
+
+		type insertedRow struct {
+			RegistrationID string `db:"id"`
+			TemplateID     string `db:"template_id"`
+		}
+		inserted := make([]insertedRow, 0)
+		for rows.Next() {
+			var row insertedRow
+			if err := rows.StructScan(&row); err != nil {
+				_ = rows.Close()
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to scan inserted registrations")
+				return err
+			}
+			inserted = append(inserted, row)
+		}
+		if err := rows.Err(); err != nil {
+			_ = rows.Close()
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to read inserted registrations")
+			return err
+		}
+		_ = rows.Close()
+
+		if len(inserted) == 0 {
+			continue
+		}
+
+		templateIDsInserted := make([]string, 0, len(inserted))
+		registrationByTemplate := make(map[string]string, len(inserted))
+		for _, row := range inserted {
+			templateIDsInserted = append(templateIDsInserted, row.TemplateID)
+			registrationByTemplate[row.TemplateID] = row.RegistrationID
+		}
+
+		queryStudents, argsStudents, err := sqlx.In(`
+			SELECT
+				prt_id,
+				student_id,
+				name
+			FROM prt_additional_students
+			WHERE prt_id IN (?)
+		`, templateIDsInserted)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to build additional students query")
+			return err
+		}
+		queryStudents = r.db.Rebind(queryStudents)
+
+		type additionalStudent struct {
+			TemplateID string `db:"prt_id"`
+			StudentID  string `db:"student_id"`
+			Name       string `db:"name"`
+		}
+		var students []additionalStudent
+		if err := tx.SelectContext(ctx, &students, queryStudents, argsStudents...); err != nil {
+			log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to select additional students")
+			return err
+		}
+
+		const studentChunkSize = 500
+		for s := 0; s < len(students); s += studentChunkSize {
+			e := s + studentChunkSize
+			if e > len(students) {
+				e = len(students)
+			}
+
+			values = values[:0]
+			args = args[:0]
+			for _, student := range students[s:e] {
+				registrationID := registrationByTemplate[student.TemplateID]
+				if registrationID == "" {
+					continue
+				}
+				values = append(values, "(?, ?, ?, ?)")
+				args = append(args, ulid.Make().String(), registrationID, student.StudentID, student.Name)
+			}
+			if len(values) == 0 {
+				continue
+			}
+
+			queryInsertStudents := `
+				INSERT INTO pr_additional_students (
+					id,
+					pr_id,
+					student_id,
+					name
+				) VALUES ` + strings.Join(values, ",")
+
+			if _, err := tx.ExecContext(ctx, r.db.Rebind(queryInsertStudents), args...); err != nil {
+				log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to insert additional students")
 				return err
 			}
 		}
@@ -166,170 +360,3 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 	fmt.Printf("[SUCCESS] Finished generating reports.\n")
 	return nil
 }
-
-var queryInsertRegistration = `
-WITH template AS (
-	SELECT
-		prt.id,
-		prt.program_id,
-		prt.lecturer_id,
-		prt.marketer_id,
-		prt.student_id,
-		prt.is_itp,
-		p.name AS program_name,
-		p.acquisition_rights,
-		p.full_fee,
-		prt.program_fee,
-		p.price_per_meeting AS program_fee_per_meeting,
-		prt.administration_fee,
-		prt.foreign_learning_fee,
-		prt.night_learning_fee,
-		prt.marketer_commission_fee,
-		prt.overpayment_fee,
-		prt.hr_fee,
-		prt.marketer_gifts_fee,
-		prt.closing_fee_for_office,
-		prt.closing_fee_for_reward,
-		prt.days,
-		prt.notes
-	FROM
-		program_registration_templates prt
-	JOIN
-		programs p
-		ON prt.program_id = p.id
-	WHERE
-		prt.id = ?
-		AND prt.deleted_at IS NULL
-)
-INSERT INTO program_registrations (
-	id,
-	template_id,
-	user_id,
-	program_id,
-	lecturer_id,
-	marketer_id,
-	student_id,
-	batch,
-	program_name,
-	program_fee,
-	program_fee_per_meeting,
-	full_fee,
-	program_meetings,
-	program_acquisition_rights,
-	administration_fee,
-	foreign_learning_fee,
-	night_learning_fee,
-	is_itp,
-	marketer_commission_fee,
-	overpayment_fee,
-	hr_fee,
-	mentor_detail_fee,
-	mentor_detail_fee_used,
-	hr_detail_fee,
-	marketer_gifts_fee,
-	closing_fee_for_office,
-	closing_fee_for_reward,
-	days,
-	notes,
-	notes_for_lecturer_wage,
-	allocated_at
-)
-SELECT
-	?,
-	(SELECT id FROM template),
-	?,
-	(SELECT program_id FROM template),
-	(SELECT lecturer_id FROM template),
-	(SELECT marketer_id FROM template),
-	(SELECT student_id FROM template),
-	?,
-	(SELECT program_name FROM template),
-	(SELECT program_fee FROM template),
-	(SELECT program_fee_per_meeting FROM template),
-	(SELECT full_fee FROM template),
-	0,
-	(CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)),
-	(SELECT administration_fee FROM template),
-	(SELECT foreign_learning_fee FROM template),
-	(SELECT night_learning_fee FROM template),
-	(SELECT is_itp FROM template),
-	(SELECT marketer_commission_fee FROM template),
-	(SELECT overpayment_fee FROM template),
-	(SELECT hr_fee FROM template),
-	(SELECT hr_fee - (40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)) FROM template),
-	NULL,
-	(40000 * CASE WHEN (SELECT is_itp FROM template) THEN 2 ELSE 1 END * (SELECT acquisition_rights FROM template)),
-	(SELECT marketer_gifts_fee FROM template),
-	(SELECT closing_fee_for_office FROM template),
-	(SELECT closing_fee_for_reward FROM template),
-	(SELECT days FROM template),
-	(SELECT notes FROM template),
-	-- get the latest notes_for_lecturer_wage for the same program, lecturer, and student
-	(
-		SELECT
-			COALESCE(prr.notes_for_lecturer_wage, '')
-		FROM
-			program_registrations prr
-		WHERE
-			prr.program_id = (SELECT program_id FROM template)
-			AND
-			prr.lecturer_id = (SELECT lecturer_id FROM template)
-			AND
-			prr.student_id = (SELECT student_id FROM template)
-			AND
-			prr.deleted_at IS NULL
-		ORDER BY
-			prr.id DESC
-			LIMIT 1
-	),
-	NOW()
-`
-
-var queryStudents = `
-	SELECT
-		adds.student_id,
-		adds.name
-	FROM
-		prt_additional_students adds
-	WHERE
-		adds.prt_id = ?
-`
-
-var queryInsertStudents = `
-	INSERT INTO pr_additional_students (
-		id,
-		pr_id,
-		student_id,
-		name
-	) VALUES (?, ?, ?, ?)
-`
-
-var queryCheckRegistrationExists = `
-	SELECT
-		p.name AS program_name,
-		l.name AS lecturer_name,
-		s.name AS student_name
-	FROM
-		program_registrations pr
-	JOIN
-		programs p
-		ON pr.program_id = p.id
-	LEFT JOIN
-		lecturers l
-		ON pr.lecturer_id = l.id
-	JOIN
-		students s
-		ON pr.student_id = s.id
-	WHERE
-		pr.deleted_at IS NULL
-		AND (
-			(pr.lecturer_id IS NULL AND ?::TEXT IS NULL)
-			OR
-			(pr.lecturer_id = ?)
-		)
-		AND pr.student_id = ?
-		AND pr.program_id = ?
-        AND pr.allocated_at AT TIME ZONE ? >= date_trunc('month', NOW() AT TIME ZONE ?)
-        AND pr.allocated_at AT TIME ZONE ? < date_trunc('month', NOW() AT TIME ZONE ?) + interval '1 month'
-	LIMIT 1
-`

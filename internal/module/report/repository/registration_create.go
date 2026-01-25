@@ -68,7 +68,7 @@ func (r *reportRepo) processRegistration(ctx context.Context, tx *sqlx.Tx, userI
 	return nil
 }
 
-func (r *reportRepo) checkRegistrationExists(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+func (_ *reportRepo) checkRegistrationExists(ctx context.Context, tx *sqlx.Tx, templateID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.checkRegistrationExists")
 	defer span.End()
 
@@ -118,7 +118,7 @@ func (r *reportRepo) checkRegistrationExists(ctx context.Context, tx *sqlx.Tx, t
 	return nil
 }
 
-func (r *reportRepo) validateTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
+func (_ *reportRepo) validateTemplate(ctx context.Context, tx *sqlx.Tx, templateID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.validateTemplate")
 	defer span.End()
 
@@ -150,7 +150,7 @@ func (r *reportRepo) validateTemplate(ctx context.Context, tx *sqlx.Tx, template
 	return nil
 }
 
-func (r *reportRepo) insertRegistration(ctx context.Context, tx *sqlx.Tx, userID, templateID, prID string) error {
+func (_ *reportRepo) insertRegistration(ctx context.Context, tx *sqlx.Tx, userID, templateID, prID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.insertRegistration")
 	defer span.End()
 
@@ -260,7 +260,7 @@ func (r *reportRepo) insertRegistration(ctx context.Context, tx *sqlx.Tx, userID
 	return nil
 }
 
-func (r *reportRepo) copyAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateID, prID string) error {
+func (_ *reportRepo) copyAdditionalStudents(ctx context.Context, tx *sqlx.Tx, templateID, prID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.copyAdditionalStudents")
 	defer span.End()
 
