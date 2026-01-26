@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -48,7 +49,12 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				items[i].StudentName += ", " + s.Name
 			}
 		}
-		items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
+
+		if items[i].ProgramMeetings == 0 {
+			items[i].RealWage = decimal.Zero
+		} else {
+			items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
+		}
 	}
 
 	// 4. Group Data
@@ -229,11 +235,11 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				}
 
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.RealWage.InexactFloat64())
-				wage := item.Wage.InexactFloat64()
-				totalRealFee += wage
+			wage := item.Wage.InexactFloat64()
+			totalRealFee += item.RealWage.InexactFloat64()
 
-				// Keep gaji
-				_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
+			// Keep gaji
+			_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
 
 				// Hak akuisisi
 				_ = f.SetCellFormula(sheetName, fmt.Sprintf("P%v", lastRow), fmt.Sprintf(`IF(O%v=0,"",%d)`, lastRow, item.AcquisitionRights))
