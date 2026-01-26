@@ -25,6 +25,24 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 		return err
 	}
 
+	if req.LecturerID != nil {
+		lecturer, err := s.masterRepo.GetLecturer(ctx, &entity.GetLecturerReq{ID: *req.LecturerID})
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to get lecturer")
+			return err
+		}
+		req.LecturerName = &lecturer.Name
+	}
+
+	if req.ProgramID != nil {
+		program, err := s.masterRepo.GetProgram(ctx, &entity.GetProgramReq{ID: *req.ProgramID})
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to get program")
+			return err
+		}
+		req.ProgramName = &program.Name
+	}
+
 	meetings := itemBefore.ProgramMeetings
 	if req.ProgramMeetings != nil {
 		meetings = *req.ProgramMeetings

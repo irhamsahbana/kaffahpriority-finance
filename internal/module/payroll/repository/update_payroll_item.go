@@ -17,13 +17,37 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 	setParts := []string{}
 	args := map[string]interface{}{"id": req.ID}
 
+	if req.LecturerID != nil {
+		setParts = append(setParts, "lecturer_id = :lecturer_id")
+		args["lecturer_id"] = *req.LecturerID
+	}
+	if req.LecturerName != nil {
+		setParts = append(setParts, "lecturer_name = :lecturer_name")
+		args["lecturer_name"] = *req.LecturerName
+	}
+	if req.ProgramID != nil {
+		setParts = append(setParts, "program_id = :program_id")
+		args["program_id"] = *req.ProgramID
+	}
+	if req.ProgramName != nil {
+		setParts = append(setParts, "program_name = :program_name")
+		args["program_name"] = *req.ProgramName
+	}
 	if req.ProgramMeetings != nil {
 		setParts = append(setParts, "program_meetings = :program_meetings")
 		args["program_meetings"] = *req.ProgramMeetings
 	}
+	if req.AcquisitionRights != nil {
+		setParts = append(setParts, "acquisition_rights = :acquisition_rights")
+		args["acquisition_rights"] = *req.AcquisitionRights
+	}
 	if req.IsMeetingFull != nil {
 		setParts = append(setParts, "is_meeting_full = :is_meeting_full")
 		args["is_meeting_full"] = *req.IsMeetingFull
+	}
+	if req.IsITP != nil {
+		setParts = append(setParts, "is_itp = :is_itp")
+		args["is_itp"] = *req.IsITP
 	}
 	if req.ForeignLearningFee != nil {
 		setParts = append(setParts, "foreign_learning_fee = :foreign_learning_fee")

@@ -3,6 +3,7 @@ package handler
 import (
 	m "codebase-app/internal/middleware"
 	activityLogRepo "codebase-app/internal/module/activity_log/repository"
+	masterRepo "codebase-app/internal/module/master/repository"
 	"codebase-app/internal/module/payroll/repository"
 	"codebase-app/internal/module/payroll/service"
 	userRepo "codebase-app/internal/module/user/repository"
@@ -19,11 +20,13 @@ func NewPayrollHandler() *payrollHandler {
 	repo := repository.NewPayrollRepository()
 	repoActivityLog := activityLogRepo.NewActivityLogRepository()
 	repoUser := userRepo.NewUserRepository()
+	repoMaster := masterRepo.NewMasterRepository()
 
 	svc := service.NewPayrollService(service.Config{
 		Repo:            repo,
 		ActivityLogRepo: repoActivityLog,
 		UserRepo:        repoUser,
+		MasterRepo:      repoMaster,
 	})
 	return &payrollHandler{
 		service: svc,
