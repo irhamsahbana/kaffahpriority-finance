@@ -64,6 +64,7 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 			} else {
 				items[i].AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
 			}
+			items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
 		}
 	}
 

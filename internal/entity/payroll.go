@@ -172,8 +172,9 @@ type ImportPayrollItemsReq struct {
 }
 
 type ImportPayrollItemsResp struct {
-	TotalProcessed int `json:"total_processed"`
-	TotalUpdated   int `json:"total_updated"`
+	TotalProcessed int                    `json:"total_processed"`
+	TotalUpdated   int                    `json:"total_updated"`
+	Items          []ImportedPayrollItems `json:"items"`
 }
 
 type ImportedPayrollItems struct {

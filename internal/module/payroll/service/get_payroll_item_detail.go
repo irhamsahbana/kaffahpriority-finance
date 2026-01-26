@@ -35,6 +35,8 @@ func (s *payrollService) GetPayrollItemDetail(ctx context.Context, req *entity.G
 		item.AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
 	}
 
+	item.RealWage = item.InitialWage.Add(item.ForeignLearningFee).Add(item.NightLearningFee)
+
 	return &entity.GetPayrollItemDetailResp{
 		PayrollItem: *item,
 	}, nil

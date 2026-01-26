@@ -48,6 +48,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				items[i].StudentName += ", " + s.Name
 			}
 		}
+		items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
 	}
 
 	// 4. Group Data
@@ -227,7 +228,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), item.NightLearningFee.InexactFloat64())
 				}
 
-				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.InitialWage.Add(item.ForeignLearningFee).Add(item.NightLearningFee).InexactFloat64())
+				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.RealWage.InexactFloat64())
 				wage := item.Wage.InexactFloat64()
 				totalRealFee += wage
 
