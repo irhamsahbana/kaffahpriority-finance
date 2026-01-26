@@ -14,6 +14,26 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+func (r *reportRepo) UseHRfeeForLecturerV2(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.UseHRfeeForLecturerV2")
+	defer span.End()
+
+	query := `
+		UPDATE program_registrations SET
+			mentor_detail_fee_used = $1,
+			updated_at = NOW()
+			WHERE id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, r.db.Rebind(query), req.UsedAmount, req.RegistrationID)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msg("failed to update mentor detail fee used")
+		return err
+	}
+
+	return nil
+}
+
 func (r *reportRepo) UseHRfeeForLecturer(ctx context.Context, req *entity.UseHRfeeForLecturerReq) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.UseHRfeeForLecturer")
 	defer span.End()

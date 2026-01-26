@@ -620,7 +620,7 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 		return err
 	}
 
-	err = s.repo.UseHRfeeForLecturer(ctx, req)
+	err = s.repo.UseHRfeeForLecturerV2(ctx, req)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).
 			Any(entity.Payload, req).
