@@ -14,6 +14,11 @@ func (s *payrollService) BulkUpdatePayrollItems(ctx context.Context, req *entity
 	defer span.End()
 
 	for i, itemReq := range req.Data {
+		if err := validatePayrollAdditionalStudents(itemReq.AdditionalStudents); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("id", itemReq.ID).Msg("invalid additional students for payroll item")
+			return err
+		}
+
 		itemBefore, err := s.repo.GetPayrollItem(ctx, itemReq.ID)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("id", itemReq.ID).Msg("failed to get payroll item for bulk update")

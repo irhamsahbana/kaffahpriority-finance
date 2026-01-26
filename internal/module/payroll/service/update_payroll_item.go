@@ -4,7 +4,9 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
+	"codebase-app/pkg/errmsg"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -61,6 +63,11 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 		req.Wage = &itemBefore.Wage
 	}
 
+	if err := validatePayrollAdditionalStudents(req.AdditionalStudents); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid additional students for payroll item")
+		return err
+	}
+
 	if err := s.repo.UpdatePayrollItem(ctx, req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to update payroll item")
 		return err
@@ -100,6 +107,26 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 			log.Ctx(childCtx).Error().Err(err).Msg("failed to create activity log")
 		}
 	}()
+
+	return nil
+}
+
+func validatePayrollAdditionalStudents(students []entity.AddStudent) error {
+	if students == nil {
+		return nil
+	}
+
+	errs := errmsg.NewCustomErrors(400)
+	for i, s := range students {
+		if s.StudentID != nil && s.Name != nil {
+			_ = errs.Add(fmt.Sprintf("additional_students[%d].student_id", i), "student_id dan name tidak boleh diisi bersamaan")
+			_ = errs.Add(fmt.Sprintf("additional_students[%d].name", i), "student_id dan name tidak boleh diisi bersamaan")
+		}
+	}
+
+	if errs.HasErrors() {
+		return errs
+	}
 
 	return nil
 }
