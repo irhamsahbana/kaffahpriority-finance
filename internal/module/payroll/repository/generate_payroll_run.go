@@ -81,7 +81,7 @@ func (_ *payrollRepo) checkExistingPayrollRun(ctx context.Context, tx *sqlx.Tx, 
 	defer span.End()
 
 	var existingRun entity.PayrollRun
-	queryCheck := `SELECT id FROM payroll_runs WHERE period = $1 LIMIT 1`
+	queryCheck := `SELECT id, status FROM payroll_runs WHERE period = $1 LIMIT 1`
 	err := tx.GetContext(ctx, &existingRun, queryCheck, period)
 	if err != nil {
 		return nil, err
@@ -171,8 +171,7 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 		JOIN
 			marketers m ON prt.marketer_id = m.id
 		WHERE
-			prt.status = 'active'
-			AND prt.deleted_at IS NULL
+			prt.deleted_at IS NULL
 	`
 	if err := tx.SelectContext(ctx, &templates, queryTemplates); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch templates")
