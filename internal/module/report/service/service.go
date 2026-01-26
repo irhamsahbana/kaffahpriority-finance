@@ -693,6 +693,13 @@ func (s *reportService) GetAcquisitionRightsAggregate(ctx context.Context, req *
 	return s.repo.GetAcquisitionRightsAggregate(ctx, req)
 }
 
+func (s *reportService) GetAcquisitionRightsAggregateFromPayrollItems(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "service.GetAcquisitionRightsAggregateFromPayrollItems")
+	defer span.End()
+
+	return s.repo.GetAcquisitionRightsAggregateFromPayrollItems(ctx, req)
+}
+
 func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *entity.GenerateRegistrationsReq) error {
 	ctx, span := tracing.StartSpan(ctx, "service.GenerateRegistrationReports")
 	defer span.End()

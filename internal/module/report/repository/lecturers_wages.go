@@ -262,6 +262,178 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 	return resp, nil
 }
 
+func (r *reportRepo) GetAcquisitionRightsAggregateFromPayrollItems(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (
+	*entity.GetAcquisitionRightsAggregateResp, error) {
+	_, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregateFromPayrollItems")
+	defer span.End()
+
+	switch req.For {
+	case "academic_manager":
+		return r.GetAcquisitionRightsAggregateFromPayrollItemsAcademicManager(ctx, req)
+	case "student_manager":
+		return r.GetAcquisitionRightsAggregateFromPayrollItemsStudentManager(ctx, req)
+	}
+
+	return nil, fmt.Errorf("invalid for field")
+}
+
+func (r *reportRepo) GetAcquisitionRightsAggregateFromPayrollItemsStudentManager(
+	ctx context.Context,
+	req *entity.GetAcquisitionRightsAggregateReq,
+) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregateFromPayrollItemsStudentManager")
+	defer span.End()
+
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.AcquisitionRightsAggregate
+	}
+	var (
+		resp = new(entity.GetAcquisitionRightsAggregateResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+	resp.Items = make([]entity.AcquisitionRightsAggregate, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			pr.period AS month,
+			sm.id AS student_manager_id,
+			sm.name AS student_manager_name,
+			SUM(
+				CASE
+					WHEN pi.wage <= 0 THEN 0
+					ELSE pi.acquisition_rights
+				END
+			) AS total_acquisition_rights
+		FROM
+			payroll_items pi
+		JOIN
+			payroll_runs pr ON pi.payroll_run_id = pr.id
+		JOIN
+			marketers m ON pi.marketer_id = m.id
+		JOIN
+			student_managers sm ON m.student_manager_id = sm.id
+		WHERE
+			pi.deleted_at IS NULL
+	`
+
+	if req.Month != "" {
+		query += ` AND pr.period = ?`
+		args = append(args, req.Month)
+	}
+
+	if req.StudentManagerId != "" {
+		query += ` AND sm.id = ?`
+		args = append(args, req.StudentManagerId)
+	}
+
+	query += `
+		GROUP BY
+			pr.period,
+			sm.id,
+			sm.name
+		ORDER BY
+			sm.id ASC,
+			month ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query acquisition rights from payroll items")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.AcquisitionRightsAggregate)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
+func (r *reportRepo) GetAcquisitionRightsAggregateFromPayrollItemsAcademicManager(
+	ctx context.Context,
+	req *entity.GetAcquisitionRightsAggregateReq,
+) (*entity.GetAcquisitionRightsAggregateResp, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.GetAcquisitionRightsAggregateFromPayrollItemsAcademicManager")
+	defer span.End()
+
+	type dao struct {
+		TotalData int `db:"total_data"`
+		entity.AcquisitionRightsAggregate
+	}
+	var (
+		resp = new(entity.GetAcquisitionRightsAggregateResp)
+		data = make([]dao, 0)
+		args = make([]any, 0, 3)
+	)
+
+	resp.Items = make([]entity.AcquisitionRightsAggregate, 0)
+
+	query := `
+		SELECT
+			COUNT (*) OVER() AS total_data,
+			pr.period AS month,
+			pi.academic_manager_id AS academic_manager_id,
+			pi.academic_manager_name AS academic_manager_name,
+			SUM(
+				CASE
+					WHEN pi.wage <= 0 THEN 0
+					ELSE pi.acquisition_rights
+				END
+			) AS total_acquisition_rights
+		FROM
+			payroll_items pi
+		JOIN
+			payroll_runs pr ON pi.payroll_run_id = pr.id
+		WHERE
+			pi.deleted_at IS NULL
+	`
+
+	if req.Month != "" {
+		query += ` AND pr.period = ?`
+		args = append(args, req.Month)
+	}
+
+	if req.AcademicManagerID != "" {
+		query += ` AND pi.academic_manager_id = ?`
+		args = append(args, req.AcademicManagerID)
+	}
+
+	query += `
+		GROUP BY
+			pr.period,
+			pi.academic_manager_id,
+			pi.academic_manager_name
+		ORDER BY
+			pi.academic_manager_id ASC,
+			month ASC
+		LIMIT ? OFFSET ?
+	`
+
+	args = append(args, req.Paginate, (req.Page-1)*req.Paginate)
+
+	if err := r.db.SelectContext(ctx, &data, r.db.Rebind(query), args...); err != nil {
+		log.Ctx(ctx).Error().Err(err).Any("req", req).Msgf("failed to query acquisition rights from payroll items")
+		return nil, err
+	}
+
+	for _, d := range data {
+		resp.Items = append(resp.Items, d.AcquisitionRightsAggregate)
+		resp.Meta.TotalData = d.TotalData
+	}
+
+	resp.Meta.CountTotalPage(req.Page, req.Paginate, resp.Meta.TotalData)
+
+	return resp, nil
+}
+
 func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity.GetLecturersWagesAggregateReq) (*entity.LecturersWageAggregateResp, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.GetLecturersWagesAggregate")
 	defer span.End()
