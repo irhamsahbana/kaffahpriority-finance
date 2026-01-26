@@ -38,6 +38,7 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.batch,
 			pr.is_paid,
 			pr.category,
+			pr.parent_id,
 			pr.id,
 			pr.template_id,
 			pr.program_id,
@@ -82,8 +83,8 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.updated_at,
 			CASE
 				WHEN
-					pr.allocated_at IS NULL AND 
-					pr.parent_id IS NOT NULL 
+					pr.allocated_at IS NULL AND
+					pr.parent_id IS NOT NULL
 					THEN parent.allocated_at
 				ELSE pr.allocated_at
 			END AS allocated_at,

@@ -82,6 +82,7 @@ type GetRegistrationsResp struct {
 
 type RegisItem struct {
 	ID                         string       `json:"id" db:"id"`
+	ParentID                   *string      `json:"parent_id" db:"parent_id"`
 	TemplateID                 string       `json:"template_id" db:"template_id"`
 	ProgramID                  string       `json:"program_id" db:"program_id"`
 	MarketerID                 string       `json:"marketer_id" db:"marketer_id"`
