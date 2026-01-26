@@ -85,8 +85,8 @@ func (r *payrollRepo) GetPayrollItemsPeriodically(ctx context.Context, req *enti
 			pi.academic_manager_name,
 			pr.period
 		ORDER BY
-			pi.academic_manager_name ASC,
-			pi.lecturer_name ASC
+			pi.academic_manager_id ASC,
+			pi.lecturer_id ASC
 		LIMIT ? OFFSET ?
 	`
 
