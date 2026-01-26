@@ -33,6 +33,7 @@ type PayrollService interface {
 	GetPayrollRuns(ctx context.Context, req *entity.GetPayrollRunsReq) (*entity.GetPayrollRunsResp, error)
 	GetPayrollRunDetail(ctx context.Context, req *entity.GetPayrollRunDetailReq) (*entity.GetPayrollRunDetailResp, error)
 	GetPayrollItems(ctx context.Context, req *entity.GetPayrollItemsReq) (*entity.GetPayrollItemsResp, error)
+	GetPayrollItemDetail(ctx context.Context, req *entity.GetPayrollItemDetailReq) (*entity.GetPayrollItemDetailResp, error)
 	GetPayrollItemsPeriodically(ctx context.Context, req *entity.GetPayrollItemsPeriodicallyReq) (*entity.GetPayrollItemsPeriodicallyResp, error)
 	UpdatePayrollItem(ctx context.Context, req *entity.UpdatePayrollItemReq) error
 	BulkUpdatePayrollItems(ctx context.Context, req *entity.BulkUpdatePayrollItemReq) error

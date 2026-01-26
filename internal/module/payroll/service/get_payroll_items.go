@@ -8,7 +8,6 @@ import (
 	"database/sql"
 
 	"github.com/rs/zerolog/log"
-	"github.com/shopspring/decimal"
 )
 
 func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPayrollItemsReq) (*entity.GetPayrollItemsResp, error) {
@@ -60,25 +59,10 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 		}
 
 		for i := range items {
-			// Append Additional Students
 			if students, ok := additionalStudentsMap[items[i].ID]; ok {
 				items[i].AdditionalStudents = students
-				for _, s := range students {
-					items[i].StudentName += ", " + s.Name
-				}
 			} else {
 				items[i].AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
-			}
-
-			// Append Program Flags
-			if items[i].ForeignLearningFee.GreaterThan(decimal.Zero) {
-				items[i].ProgramName += " + FL"
-			}
-			if items[i].NightLearningFee.GreaterThan(decimal.Zero) {
-				items[i].ProgramName += " + NL"
-			}
-			if items[i].IsITP {
-				items[i].ProgramName += " + ITP"
 			}
 		}
 	}

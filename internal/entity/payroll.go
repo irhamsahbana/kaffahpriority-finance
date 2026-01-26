@@ -51,6 +51,14 @@ type GetPayrollItemsResp struct {
 	Meta  types.Meta    `json:"meta"`
 }
 
+type GetPayrollItemDetailReq struct {
+	ID string `params:"id" validate:"required,ulid"`
+}
+
+type GetPayrollItemDetailResp struct {
+	PayrollItem
+}
+
 type GetPayrollItemsPeriodicallyReq struct {
 	Period            string `query:"period"`
 	Q                 string `query:"q"`
