@@ -46,6 +46,7 @@ type PayrollItem struct {
 	IsMeetingFull       bool            `json:"is_meeting_full" db:"is_meeting_full"`
 	WagePerMeeting      decimal.Decimal `json:"wage_per_meeting" db:"wage_per_meeting"`
 	InitialWage         decimal.Decimal `json:"initial_wage" db:"initial_wage"`
+	RealWage            decimal.Decimal `json:"real_wage" db:"-"`
 	FullWage            decimal.Decimal `json:"full_wage" db:"full_wage"`
 	Wage                decimal.Decimal `json:"wage" db:"wage"`
 	AcquisitionRights   uint64          `json:"acquisition_rights" db:"acquisition_rights"`
