@@ -125,6 +125,14 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 		args = append(args, req.ProgramId)
 	}
 
+	if req.IsMandatoryFieldsCompleted != nil {
+		if *req.IsMandatoryFieldsCompleted {
+			query += ` AND prt.lecturer_id IS NOT NULL `
+		} else {
+			query += ` AND prt.lecturer_id IS NULL `
+		}
+	}
+
 	if req.Q != "" {
 		query += ` AND (
 			s.name ILIKE ?

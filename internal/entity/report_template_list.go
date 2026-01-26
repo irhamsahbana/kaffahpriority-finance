@@ -19,6 +19,7 @@ type GetTemplatesReq struct {
 
 	StudentId string `query:"student_id" validate:"omitempty,ulid"`
 	ProgramId string `query:"program_id" validate:"omitempty,ulid"`
+	IsMandatoryFieldsCompleted *bool `query:"is_mandatory_fields_completed" validate:"omitempty"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {
