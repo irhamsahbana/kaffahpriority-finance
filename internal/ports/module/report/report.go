@@ -64,6 +64,7 @@ type FinancialRepository interface {
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 	BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
+	GetAcquisitionRightsAggregateFromPayrollItems(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
 
 // Reporting and analytics operations
@@ -136,6 +137,7 @@ type FinancialService interface {
 	UpdateLecturersWage(ctx context.Context, req *entity.UpdateLecturersWageReq) error
 	BulkUpdateLecturersWage(ctx context.Context, req *entity.BulkUpdateLecturersWageReq) error
 	GetAcquisitionRightsAggregate(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
+	GetAcquisitionRightsAggregateFromPayrollItems(ctx context.Context, req *entity.GetAcquisitionRightsAggregateReq) (*entity.GetAcquisitionRightsAggregateResp, error)
 }
 
 type ReportingService interface {

@@ -87,6 +87,7 @@ func (h *reportHandler) Register(router fiber.Router) {
 	protected.Get("/lecturers-wages-aggregate", h.getLecturerWagesAggregate)
 	protected.Get("/lecturers-wages-aggregate-yearly", h.getLecturerWagesAggregateYearly)
 	protected.Get("/acquisition-rights-aggregate", h.getAcquisitionRightsAggregate)
+	protected.Get("/acquisition-rights-aggregate-payroll", h.getAcquisitionRightsAggregateFromPayrollItems)
 
 	protected.Post("/generate-registration-reports", h.generateRegistrationReports)
 	protected.Post("/multi-allocation-registrations", h.registrationMultiAllocation)
@@ -939,6 +940,38 @@ func (h *reportHandler) bulkUpdateLecturerWages(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.Success(nil, ""))
+}
+
+func (h *reportHandler) getAcquisitionRightsAggregateFromPayrollItems(c *fiber.Ctx) error {
+	var (
+		ctx, span = tracing.StartSpan(c.UserContext(), "handler.getAcquisitionRightsAggregateFromPayrollItems")
+		req       = new(entity.GetAcquisitionRightsAggregateReq)
+		v         = adapter.Adapters.Validator
+		l         = m.GetLocals(c)
+	)
+	defer span.End()
+
+	if err := c.QueryParser(req); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("invalid request")
+		return c.Status(fiber.StatusBadRequest).JSON(response.Error(err))
+	}
+
+	req.UserID = l.GetUserId()
+	req.SetDefault()
+
+	if err := v.Validate(req); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Any("req", req).Msg("invalid request")
+		code, errs := errmsg.Errors(err, req)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	resp, err := h.service.GetAcquisitionRightsAggregateFromPayrollItems(ctx, req)
+	if err != nil {
+		code, errs := errmsg.Errors[error](err)
+		return c.Status(code).JSON(response.Error(errs))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Success(resp, ""))
 }
 
 func (h *reportHandler) generateRegistrationReports(c *fiber.Ctx) error {
