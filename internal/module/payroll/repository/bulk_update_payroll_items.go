@@ -34,6 +34,10 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 			setParts = append(setParts, "is_meeting_full = :is_meeting_full")
 			args["is_meeting_full"] = *item.IsMeetingFull
 		}
+		if item.IsITP != nil {
+			setParts = append(setParts, "is_itp = :is_itp")
+			args["is_itp"] = *item.IsITP
+		}
 		if item.ForeignLearningFee != nil {
 			setParts = append(setParts, "foreign_learning_fee = :foreign_learning_fee")
 			args["foreign_learning_fee"] = *item.ForeignLearningFee
