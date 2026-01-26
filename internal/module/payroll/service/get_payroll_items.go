@@ -62,9 +62,12 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 		for i := range items {
 			// Append Additional Students
 			if students, ok := additionalStudentsMap[items[i].ID]; ok {
+				items[i].AdditionalStudents = students
 				for _, s := range students {
 					items[i].StudentName += ", " + s.Name
 				}
+			} else {
+				items[i].AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
 			}
 
 			// Append Program Flags

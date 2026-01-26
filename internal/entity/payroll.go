@@ -125,6 +125,7 @@ type UpdatePayrollItemReq struct {
 	UserID             string           `json:"user_id"`
 	ProgramMeetings    *uint64          `json:"program_meetings"`
 	AcquisitionRights  *uint64          `json:"acquisition_rights"`
+	AdditionalStudents []AddStudent     `json:"additional_students" validate:"omitempty,dive"`
 	IsMeetingFull      *bool            `json:"is_meeting_full"`
 	ForeignLearningFee *decimal.Decimal `json:"foreign_learning_fee"`
 	NightLearningFee   *decimal.Decimal `json:"night_learning_fee"`
