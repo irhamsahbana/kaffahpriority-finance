@@ -8,6 +8,7 @@ import (
 	"database/sql"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPayrollItemsReq) (*entity.GetPayrollItemsResp, error) {
@@ -64,7 +65,12 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 			} else {
 				items[i].AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
 			}
-			items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
+			
+			if items[i].ProgramMeetings == 0 {
+				items[i].RealWage = decimal.Zero
+			} else {
+				items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
+			}
 		}
 	}
 
