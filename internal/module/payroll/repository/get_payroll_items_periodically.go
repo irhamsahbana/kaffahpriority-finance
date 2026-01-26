@@ -182,7 +182,7 @@ func (r *payrollRepo) GetPayrollReportsYearly(ctx context.Context, req *entity.G
 		monthQuery := `
 			SELECT
 				EXTRACT(MONTH FROM pr.created_at AT TIME ZONE ?) AS month,
-				COALESCE(SUM(pi.wage), 0) AS wage,
+				COALESCE(SUM(CASE WHEN pi.program_meetings = 0 THEN 0 ELSE (pi.initial_wage + COALESCE(pi.foreign_learning_fee, 0) + COALESCE(pi.night_learning_fee, 0)) END), 0) AS wage,
 				COALESCE(SUM(CASE WHEN pi.wage > 0 THEN pi.acquisition_rights ELSE 0 END), 0) AS total_acquisition_rights
 			FROM
 				payroll_items pi
