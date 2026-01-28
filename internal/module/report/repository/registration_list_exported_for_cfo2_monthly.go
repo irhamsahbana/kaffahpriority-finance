@@ -111,10 +111,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 	defer span.End()
 
 	// 1. Fetch unused registrations
-	respUnused, err := r.GetExportedRegistrationsForCFO2MonthlyUnused(ctx, req)
-	if err != nil {
-		return nil, err
-	}
+	// respUnused, err := r.GetExportedRegistrationsForCFO2MonthlyUnused(ctx, req)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	resp := new(entity.GetExportedRegistrationsForCFO2MonthlyResp)
+	resp.Items = make([]entity.RegisItem, 0)
 
 	// 2. Fetch main registrations
 	items, err := r.fetchRegistrationsCFO2(ctx, req)
@@ -123,8 +126,9 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 	}
 
 	if len(items) == 0 {
-		respUnused.Items = append(respUnused.Items, items...)
-		return respUnused, nil
+		// respUnused.Items = append(respUnused.Items, items...)
+		// return respUnused, nil
+		return resp, nil
 	}
 
 	// 3. Enrich items (calculate ITP, modify names, collect IDs)
@@ -139,10 +143,14 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2Monthly(ctx context.Context,
 	}
 
 	// 5. Merge into response
-	respUnused.Items = append(respUnused.Items, items...)
-	respUnused.TotalITP += totalITP
+	// respUnused.Items = append(respUnused.Items, items...)
+	// respUnused.TotalITP += totalITP
+	// return respUnused, nil
 
-	return respUnused, nil
+	resp.Items = items
+	resp.TotalITP = totalITP
+
+	return resp, nil
 }
 
 func (r *reportRepo) fetchRegistrationsCFO2(ctx context.Context, req *entity.GetExportedRegistrationsForCFO2MonthlyReq) ([]entity.RegisItem, error) {
