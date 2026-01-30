@@ -64,6 +64,11 @@ func (r *payrollRepo) GetPayrollItemsWithPagination(ctx context.Context, payroll
 		args = append(args, req.ProgramID)
 	}
 
+	if req.AcademicManagerID != "" {
+		query += ` AND pi.academic_manager_id = ?`
+		args = append(args, req.AcademicManagerID)
+	}
+
 	query += `
 		ORDER BY
 			pi.academic_manager_id ASC,
