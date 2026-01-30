@@ -37,12 +37,13 @@ type GetPayrollRunDetailResp struct {
 }
 
 type GetPayrollItemsReq struct {
-	Period     string `query:"period"`
-	Q          string `query:"q"`
-	MarketerID string `query:"marketer_id"`
-	LecturerID string `query:"lecturer_id"`
-	StudentID  string `query:"student_id"`
-	ProgramID  string `query:"program_id"`
+	Period            string `query:"period"`
+	Q                 string `query:"q"`
+	MarketerID        string `query:"marketer_id"`
+	LecturerID        string `query:"lecturer_id"`
+	StudentID         string `query:"student_id"`
+	ProgramID         string `query:"program_id"`
+	AcademicManagerID string `query:"academic_manager_id"`
 	types.MetaQuery
 }
 

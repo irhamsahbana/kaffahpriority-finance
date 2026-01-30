@@ -17,9 +17,9 @@ type GetTemplatesReq struct {
 	LecturerId        string `query:"lecturer_id" validate:"omitempty,ulid"`
 	AcademicManagerId string `query:"academic_manager_id" validate:"omitempty,ulid"`
 
-	StudentId string `query:"student_id" validate:"omitempty,ulid"`
-	ProgramId string `query:"program_id" validate:"omitempty,ulid"`
-	IsMandatoryFieldsCompleted *bool `query:"is_mandatory_fields_completed" validate:"omitempty"`
+	StudentId                  string `query:"student_id" validate:"omitempty,ulid"`
+	ProgramId                  string `query:"program_id" validate:"omitempty,ulid"`
+	IsMandatoryFieldsCompleted *bool  `query:"is_mandatory_fields_completed" validate:"omitempty"`
 }
 
 func (r *GetTemplatesReq) SetDefault() {
