@@ -16,6 +16,8 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	ctx, span := tracing.StartSpan(ctx, "service.ExportPayrollItemsPeriodically")
 	defer span.End()
 
+	const sheetName = "Rekap Gaji"
+
 	// 1. Get Payroll Run for the period
 	run, err := s.repo.GetPayrollRunByPeriod(ctx, req.Period)
 	if err != nil {
@@ -117,7 +119,10 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 
 	// 5. Generate Excel
 	f := excelize.NewFile()
-	var sheetName = "Sheet1"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to set sheet name")
+		return nil, err
+	}
 
 	// Styles
 	HeaderStyle, _ := newHeaderStyle(f, "#3BFFF5", true)

@@ -20,7 +20,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 	defer span.End()
 
 	const (
-		sheetName = "Sheet1"
+		sheetName = "Rekap Gaji"
 		// colNo              = "A"
 		colProgramMeetings = "F" // Jumlah Tatap Muka
 		colFullWage        = "H" // Ujroh Full
