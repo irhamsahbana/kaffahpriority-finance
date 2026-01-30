@@ -235,11 +235,11 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				}
 
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.RealWage.InexactFloat64())
-			wage := item.Wage.InexactFloat64()
-			totalRealFee += item.RealWage.InexactFloat64()
+				wage := item.Wage.InexactFloat64()
+				totalRealFee += item.RealWage.InexactFloat64()
 
-			// Keep gaji
-			_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
+				// Keep gaji
+				_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
 
 				// Hak akuisisi
 				_ = f.SetCellFormula(sheetName, fmt.Sprintf("P%v", lastRow), fmt.Sprintf(`IF(O%v=0,"",%d)`, lastRow, item.AcquisitionRights))
