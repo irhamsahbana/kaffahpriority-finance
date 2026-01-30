@@ -65,7 +65,7 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 			} else {
 				items[i].AdditionalStudents = make([]entity.PayrollItemAdditionalStudent, 0)
 			}
-			
+
 			if items[i].ProgramMeetings == 0 {
 				items[i].RealWage = decimal.Zero
 			} else {
