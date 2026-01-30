@@ -328,11 +328,11 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 	}
 
 	// Find items to DELETE (in DB but not in templates)
-	for key, item := range existingMap {
-		if !templateMap[key] {
-			toDeleteIDs = append(toDeleteIDs, item.ID)
-		}
-	}
+	// for key, item := range existingMap {
+	// 	if !templateMap[key] {
+	// 		toDeleteIDs = append(toDeleteIDs, item.ID)
+	// 	}
+	// }
 
 	// 4. Execute Operations
 	if len(toDeleteIDs) > 0 {
