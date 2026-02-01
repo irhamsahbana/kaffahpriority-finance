@@ -41,6 +41,10 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 		setParts = append(setParts, "acquisition_rights = :acquisition_rights")
 		args["acquisition_rights"] = *req.AcquisitionRights
 	}
+	if req.Notes != nil {
+		setParts = append(setParts, "notes = :notes")
+		args["notes"] = *req.Notes
+	}
 	if req.IsMeetingFull != nil {
 		setParts = append(setParts, "is_meeting_full = :is_meeting_full")
 		args["is_meeting_full"] = *req.IsMeetingFull
