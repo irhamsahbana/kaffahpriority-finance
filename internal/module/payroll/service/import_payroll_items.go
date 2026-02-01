@@ -24,11 +24,12 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		// colNo              = "A"
 		colProgramMeetings = "F" // Jumlah Tatap Muka
 		colFullWage        = "H" // Ujroh Full
-		colInitialWage     = "I" // Ujroh Awal
-		colIsMeetingFull   = "J" // TF/F
-		colForeignFee      = "K" // FL
-		colNightFee        = "L" // NL
-		colKeepWage        = "O" // Keep Gaji
+		colWagePerMeeting  = "G" // Gaji per Tatap Muka / Hitungan
+		// colInitialWage     = "I" // Ujroh Awal
+		colIsMeetingFull = "J" // TF/F
+		colForeignFee    = "K" // FL
+		colNightFee      = "L" // NL
+		colKeepWage      = "O" // Keep Gaji
 		// colAcqRights       = "P" // Hak Akuisisi
 		colID = "R" // Payroll Item ID
 	)
@@ -68,8 +69,9 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		// no, _ := f.GetCellValue(sheetName, cell(colNo, rowIdx))
 		idStr, _ := f.GetCellValue(sheetName, cell(colID, rowIdx))
 		meetingsStr, _ := f.GetCellValue(sheetName, cell(colProgramMeetings, rowIdx))
+		wagePerMeetingStr, _ := f.GetCellValue(sheetName, cell(colWagePerMeeting, rowIdx), rawValue)
 		fullWageStr, _ := f.GetCellValue(sheetName, cell(colFullWage, rowIdx), rawValue)
-		initialWageStr, _ := f.CalcCellValue(sheetName, cell(colInitialWage, rowIdx))
+		// initialWageStr, _ := f.CalcCellValue(sheetName, cell(colInitialWage, rowIdx))
 		isFullStr, _ := f.GetCellValue(sheetName, cell(colIsMeetingFull, rowIdx))
 		flStr, _ := f.GetCellValue(sheetName, cell(colForeignFee, rowIdx), rawValue)
 		nlStr, _ := f.GetCellValue(sheetName, cell(colNightFee, rowIdx), rawValue)
@@ -80,8 +82,10 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		meetingsStr = strings.TrimSpace(meetingsStr)
 		fullWageStr = strings.TrimSpace(fullWageStr)
 		fullWageStr = strings.ReplaceAll(fullWageStr, ",", "")
-		initialWageStr = strings.TrimSpace(initialWageStr)
-		initialWageStr = strings.ReplaceAll(initialWageStr, ",", "")
+		wagePerMeetingStr = strings.TrimSpace(wagePerMeetingStr)
+		wagePerMeetingStr = strings.ReplaceAll(wagePerMeetingStr, ",", "")
+		// initialWageStr = strings.TrimSpace(initialWageStr)
+		// initialWageStr = strings.ReplaceAll(initialWageStr, ",", "")
 		isFullStr = strings.TrimSpace(isFullStr)
 		flStr = strings.TrimSpace(flStr)
 		nlStr = strings.TrimSpace(nlStr)
@@ -102,22 +106,19 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		}
 		item.ID = idStr
 
-		// Program Meetings
-		meetings, err := strconv.Atoi(meetingsStr)
-		if err != nil {
-			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Jumlah Tatap Muka tidak valid: %s", meetingsStr))
+		// Is Meeting Full (TF/F)
+		// Logic: "full" or "tidak full" as per Report module
+		// But user said: "F" or "1" means Full.
+		// Let's support both Report module standard AND User's specific request.
+		// Report module: "full" -> true, "tidak full" -> false
+		// User request: "F" or "1" -> true
+		// I will normalize to lowercase.
+		isFullLower := strings.ToLower(isFullStr)
+		if isFullLower == "full" || isFullLower == "f" || isFullLower == "1" || isFullLower == "true" {
+			item.IsMeetingFull = true
+		} else {
+			item.IsMeetingFull = false
 		}
-		item.ProgramMeetings = meetings
-
-		// Initial Wage
-		initialWage, err := decimal.NewFromString(initialWageStr)
-		if err != nil {
-			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Ujroh Awal tidak valid: %s", initialWageStr))
-		}
-		if initialWage.LessThan(decimal.Zero) {
-			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), "Ujroh Awal tidak boleh negatif")
-		}
-		item.InitialWage = initialWage
 
 		fullWage := decimal.Zero
 		if fullWageStr != "" {
@@ -133,18 +134,29 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		}
 		item.FullWage = fullWage
 
-		// Is Meeting Full (TF/F)
-		// Logic: "full" or "tidak full" as per Report module
-		// But user said: "F" or "1" means Full.
-		// Let's support both Report module standard AND User's specific request.
-		// Report module: "full" -> true, "tidak full" -> false
-		// User request: "F" or "1" -> true
-		// I will normalize to lowercase.
-		isFullLower := strings.ToLower(isFullStr)
-		if isFullLower == "full" || isFullLower == "f" || isFullLower == "1" || isFullLower == "true" {
-			item.IsMeetingFull = true
+		// Wage per meeting
+		wagePerMeeting := decimal.Zero
+		if wagePerMeetingStr != "" {
+			parsedWagePerMeeting, err := decimal.NewFromString(wagePerMeetingStr)
+			if err != nil {
+				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Gaji per Tatap Muka tidak valid: %s", wagePerMeetingStr))
+			} else {
+				wagePerMeeting = parsedWagePerMeeting
+			}
+		}
+
+		// Program Meetings
+		meetings, err := strconv.Atoi(meetingsStr)
+		if err != nil {
+			_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("Jumlah Tatap Muka tidak valid: %s", meetingsStr))
+		}
+		item.ProgramMeetings = meetings
+
+		// Initial Wage
+		if item.IsMeetingFull {
+			item.InitialWage = fullWage
 		} else {
-			item.IsMeetingFull = false
+			item.InitialWage = wagePerMeeting.Mul(decimal.NewFromInt(int64(meetings)))
 		}
 
 		// Foreign Learning Fee
