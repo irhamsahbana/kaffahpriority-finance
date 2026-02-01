@@ -48,11 +48,6 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 		meetings = *req.ProgramMeetings
 	}
 
-	isFull := itemBefore.IsMeetingFull
-	if req.IsMeetingFull != nil {
-		isFull = *req.IsMeetingFull
-	}
-
 	fl := itemBefore.ForeignLearningFee
 	if req.ForeignLearningFee != nil {
 		fl = *req.ForeignLearningFee
@@ -65,17 +60,12 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 	}
 	req.NightLearningFee = &nl
 
-	var initialWage decimal.Decimal
-	if isFull {
-		initialWage = itemBefore.FullWage
-	} else {
-		initialWage = itemBefore.WagePerMeeting.Mul(decimal.NewFromInt(int64(meetings)))
+	if req.InitialWage != nil {
+		if meetings < 1 {
+			zero := decimal.Zero
+			req.InitialWage = &zero
+		}
 	}
-
-	if meetings < 1 {
-		initialWage = decimal.Zero
-	}
-	req.InitialWage = &initialWage
 
 	if req.Wage == nil {
 		req.Wage = &itemBefore.Wage
