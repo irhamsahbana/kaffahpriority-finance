@@ -58,6 +58,10 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 			setParts = append(setParts, "acquisition_rights = :acquisition_rights")
 			args["acquisition_rights"] = *item.AcquisitionRights
 		}
+		if item.Notes != nil {
+			setParts = append(setParts, "notes = :notes")
+			args["notes"] = *item.Notes
+		}
 
 		if len(setParts) > 0 {
 			query := fmt.Sprintf("UPDATE payroll_items SET %s, updated_at = NOW() WHERE id = :id", strings.Join(setParts, ", "))

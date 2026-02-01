@@ -50,6 +50,7 @@ type PayrollItem struct {
 	FullWage            decimal.Decimal `json:"full_wage" db:"full_wage"`
 	Wage                decimal.Decimal `json:"wage" db:"wage"`
 	AcquisitionRights   uint64          `json:"acquisition_rights" db:"acquisition_rights"`
+	Notes               string          `json:"notes" db:"notes"`
 	CreatedAt           time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt           time.Time       `json:"updated_at" db:"updated_at"`
 	DeletedAt           *time.Time      `json:"deleted_at" db:"deleted_at"`
