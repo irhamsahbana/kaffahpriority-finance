@@ -63,7 +63,7 @@ func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, tim
 			return nil, err
 		}
 
-		if err := r.syncPayrollItems(ctx, tx, run.ID, templates); err != nil {
+		if err := r.syncPayrollItems(ctx, tx, run.ID, period, templates); err != nil {
 			return nil, err
 		}
 	}
@@ -180,7 +180,7 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 	return templates, nil
 }
 
-func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, period string, templates []templateData) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.createPayrollItemsFromTemplates")
 	defer span.End()
 
@@ -198,6 +198,11 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 		return err
 	}
 
+	notesMap, err := r.fetchLatestPayrollItemNotes(ctx, tx, period, templates)
+	if err != nil {
+		return err
+	}
+
 	for _, t := range templates {
 		wagePerMeeting := t.PricePerMeeting
 		fullWage := t.FullFee
@@ -209,6 +214,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			acquisitionRights = acquisitionRights * 2
 		}
 
+		key := fmt.Sprintf("%s|%s|%s", t.StudentID, t.ProgramID, t.LecturerID)
 		item := entity.PayrollItem{
 			ID:                  ulid.Make().String(),
 			TemplateID:          t.TemplateID,
@@ -233,6 +239,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			Wage:                decimal.Zero,
 			InitialWage:         decimal.Zero,
 			AcquisitionRights:   acquisitionRights,
+			Notes:               notesMap[key],
 			CreatedAt:           time.Now(),
 			UpdatedAt:           time.Now(),
 		}
@@ -261,14 +268,14 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			program_id, program_name, marketer_id, marketer_name,
 			foreign_learning_fee, night_learning_fee, is_itp,
 			program_meetings, is_meeting_full, wage_per_meeting,
-			full_wage, wage, acquisition_rights, created_at, updated_at
+			full_wage, wage, acquisition_rights, notes, created_at, updated_at
 		) VALUES (
 			:id, :template_id, :payroll_run_id, :academic_manager_id, :academic_manager_name,
 			:lecturer_id, :lecturer_name, :student_id, :student_name,
 			:program_id, :program_name, :marketer_id, :marketer_name,
 			:foreign_learning_fee, :night_learning_fee, :is_itp,
 			:program_meetings, :is_meeting_full, :wage_per_meeting,
-			:full_wage, :wage, :acquisition_rights, :created_at, :updated_at
+			:full_wage, :wage, :acquisition_rights, :notes, :created_at, :updated_at
 		)
 	`
 	_, err = tx.NamedExecContext(ctx, queryInsertItems, items)
@@ -295,7 +302,87 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 	return nil
 }
 
-func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+func (r *payrollRepo) fetchLatestPayrollItemNotes(ctx context.Context, tx *sqlx.Tx, period string, templates []templateData) (map[string]string, error) {
+	ctx, span := tracing.StartSpan(ctx, "repo.fetchLatestPayrollItemNotes")
+	defer span.End()
+
+	notesMap := make(map[string]string)
+	if len(templates) == 0 {
+		return notesMap, nil
+	}
+
+	periodTime, err := time.Parse("2006-01", period)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse period")
+		return nil, err
+	}
+	prevPeriod := periodTime.AddDate(0, -1, 0).Format("2006-01")
+
+	studentIDs := make([]string, 0, len(templates))
+	programIDs := make([]string, 0, len(templates))
+	lecturerIDs := make([]string, 0, len(templates))
+
+	for _, t := range templates {
+		studentIDs = append(studentIDs, t.StudentID)
+		programIDs = append(programIDs, t.ProgramID)
+		lecturerIDs = append(lecturerIDs, t.LecturerID)
+	}
+
+	type noteRow struct {
+		StudentID  string `db:"student_id"`
+		ProgramID  string `db:"program_id"`
+		LecturerID string `db:"lecturer_id"`
+		Notes      string `db:"notes"`
+	}
+
+	query := `
+		WITH template_keys AS (
+			SELECT DISTINCT
+				student_id,
+				program_id,
+				lecturer_id
+			FROM UNNEST($1::text[], $2::text[], $3::text[]) AS t(student_id, program_id, lecturer_id)
+		)
+		SELECT DISTINCT ON (pi.student_id, pi.program_id, pi.lecturer_id)
+			pi.student_id,
+			pi.program_id,
+			pi.lecturer_id,
+			COALESCE(pi.notes, '') AS notes
+		FROM template_keys tk
+		JOIN payroll_items pi
+			ON pi.student_id = tk.student_id
+			AND pi.program_id = tk.program_id
+			AND pi.lecturer_id = tk.lecturer_id
+		JOIN payroll_runs pr ON pr.id = pi.payroll_run_id
+		WHERE pi.deleted_at IS NULL
+			AND pr.period = $4
+		ORDER BY
+			pi.student_id,
+			pi.program_id,
+			pi.lecturer_id,
+			pi.created_at DESC
+	`
+
+	var rows []noteRow
+	if err := tx.SelectContext(ctx, &rows, query,
+		pq.Array(studentIDs),
+		pq.Array(programIDs),
+		pq.Array(lecturerIDs),
+		prevPeriod,
+	); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch latest payroll item notes")
+		return nil, err
+	}
+
+	for _, row := range rows {
+		key := fmt.Sprintf("%s|%s|%s", row.StudentID, row.ProgramID, row.LecturerID)
+		notesMap[key] = row.Notes
+	}
+
+	return notesMap, nil
+}
+
+func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, period string, templates []templateData) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.syncPayrollItems")
 	defer span.End()
 
@@ -344,7 +431,7 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 
 	if len(toAdd) > 0 {
 		log.Ctx(ctx).Info().Int("count", len(toAdd)).Msg("syncPayrollItems: adding new items")
-		if err := r.createPayrollItemsFromTemplates(ctx, tx, runID, toAdd); err != nil {
+		if err := r.createPayrollItemsFromTemplates(ctx, tx, runID, period, toAdd); err != nil {
 			return err
 		}
 	}
