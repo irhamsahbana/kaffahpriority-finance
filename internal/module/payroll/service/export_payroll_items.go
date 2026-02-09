@@ -240,6 +240,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				}
 
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.RealWage.InexactFloat64())
+				f.SetCellValue(sheetName, fmt.Sprintf("N%v", lastRow), item.Notes)
 				wage := item.Wage.InexactFloat64()
 				totalRealFee += item.RealWage.InexactFloat64()
 
