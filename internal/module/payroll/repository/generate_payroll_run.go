@@ -63,7 +63,7 @@ func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, tim
 			return nil, err
 		}
 
-		if err := r.syncPayrollItems(ctx, tx, run.ID, templates); err != nil {
+		if err := r.syncPayrollItems(ctx, tx, run.ID, templates, period); err != nil {
 			return nil, err
 		}
 	}
@@ -180,7 +180,7 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 	return templates, nil
 }
 
-func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData, previousNotes map[string]string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.createPayrollItemsFromTemplates")
 	defer span.End()
 
@@ -209,6 +209,11 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			acquisitionRights = acquisitionRights * 2
 		}
 
+		notes := ""
+		if val, ok := previousNotes[t.TemplateID]; ok {
+			notes = val
+		}
+
 		item := entity.PayrollItem{
 			ID:                  ulid.Make().String(),
 			TemplateID:          t.TemplateID,
@@ -233,6 +238,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			Wage:                decimal.Zero,
 			InitialWage:         decimal.Zero,
 			AcquisitionRights:   acquisitionRights,
+			Notes:               notes,
 			CreatedAt:           time.Now(),
 			UpdatedAt:           time.Now(),
 		}
@@ -261,14 +267,14 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			program_id, program_name, marketer_id, marketer_name,
 			foreign_learning_fee, night_learning_fee, is_itp,
 			program_meetings, is_meeting_full, wage_per_meeting,
-			full_wage, wage, acquisition_rights, created_at, updated_at
+			full_wage, wage, acquisition_rights, notes, created_at, updated_at
 		) VALUES (
 			:id, :template_id, :payroll_run_id, :academic_manager_id, :academic_manager_name,
 			:lecturer_id, :lecturer_name, :student_id, :student_name,
 			:program_id, :program_name, :marketer_id, :marketer_name,
 			:foreign_learning_fee, :night_learning_fee, :is_itp,
 			:program_meetings, :is_meeting_full, :wage_per_meeting,
-			:full_wage, :wage, :acquisition_rights, :created_at, :updated_at
+			:full_wage, :wage, :acquisition_rights, :notes, :created_at, :updated_at
 		)
 	`
 	_, err = tx.NamedExecContext(ctx, queryInsertItems, items)
@@ -295,7 +301,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 	return nil
 }
 
-func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData) error {
+func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID string, templates []templateData, period string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.syncPayrollItems")
 	defer span.End()
 
@@ -344,12 +350,62 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 
 	if len(toAdd) > 0 {
 		log.Ctx(ctx).Info().Int("count", len(toAdd)).Msg("syncPayrollItems: adding new items")
-		if err := r.createPayrollItemsFromTemplates(ctx, tx, runID, toAdd); err != nil {
+
+		previousNotes := make(map[string]string)
+		if periodTime, err := time.Parse("2006-01", period); err == nil {
+			prevPeriod := periodTime.AddDate(0, -1, 0).Format("2006-01")
+
+			var templateIDs []string
+			for _, t := range toAdd {
+				templateIDs = append(templateIDs, t.TemplateID)
+			}
+
+			if notes, err := r.fetchPreviousPeriodNotes(ctx, tx, prevPeriod, templateIDs); err == nil {
+				previousNotes = notes
+			} else {
+				log.Ctx(ctx).Warn().Err(err).Msg("failed to fetch previous period notes")
+			}
+		}
+
+		if err := r.createPayrollItemsFromTemplates(ctx, tx, runID, toAdd, previousNotes); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (r *payrollRepo) fetchPreviousPeriodNotes(ctx context.Context, tx *sqlx.Tx, prevPeriod string, templateIDs []string) (map[string]string, error) {
+	if len(templateIDs) == 0 {
+		return nil, nil
+	}
+
+	var results []struct {
+		TemplateID string `db:"template_id"`
+		Notes      string `db:"notes"`
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT pi.template_id, pi.notes
+		FROM payroll_items pi
+		JOIN payroll_runs pr ON pi.payroll_run_id = pr.id
+		WHERE pr.period = ? AND pi.notes != '' AND pi.deleted_at IS NULL AND pi.template_id IN (?)
+	`, prevPeriod, templateIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	query = tx.Rebind(query)
+	if err := tx.SelectContext(ctx, &results, query, args...); err != nil {
+		return nil, err
+	}
+
+	notesMap := make(map[string]string)
+	for _, res := range results {
+		notesMap[res.TemplateID] = res.Notes
+	}
+
+	return notesMap, nil
 }
 
 func (_ *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sqlx.Tx, runID string) ([]entity.PayrollItem, error) {
