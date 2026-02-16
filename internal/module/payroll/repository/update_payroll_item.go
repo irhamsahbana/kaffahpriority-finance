@@ -69,6 +69,10 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 		setParts = append(setParts, "initial_wage = :initial_wage")
 		args["initial_wage"] = *req.InitialWage
 	}
+	if req.WagePerMeeting != nil {
+		setParts = append(setParts, "wage_per_meeting = :wage_per_meeting")
+		args["wage_per_meeting"] = *req.WagePerMeeting
+	}
 
 	if len(setParts) == 0 && req.AdditionalStudents == nil {
 		return nil
