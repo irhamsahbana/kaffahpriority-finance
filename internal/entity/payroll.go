@@ -146,6 +146,8 @@ type UpdatePayrollItemReq struct {
 	NightLearningFee   *decimal.Decimal `json:"night_learning_fee"`
 	Wage               *decimal.Decimal `json:"wage"`
 	InitialWage        *decimal.Decimal `json:"initial_wage"`
+	WagePerMeeting     *decimal.Decimal `json:"wage_per_meeting"`
+	FullWage           *decimal.Decimal `json:"full_wage"`
 }
 
 func (_ *UpdatePayrollItemReq) Validate() error {
