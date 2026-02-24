@@ -57,7 +57,7 @@ func (r *payrollRepo) GeneratePayrollRun(ctx context.Context, period string, tim
 	// 3. Sync with templates (Create new items, Delete invalid items)
 	// We only sync if the run is in "draft" status.
 	if run.Status == entity.PayrollRunStatusDraft {
-		templates, err := r.fetchRegistrationTemplates(ctx, tx)
+		templates, err := r.fetchRegistrationTemplates(ctx, tx, period)
 		if err != nil {
 			return nil, err
 		}
@@ -133,9 +133,19 @@ func (_ *payrollRepo) createPayrollRunEntity(ctx context.Context, tx *sqlx.Tx, p
 	return &run, nil
 }
 
-func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx) ([]templateData, error) {
+func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.Tx, period string) ([]templateData, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.fetchRegistrationTemplates")
 	defer span.End()
+
+	// Parse period to get the last day of the month
+	periodTime, err := time.Parse("2006-01", period)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse period")
+		return nil, err
+	}
+
+	year, month, _ := periodTime.Date()
+	periodEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, time.Local) // Last day of the month
 
 	var templates []templateData
 	queryTemplates := `
@@ -170,9 +180,9 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 		JOIN
 			marketers m ON prt.marketer_id = m.id
 		WHERE
-			prt.deleted_at IS NULL
+			prt.deleted_at IS NULL AND prt.created_at <= $1
 	`
-	if err := tx.SelectContext(ctx, &templates, queryTemplates); err != nil {
+	if err := tx.SelectContext(ctx, &templates, queryTemplates, periodEnd); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch templates")
 		return nil, err
 	}
@@ -331,11 +341,11 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 	}
 
 	// Find items to DELETE (in DB but not in templates)
-	// for key, item := range existingMap {
-	// 	if !templateMap[key] {
-	// 		toDeleteIDs = append(toDeleteIDs, item.ID)
-	// 	}
-	// }
+	for key, item := range existingMap {
+		if !templateMap[key] {
+			toDeleteIDs = append(toDeleteIDs, item.ID)
+		}
+	}
 
 	// 4. Execute Operations
 	if len(toDeleteIDs) > 0 {
