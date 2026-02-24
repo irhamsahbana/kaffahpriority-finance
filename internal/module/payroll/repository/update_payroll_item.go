@@ -25,6 +25,14 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 		setParts = append(setParts, "lecturer_name = :lecturer_name")
 		args["lecturer_name"] = *req.LecturerName
 	}
+	if req.StudentID != nil {
+		setParts = append(setParts, "student_id = :student_id")
+		args["student_id"] = *req.StudentID
+	}
+	if req.StudentName != nil {
+		setParts = append(setParts, "student_name = :student_name")
+		args["student_name"] = *req.StudentName
+	}
 	if req.ProgramID != nil {
 		setParts = append(setParts, "program_id = :program_id")
 		args["program_id"] = *req.ProgramID
