@@ -5,7 +5,6 @@ import (
 	"codebase-app/internal/infrastructure/tracing"
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -312,11 +311,10 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 	}
 
 	// 2. Map existing items for O(1) lookup
-	// Key: StudentID|ProgramID|LecturerID
+	// Key: TemplateID
 	existingMap := make(map[string]entity.PayrollItem)
 	for _, item := range existingItems {
-		key := fmt.Sprintf("%s|%s|%s", item.StudentID, item.ProgramID, item.LecturerID)
-		existingMap[key] = item
+		existingMap[item.TemplateID] = item
 	}
 
 	// 3. Identify items to ADD and DELETE
@@ -326,9 +324,8 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 
 	// Find items to ADD (in templates but not in DB)
 	for _, t := range templates {
-		key := fmt.Sprintf("%s|%s|%s", t.StudentID, t.ProgramID, t.LecturerID)
-		templateMap[key] = true
-		if _, exists := existingMap[key]; !exists {
+		templateMap[t.TemplateID] = true
+		if _, exists := existingMap[t.TemplateID]; !exists {
 			toAdd = append(toAdd, t)
 		}
 	}
@@ -411,7 +408,7 @@ func (r *payrollRepo) fetchPreviousPeriodNotes(ctx context.Context, tx *sqlx.Tx,
 func (_ *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sqlx.Tx, runID string) ([]entity.PayrollItem, error) {
 	var items []entity.PayrollItem
 	query := `
-		SELECT id, student_id, program_id, lecturer_id
+		SELECT id, template_id, student_id, program_id, lecturer_id
 		FROM payroll_items
 		WHERE payroll_run_id = $1 AND deleted_at IS NULL
 	`
