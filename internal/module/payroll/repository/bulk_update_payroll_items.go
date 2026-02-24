@@ -62,6 +62,14 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 			setParts = append(setParts, "notes = :notes")
 			args["notes"] = *item.Notes
 		}
+		if item.StudentID != nil {
+			setParts = append(setParts, "student_id = :student_id")
+			args["student_id"] = *item.StudentID
+		}
+		if item.StudentName != nil {
+			setParts = append(setParts, "student_name = :student_name")
+			args["student_name"] = *item.StudentName
+		}
 
 		if len(setParts) > 0 {
 			query := fmt.Sprintf("UPDATE payroll_items SET %s, updated_at = NOW() WHERE id = :id", strings.Join(setParts, ", "))

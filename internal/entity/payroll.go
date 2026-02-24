@@ -134,6 +134,8 @@ type UpdatePayrollItemReq struct {
 	UserID             string           `json:"user_id"`
 	LecturerID         *string          `json:"lecturer_id"`
 	LecturerName       *string          `json:"-"`
+	StudentID          *string          `json:"student_id"`
+	StudentName        *string          `json:"student_name"`
 	ProgramID          *string          `json:"program_id"`
 	ProgramName        *string          `json:"-"`
 	ProgramMeetings    *uint64          `json:"program_meetings"`
