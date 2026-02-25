@@ -320,6 +320,12 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 		return err
 	}
 
+	// 1b. Fetch template IDs of manually deleted items so we don't re-create them
+	deletedTemplateIDs, err := r.fetchDeletedPayrollItemTemplateIDs(ctx, tx, runID)
+	if err != nil {
+		return err
+	}
+
 	// 2. Map existing items for O(1) lookup
 	// Key: TemplateID
 	existingMap := make(map[string]entity.PayrollItem)
@@ -332,10 +338,14 @@ func (r *payrollRepo) syncPayrollItems(ctx context.Context, tx *sqlx.Tx, runID s
 	var toAdd []templateData
 	var toDeleteIDs []string
 
-	// Find items to ADD (in templates but not in DB)
+	// Find items to ADD (in templates but not in DB, and not previously deleted by user)
 	for _, t := range templates {
 		templateMap[t.TemplateID] = true
 		if _, exists := existingMap[t.TemplateID]; !exists {
+			// Skip templates whose payroll items were manually deleted by the user
+			if deletedTemplateIDs[t.TemplateID] {
+				continue
+			}
 			toAdd = append(toAdd, t)
 		}
 	}
@@ -427,6 +437,28 @@ func (_ *payrollRepo) fetchExistingPayrollItemsLight(ctx context.Context, tx *sq
 		return nil, err
 	}
 	return items, nil
+}
+
+// fetchDeletedPayrollItemTemplateIDs returns template_ids of payroll items that were
+// manually soft-deleted for this run. This prevents syncPayrollItems from re-creating
+// items that the user intentionally removed.
+func (_ *payrollRepo) fetchDeletedPayrollItemTemplateIDs(ctx context.Context, tx *sqlx.Tx, runID string) (map[string]bool, error) {
+	var templateIDs []string
+	query := `
+		SELECT template_id
+		FROM payroll_items
+		WHERE payroll_run_id = $1 AND deleted_at IS NOT NULL
+	`
+	if err := tx.SelectContext(ctx, &templateIDs, query, runID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to fetch deleted payroll item template IDs")
+		return nil, err
+	}
+
+	result := make(map[string]bool, len(templateIDs))
+	for _, id := range templateIDs {
+		result[id] = true
+	}
+	return result, nil
 }
 
 func (_ *payrollRepo) deletePayrollItems(ctx context.Context, tx *sqlx.Tx, ids []string) error {
