@@ -166,7 +166,8 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 			prt.is_itp,
 			p.price_per_meeting,
 			p.full_fee,
-			p.acquisition_rights
+			p.acquisition_rights,
+			prt.created_at AS created_at
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -533,4 +534,5 @@ type templateData struct {
 	PricePerMeeting     decimal.Decimal `db:"price_per_meeting"`
 	FullFee             decimal.Decimal `db:"full_fee"`
 	AcquisitionRights   uint64          `db:"acquisition_rights"`
+	CreatedAt           time.Time       `db:"created_at"`
 }

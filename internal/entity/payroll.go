@@ -199,3 +199,13 @@ type ImportedPayrollItems struct {
 	Wage               decimal.Decimal  `json:"wage" db:"wage"`
 	FullWage           decimal.Decimal  `json:"full_wage" db:"full_wage"`
 }
+
+type CreatePayrollItemReq struct {
+	TemplateID string `json:"template_id" validate:"required,ulid"`
+	Period     string `json:"period" validate:"required,datetime=2006-01"`
+	UserID     string `json:"user_id"`
+}
+
+type CreatePayrollItemResp struct {
+	ID string `json:"id"`
+}

@@ -7,6 +7,7 @@ import (
 
 type PayrollRepository interface {
 	CreatePayrollRun(ctx context.Context, run *entity.PayrollRun) error
+	CreatePayrollItem(ctx context.Context, req *entity.CreatePayrollItemReq) (*entity.CreatePayrollItemResp, error)
 	CreatePayrollItems(ctx context.Context, items []entity.PayrollItem) error
 	GetPayrollRuns(ctx context.Context, req *entity.GetPayrollRunsReq) ([]entity.PayrollRun, int, error)
 	GetPayrollRun(ctx context.Context, id string) (*entity.PayrollRun, error)
@@ -30,6 +31,7 @@ type PayrollRepository interface {
 
 type PayrollService interface {
 	CreatePayrollRun(ctx context.Context, req *entity.CreatePayrollRunReq) (*entity.CreatePayrollRunResp, error)
+	CreatePayrollItem(ctx context.Context, req *entity.CreatePayrollItemReq) (*entity.CreatePayrollItemResp, error)
 	GetPayrollRuns(ctx context.Context, req *entity.GetPayrollRunsReq) (*entity.GetPayrollRunsResp, error)
 	GetPayrollRunDetail(ctx context.Context, req *entity.GetPayrollRunDetailReq) (*entity.GetPayrollRunDetailResp, error)
 	GetPayrollItems(ctx context.Context, req *entity.GetPayrollItemsReq) (*entity.GetPayrollItemsResp, error)

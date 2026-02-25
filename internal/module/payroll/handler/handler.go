@@ -39,6 +39,7 @@ func (h *payrollHandler) Register(router fiber.Router) {
 	protected.Post("/runs", h.CreatePayrollRun)
 	protected.Get("/runs", h.GetPayrollRuns)
 	protected.Get("/runs/:id", h.GetPayrollRunDetail)
+	protected.Post("/items", h.CreatePayrollItem)
 	protected.Get("/items", h.GetPayrollItems)
 	protected.Get("/items/:id", h.GetPayrollItemDetail)
 	protected.Get("/reports/periodically", h.GetPayrollItemsPeriodically)
