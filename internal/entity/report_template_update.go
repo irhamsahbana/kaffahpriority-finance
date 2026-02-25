@@ -16,6 +16,7 @@ type UpdateTemplateGeneralReq struct {
 	AdditionalStudents []AddStudent `json:"additional_students" validate:"required,dive"`
 	Days               []int        `json:"days" validate:"required,unique_in_slice,dive,min=1,max=7"`
 	Notes              *string      `json:"notes" validate:"omitempty,max=255"`
+	CreatedAt          *string      `json:"created_at" validate:"omitempty,datetime=2006-01-02"`
 
 	ProgramFee            float64  `json:"program_fee" validate:"required,min=0"`
 	AdministrationFee     float64  `json:"administration_fee" validate:"min=0"`

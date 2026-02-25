@@ -53,6 +53,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			marketer_gifts_fee = ?,
 			closing_fee_for_office = ?,
 			closing_fee_for_reward = ?,
+			created_at = COALESCE(?, created_at),
 			updated_at = NOW()
 		WHERE
 			id = ?
@@ -65,6 +66,7 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
+		req.CreatedAt,
 		req.ID,
 	)
 	if err != nil {
