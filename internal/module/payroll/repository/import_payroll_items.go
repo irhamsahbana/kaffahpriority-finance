@@ -84,6 +84,14 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 			WHERE
 				p.id = v.id
 				AND p.deleted_at IS NULL
+				AND (
+					p.program_meetings IS DISTINCT FROM v.program_meetings
+					OR p.is_meeting_full IS DISTINCT FROM v.is_meeting_full
+					OR p.foreign_learning_fee IS DISTINCT FROM v.foreign_learning_fee
+					OR p.night_learning_fee IS DISTINCT FROM v.night_learning_fee
+					OR p.wage IS DISTINCT FROM v.wage
+					OR p.full_wage IS DISTINCT FROM v.full_wage
+				)
 		`
 
 		res, execErr := tx.ExecContext(ctx, r.db.Rebind(query), args...)
