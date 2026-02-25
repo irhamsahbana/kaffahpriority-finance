@@ -129,7 +129,7 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 			itemID = existingItemID
 		} else {
 			// Already exists and active
-			itemID = existingItemID
+			return nil, errmsg.NewCustomErrors(400, errmsg.WithMessage("Data santri ini sudah ada pada periode tersebut"))
 		}
 	} else {
 		// Insert new
