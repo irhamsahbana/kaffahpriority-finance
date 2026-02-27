@@ -66,6 +66,8 @@ type GetSummariesResp struct {
 	TotalMarketerCommission  decimal.Decimal `json:"total_marketer_commission_fee"`
 	TotalMarketerGifts       decimal.Decimal `json:"total_marketer_gifts_fee"`
 	TotalClosingFeeForReward decimal.Decimal `json:"total_closing_fee_for_reward"`
+	TotalClosingFeeForOffice decimal.Decimal `json:"total_closing_fee_for_office"`
+	TotalIncome              decimal.Decimal `json:"total_income"`
 	TotalProfit              decimal.Decimal `json:"total_profit"`
 }
 
