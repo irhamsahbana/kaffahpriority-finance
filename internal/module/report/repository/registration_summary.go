@@ -27,7 +27,15 @@ func (r *reportRepo) GetSummaries(ctx context.Context, req *entity.GetSummariesR
 			COALESCE(SUM(pr.marketer_gifts_fee), 0) AS total_marketer_gifts_fee,
 			COALESCE(SUM(pr.closing_fee_for_reward), 0) AS total_closing_fee_for_reward,
 			COALESCE(SUM(pr.closing_fee_for_office), 0) AS total_closing_fee_for_office,
-			COALESCE(SUM(COALESCE(pr.program_fee, 0) + COALESCE(pr.night_learning_fee, 0) + COALESCE(pr.foreign_learning_fee, 0)), 0) AS total_income,
+			COALESCE(
+				SUM(
+					COALESCE(pr.program_fee, 0)
+					+ COALESCE(pr.night_learning_fee, 0)
+					+ COALESCE(pr.foreign_learning_fee, 0)
+					+ COALESCE(pr.overpayment_fee, 0)
+					+ COALESCE(pr.administration_fee, 0)
+				)
+			, 0) AS total_income,
 			COALESCE(
 				SUM(
 					COALESCE(pr.administration_fee, 0)
