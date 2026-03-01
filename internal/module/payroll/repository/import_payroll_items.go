@@ -91,6 +91,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 					OR p.night_learning_fee IS DISTINCT FROM v.night_learning_fee
 					OR p.wage IS DISTINCT FROM v.wage
 					OR p.full_wage IS DISTINCT FROM v.full_wage
+					OR p.initial_wage = 0
 				)
 		`
 
