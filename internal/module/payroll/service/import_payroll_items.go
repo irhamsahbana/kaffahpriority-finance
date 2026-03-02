@@ -29,9 +29,9 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		colIsMeetingFull = "J" // TF/F
 		colForeignFee    = "K" // FL
 		colNightFee      = "L" // NL
-		colKeepWage      = "O" // Keep Gaji
-		// colAcqRights       = "P" // Hak Akuisisi
-		colID = "R" // Payroll Item ID
+		colKeepWage      = "P" // Keep Gaji
+		// colAcqRights       = "Q" // Hak Akuisisi
+		colID = "S" // Payroll Item ID
 	)
 
 	var errs = errmsg.NewCustomErrors(400)

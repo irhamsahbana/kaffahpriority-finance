@@ -126,14 +126,14 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 
 	// Styles
 	HeaderStyle, _ := newHeaderStyle(f, "#3BFFF5", true)
-	HeaderStyleRight, _ := f.NewStyle(&excelize.Style{
+	HeaderStyleTotal, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:  true,
 			Size:  12,
 			Color: "#000000",
 		},
 		Alignment: &excelize.Alignment{
-			Horizontal: "right",
+			Horizontal: "center",
 			Vertical:   "center",
 		},
 		Border: defaultBorderStyle(),
@@ -177,12 +177,13 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	_ = f.SetCellValue(sheetName, "K1", "FL")
 	_ = f.SetCellValue(sheetName, "L1", "NL")
 	_ = f.SetCellValue(sheetName, "M1", "UJROH REAL")
-	_ = f.SetCellValue(sheetName, "N1", "KETERANGAN")
-	_ = f.SetCellValue(sheetName, "O1", "KEEP GAJI")
-	_ = f.SetCellValue(sheetName, "P1", "HAK AKUISISI")
-	_ = f.SetCellValue(sheetName, "Q1", "PENASEHAT AKADEMIK")
+	_ = f.SetCellValue(sheetName, "N1", "TOTAL")
+	_ = f.SetCellValue(sheetName, "O1", "KETERANGAN")
+	_ = f.SetCellValue(sheetName, "P1", "KEEP GAJI")
+	_ = f.SetCellValue(sheetName, "Q1", "HAK AKUISISI")
+	_ = f.SetCellValue(sheetName, "R1", "PENASEHAT AKADEMIK")
 
-	_ = f.SetCellStyle(sheetName, "A1", "Q1", HeaderStyle)
+	_ = f.SetCellStyle(sheetName, "A1", "R1", HeaderStyle)
 	_ = f.SetColWidth(sheetName, "B", "B", 20)
 	_ = f.SetColWidth(sheetName, "D", "D", 20)
 	_ = f.SetColWidth(sheetName, "E", "E", 20)
@@ -192,6 +193,8 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	_ = f.SetColWidth(sheetName, "O", "O", 20)
 	_ = f.SetColWidth(sheetName, "P", "P", 20)
 	_ = f.SetColWidth(sheetName, "Q", "Q", 20)
+	_ = f.SetColWidth(sheetName, "R", "R", 20)
+	_ = f.SetColVisible(sheetName, "S", false)
 
 	_ = f.SetPanes(sheetName, &excelize.Panes{
 		Freeze: true,
@@ -204,8 +207,8 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 	for _, am := range groupedData {
 		lastRow++
 		f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), am.AcademicManagerName)
-		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1))
-		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("Q%v", lastRow+1), academicManagerNameStyle)
+		f.MergeCell(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("R%v", lastRow+1))
+		f.SetCellStyle(sheetName, fmt.Sprintf("A%v", lastRow), fmt.Sprintf("R%v", lastRow+1), academicManagerNameStyle)
 		lastRow++
 
 		for lecturerIndex, lecturer := range am.Lecturers {
@@ -213,13 +216,14 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 			f.SetCellValue(sheetName, fmt.Sprintf("A%v", lastRow), lecturerIndex+1)
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", lastRow), lecturer.LecturerName)
 
+			startRow := lastRow
 			var totalRealFee float64
 
 			for itemIndex, item := range lecturer.Items {
 				f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow), itemIndex+1)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), item.StudentName)
 				f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), item.ProgramName)
-				f.SetCellValue(sheetName, fmt.Sprintf("Q%v", lastRow), item.MarketerName)
+				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.MarketerName)
 
 				f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow), item.ProgramMeetings)
 				f.SetCellValue(sheetName, fmt.Sprintf("G%v", lastRow), item.WagePerMeeting.InexactFloat64())
@@ -240,18 +244,18 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				}
 
 				f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), item.RealWage.InexactFloat64())
-				f.SetCellValue(sheetName, fmt.Sprintf("N%v", lastRow), item.Notes)
+				f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), item.Notes)
 				wage := item.Wage.InexactFloat64()
 				totalRealFee += item.RealWage.InexactFloat64()
 
 				// Keep gaji
-				_ = f.SetCellValue(sheetName, fmt.Sprintf("O%v", lastRow), wage)
+				_ = f.SetCellValue(sheetName, fmt.Sprintf("P%v", lastRow), wage)
 
 				// Hak akuisisi
-				_ = f.SetCellFormula(sheetName, fmt.Sprintf("P%v", lastRow), fmt.Sprintf(`IF(O%v=0,"",%d)`, lastRow, item.AcquisitionRights))
+				_ = f.SetCellFormula(sheetName, fmt.Sprintf("Q%v", lastRow), fmt.Sprintf(`IF(P%v=0,"",%d)`, lastRow, item.AcquisitionRights))
 
-				// ID for re-import (Hidden or explicit column R)
-				f.SetCellValue(sheetName, fmt.Sprintf("R%v", lastRow), item.ID)
+				// ID for re-import (Hidden or explicit column S)
+				f.SetCellValue(sheetName, fmt.Sprintf("S%v", lastRow), item.ID)
 
 				// Apply styles to editable columns
 				f.SetCellStyle(sheetName, fmt.Sprintf("F%v", lastRow), fmt.Sprintf("F%v", lastRow), editableStyle)
@@ -259,21 +263,19 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellStyle(sheetName, fmt.Sprintf("J%v", lastRow), fmt.Sprintf("J%v", lastRow), editableStyle)
 				f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("K%v", lastRow), editableStyle)
 				f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), editableStyle)
-				f.SetCellStyle(sheetName, fmt.Sprintf("O%v", lastRow), fmt.Sprintf("O%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("P%v", lastRow), fmt.Sprintf("P%v", lastRow), editableStyle)
 
 				if itemIndex+1 != len(lecturer.Items) {
 					lastRow++
 				}
-
-				if itemIndex == len(lecturer.Items)-1 {
-					lastRow++
-					f.SetCellValue(sheetName, fmt.Sprintf("L%v", lastRow), "TOTAL")
-					f.SetCellValue(sheetName, fmt.Sprintf("M%v", lastRow), totalRealFee)
-					f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), HeaderStyle)
-					f.SetCellStyle(sheetName, fmt.Sprintf("M%v", lastRow), fmt.Sprintf("M%v", lastRow), HeaderStyleRight)
-					// lastRow++
-				}
 			}
+
+			// Add total to column N (merged)
+			f.SetCellValue(sheetName, fmt.Sprintf("N%v", startRow), totalRealFee)
+			f.MergeCell(sheetName, fmt.Sprintf("N%v", startRow), fmt.Sprintf("N%v", lastRow))
+			f.SetCellStyle(sheetName, fmt.Sprintf("N%v", startRow), fmt.Sprintf("N%v", lastRow), HeaderStyleTotal)
+
+			lastRow++
 		}
 	}
 
