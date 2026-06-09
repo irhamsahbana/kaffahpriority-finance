@@ -47,11 +47,11 @@ func (r *reportRepo) UpdateRegistrationV2(ctx context.Context, req *entity.Updat
 	// check duplicate allocation
 	if len(req.AllocatedAt) >= 7 {
 		targetMonth := req.AllocatedAt[:7]
-		collisionID, paidAt, _, err := r.checkAllocationCollision(ctx, tx, currentReg.TemplateID, targetMonth, req.ID)
+		collisionID, paidAt, isPaid, err := r.checkAllocationCollision(ctx, tx, currentReg.TemplateID, targetMonth, req.ID)
 		if err != nil {
 			return nil, err
 		}
-		if collisionID != nil {
+		if collisionID != nil && isPaid {
 			// Format allocation from YYYY-MM to MMMM YYYY
 			allocationFormatted := targetMonth
 			if len(targetMonth) == 7 { // YYYY-MM format
