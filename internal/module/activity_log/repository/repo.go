@@ -90,6 +90,11 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 		args = append(args, pq.Array(req.EntityIDs))
 	}
 
+	if req.LogID != "" {
+		query += " AND id = ?"
+		args = append(args, req.LogID)
+	}
+
 	if req.EntityName != "" {
 		query += " AND entity_name = ?"
 		args = append(args, req.EntityName)
@@ -98,6 +103,21 @@ func (r *activityLogRepo) GetActivityLogs(ctx context.Context, req *entity.GetAc
 	if len(req.ActivityTypes) > 0 {
 		query += " AND logs->>'type' = ANY(?)"
 		args = append(args, pq.Array(req.ActivityTypes))
+	}
+
+	if req.StartDate != "" {
+		query += " AND created_at AT TIME ZONE 'Asia/Makassar' >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS')"
+		args = append(args, req.StartDate+" 00:00:00")
+	}
+
+	if req.EndDate != "" {
+		query += " AND created_at AT TIME ZONE 'Asia/Makassar' <= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS')"
+		args = append(args, req.EndDate+" 23:59:59")
+	}
+
+	if req.Q != "" {
+		query += " AND (logs->>'author_name' ILIKE '%' || ? || '%' OR logs->>'message' ILIKE '%' || ? || '%')"
+		args = append(args, req.Q, req.Q)
 	}
 
 	query += `

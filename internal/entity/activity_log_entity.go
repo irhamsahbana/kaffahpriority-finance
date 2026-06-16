@@ -61,6 +61,7 @@ type ActivityLogChanges struct {
 type GetActivityLogsReq struct {
 	UserID string `json:"user_id" validate:"required,ulid"`
 
+	LogID              string   `query:"log_id" validate:"omitempty,ulid"`
 	EntityIDsQuery     string   `query:"entity_ids"`
 	EntityIDs          []string `json:"entity_ids" validate:"omitempty,dive,ulid"`
 	EntityName         string   `query:"entity_name"`
@@ -68,6 +69,10 @@ type GetActivityLogsReq struct {
 	ActivityTypes      []string `json:"activity_types" validate:"omitempty,dive,oneof=create update delete"`
 	SortBy             string   `query:"sort_by" validate:"oneof=created_at"`
 	SortType           string   `query:"sort_type" validate:"oneof=asc desc"`
+	StartDate          string   `query:"start_date" validate:"omitempty,datetime=2006-01-02"`
+	EndDate            string   `query:"end_date" validate:"omitempty,datetime=2006-01-02"`
+	Q                  string   `query:"q" validate:"omitempty"`
+
 	types.MetaQuery
 }
 
