@@ -166,6 +166,11 @@ type DeletePayrollItemReq struct {
 	UserID string `json:"user_id"`
 }
 
+type ResetPayrollRunItemsReq struct {
+	ID     string `params:"id" validate:"required,ulid"`
+	UserID string `json:"user_id"`
+}
+
 type ExportPayrollItemsPeriodicallyReq struct {
 	Period string `query:"period" validate:"required,datetime=2006-01"`
 }

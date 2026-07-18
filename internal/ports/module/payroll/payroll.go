@@ -27,6 +27,7 @@ type PayrollRepository interface {
 	ImportPayrollItems(ctx context.Context, req *entity.ImportPayrollItemsReq) (int64, error)
 	GetPayrollItemsPeriodically(ctx context.Context, req *entity.GetPayrollItemsPeriodicallyReq) (*entity.GetPayrollItemsPeriodicallyResp, error)
 	GetPayrollReportsYearly(ctx context.Context, req *entity.GetPayrollReportsYearlyReq) (*entity.PayrollReportsYearlyResp, error)
+	ResetPayrollRunItems(ctx context.Context, runID string) (int64, error)
 }
 
 type PayrollService interface {
@@ -43,4 +44,5 @@ type PayrollService interface {
 	DeletePayrollItem(ctx context.Context, req *entity.DeletePayrollItemReq) error
 	ExportPayrollItemsPeriodically(ctx context.Context, req *entity.ExportPayrollItemsPeriodicallyReq) (*entity.ExportPayrollItemsPeriodicallyResp, error)
 	GetPayrollReportsYearly(ctx context.Context, req *entity.GetPayrollReportsYearlyReq) (*entity.PayrollReportsYearlyResp, error)
+	ResetPayrollRunItems(ctx context.Context, req *entity.ResetPayrollRunItemsReq) error
 }
