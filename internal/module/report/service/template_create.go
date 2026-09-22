@@ -4,7 +4,6 @@ import (
 	"codebase-app/internal/entity"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
-	"codebase-app/pkg/errmsg"
 	"context"
 	"time"
 
@@ -15,20 +14,6 @@ import (
 func (s *reportService) CreateTemplate(ctx context.Context, req *entity.CreateTemplateReq) (*entity.CreateTemplateResp, error) {
 	ctx, span := tracing.StartSpan(ctx, "service.CreateTemplate")
 	defer span.End()
-
-	isCombinationExist, err := s.repo.CheckTemplateCombinationForCreate(ctx, req)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).
-			Any(entity.Payload, req).
-			Msgf("failed to check combination")
-		return nil, err
-	}
-	if isCombinationExist {
-		log.Ctx(ctx).Warn().
-			Any(entity.Payload, req).
-			Msgf("combination already exist")
-		return nil, errmsg.NewCustomErrors(409).SetMessage("Template dengan kombinasi program, marketer, pengajar, dan santri tersebut sudah ada. Silahkan cek kembali atau update data yang sudah ada")
-	}
 
 	resp, err := s.repo.CreateTemplate(ctx, req)
 	if err != nil {

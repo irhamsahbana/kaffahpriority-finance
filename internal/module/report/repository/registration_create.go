@@ -74,30 +74,13 @@ func (r *reportRepo) checkRegistrationExists(ctx context.Context, tx *sqlx.Tx, t
 
 	queryCheck := `
 		SELECT EXISTS (
-			WITH template AS (
-				SELECT
-					prt.program_id,
-					prt.lecturer_id,
-					prt.student_id
-				FROM
-					program_registration_templates prt
-				WHERE
-					prt.id = ?
-					AND prt.deleted_at IS NULL
-			)
 			SELECT
 				1
 			FROM
 				program_registrations pr
 			WHERE
-				pr.program_id = (SELECT program_id FROM template)
-				AND (
-					CASE
-						WHEN pr.lecturer_id IS NULL THEN (SELECT lecturer_id FROM template) IS NULL
-						ELSE pr.lecturer_id = (SELECT lecturer_id FROM template)
-					END
-				)
-				AND pr.student_id = (SELECT student_id FROM template)
+				pr.template_id = ?
+				AND pr.allocated_at IS NOT NULL
 				AND EXTRACT(MONTH FROM pr.allocated_at) = EXTRACT(MONTH FROM NOW())
 				AND EXTRACT(YEAR FROM pr.allocated_at) = EXTRACT(YEAR FROM NOW())
 				AND pr.deleted_at IS NULL

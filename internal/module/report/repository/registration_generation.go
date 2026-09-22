@@ -93,22 +93,11 @@ func (r *reportRepo) GenerateRegistrationReports(ctx context.Context, req *entit
 		ctx, spanTemplate := tracing.StartSpan(ctx, fmt.Sprintf("repo.GenerateRegistrationReports:templateId:%s", templateId))
 		defer spanTemplate.End()
 
-		// Ambil data dari template untuk pengecekan
-		var studentId, programId string
-		var lecturerId *string
-		err = tx.QueryRowContext(ctx, `SELECT lecturer_id, student_id, program_id FROM program_registration_templates WHERE id = $1`,
-			templateId).Scan(&lecturerId, &studentId, &programId)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("templateId", templateId).Any("req", req).Msgf("failed to get template data")
-			return err
-		}
-
-		// check if registration already exists
+		// check if registration already exists for this template in the current month
 		var programName, studentName string
 		var lecturerName *string
 		err = tx.QueryRowxContext(ctx, r.db.Rebind(queryCheckRegistrationExists),
-			lecturerId, lecturerId,
-			studentId, programId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
+			templateId, req.Timezone, req.Timezone, req.Timezone, req.Timezone,
 		).Scan(&programName, &lecturerName, &studentName)
 
 		// if registration already exists, skip this template
@@ -322,13 +311,7 @@ var queryCheckRegistrationExists = `
 		ON pr.student_id = s.id
 	WHERE
 		pr.deleted_at IS NULL
-		AND (
-			(pr.lecturer_id IS NULL AND ?::TEXT IS NULL)
-			OR
-			(pr.lecturer_id = ?)
-		)
-		AND pr.student_id = ?
-		AND pr.program_id = ?
+		AND pr.template_id = ?
         AND pr.allocated_at AT TIME ZONE ? >= date_trunc('month', NOW() AT TIME ZONE ?)
         AND pr.allocated_at AT TIME ZONE ? < date_trunc('month', NOW() AT TIME ZONE ?) + interval '1 month'
 	LIMIT 1
