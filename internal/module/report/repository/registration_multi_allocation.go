@@ -179,9 +179,7 @@ func (r *reportRepo) processAllocation(ctx context.Context, tx *sqlx.Tx, req *en
 		tx.Rebind(queryCheckMultiAllocation),
 		allocationDate,
 		allocationDate,
-		template.ProgramId,
-		template.StudentId,
-		template.LecturerId,
+		template.ID,
 	)
 
 	// if registration already exists, skip to the next allocation
@@ -369,8 +367,6 @@ var queryCheckMultiAllocation = `
 	WHERE
 		allocated_at AT TIME ZONE 'Asia/Makassar' >= (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC')
 		AND allocated_at AT TIME ZONE 'Asia/Makassar' < (TO_TIMESTAMP(?, 'YYYY-MM-DD') AT TIME ZONE 'UTC' + INTERVAL '1 month')
-		AND program_id = ?
-		AND student_id = ?
-		AND lecturer_id = ?
+		AND template_id = ?
 		AND deleted_at IS NULL
 `
