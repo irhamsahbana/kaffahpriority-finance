@@ -4,6 +4,7 @@
 - When editing files, always use absolute paths.
 - When making changes to a file, explain why the change is being made.
 - When generating code, add comments in English.
+- **Never open or explore `.env` files**: Do not read, list contents of, or search inside `.env` (or similar secret-bearing files). Treat their contents as off-limits.
 - **Shell & Package Manager**:
   - Use `fish` (preferred) or `bash` for shell commands.
   - Use `go mod` for dependency management.
