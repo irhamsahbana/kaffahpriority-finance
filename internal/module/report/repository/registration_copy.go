@@ -46,8 +46,15 @@ func (r *reportRepo) processCopyRegistration(ctx context.Context, tx *sqlx.Tx, u
 	ctx, span := tracing.StartSpan(ctx, "repo.processCopyRegistration")
 	defer span.End()
 
-	if err := r.checkCopyRegistrationExists(ctx, tx, item); err != nil {
+	overwritten, err := r.checkCopyRegistrationExists(ctx, tx, item)
+	if err != nil {
 		return err
+	}
+
+	// The target month already had an unpaid allocation which has been
+	// overwritten (marked as paid), so no new registration is inserted.
+	if overwritten {
+		return nil
 	}
 
 	prID := ulid.Make().String()
@@ -62,7 +69,7 @@ func (r *reportRepo) processCopyRegistration(ctx context.Context, tx *sqlx.Tx, u
 	return nil
 }
 
-func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.Tx, item entity.CopyRegisItem) error {
+func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.Tx, item entity.CopyRegisItem) (bool, error) {
 	ctx, span := tracing.StartSpan(ctx, "repo.checkCopyRegistrationExists")
 	defer span.End()
 
@@ -72,7 +79,7 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 	}
 	queryGetInfo := `SELECT template_id FROM program_registrations WHERE id = ?`
 	if err := tx.GetContext(ctx, &regisInfo, tx.Rebind(queryGetInfo), item.RegisId); err != nil {
-		return err
+		return false, err
 	}
 
 	targetMonth := item.AllocatedAt
@@ -80,12 +87,23 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 		targetMonth = targetMonth[:7]
 	}
 
-	collisionID, paidAt, _, err := r.checkAllocationCollision(ctx, tx, regisInfo.TemplateID, targetMonth, "")
+	collisionID, paidAt, isPaid, err := r.checkAllocationCollision(ctx, tx, regisInfo.TemplateID, targetMonth, "")
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if collisionID != nil {
+		// An allocation for the target month already exists. Only treat it as a
+		// conflict when it is already paid; an unpaid registration is overwritten
+		// in place so the copy can proceed (mirrors UpdateRegistrationV2 and the
+		// multi-allocation flow).
+		if !isPaid {
+			if err := r.overwriteCopyRegistration(ctx, tx, *collisionID); err != nil {
+				return false, err
+			}
+			return true, nil
+		}
+
 		// Format allocation from YYYY-MM to MMMM YYYY
 		allocationFormatted := targetMonth
 		if len(targetMonth) == 7 { // YYYY-MM format
@@ -108,7 +126,30 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 			paidAtStr = paidAt.Time.Format("02 January 2006 15:04")
 		}
 
-		return errmsg.NewCustomErrors(409).SetMessage("Alokasi untuk bulan " + allocationFormatted + " sudah ada untuk template ini (dibayar pada: " + paidAtStr + ")")
+		return false, errmsg.NewCustomErrors(409).SetMessage("Alokasi untuk bulan " + allocationFormatted + " sudah ada untuk template ini (dibayar pada: " + paidAtStr + ")")
+	}
+
+	return false, nil
+}
+
+func (r *reportRepo) overwriteCopyRegistration(ctx context.Context, tx *sqlx.Tx, registrationID string) error {
+	ctx, span := tracing.StartSpan(ctx, "repo.overwriteCopyRegistration")
+	defer span.End()
+
+	// The unpaid allocation is replaced by marking it as paid now, matching the
+	// behavior of the multi-allocation overwrite. Fee columns are left untouched.
+	query := `
+		UPDATE program_registrations
+		SET
+			is_paid = TRUE,
+			paid_at = NOW(),
+			updated_at = NOW()
+		WHERE id = ?
+	`
+
+	if _, err := tx.ExecContext(ctx, tx.Rebind(query), registrationID); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("registration_id", registrationID).Msg("failed to overwrite unpaid registration")
+		return err
 	}
 
 	return nil
