@@ -704,7 +704,44 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 	ctx, span := tracing.StartSpan(ctx, "service.GenerateRegistrationReports")
 	defer span.End()
 
-	return s.repo.GenerateRegistrationReports(ctx, req)
+	generateErr := s.repo.GenerateRegistrationReports(ctx, req)
+
+	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
+	go func() {
+		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
+		if err != nil {
+			log.Ctx(childCtx).Error().Err(err).
+				Any(entity.Payload, req).
+				Msgf("failed to get me")
+			return
+		}
+
+		activityLog := &entity.ActivityLog{
+			ID:         ulid.Make().String(),
+			EntityName: entity.ActivityLogEntityProgramRegistrationReports,
+			AuthorName: user.Name,
+			AuthorRole: user.Role,
+			CreatedAt:  time.Now(),
+			CreatedBy:  req.UserID,
+			After:      req,
+		}
+
+		if generateErr != nil {
+			activityLog.Type = entity.ActivityLogTypeError
+			activityLog.Message = "gagal generate laporan registrasi"
+			activityLog.ErrorMessage = generateErr.Error()
+		} else {
+			activityLog.Type = entity.ActivityLogTypeCreate
+			activityLog.Message = "berhasil generate laporan registrasi"
+		}
+
+		if err := s.activityLogRepo.CreateActivityLog(childCtx, activityLog); err != nil {
+			log.Ctx(childCtx).Error().Err(err).
+				Msgf("failed to create activity log")
+		}
+	}()
+
+	return generateErr
 }
 
 func (s *reportService) RegistrationMultiAllocation(ctx context.Context, req *entity.RegistrationMuliAllocationReq) error {

@@ -12,6 +12,7 @@ const (
 	ActivityLogTypeUpdate ActivityLogType = "update"
 	ActivityLogTypeUpsert ActivityLogType = "upsert"
 	ActivityLogTypeDelete ActivityLogType = "delete"
+	ActivityLogTypeError  ActivityLogType = "error"
 	// ActivityLogTypeComment ActivityLogType = "comment"
 )
 
@@ -21,6 +22,7 @@ const (
 	ActivityLogEntityPrograms                     ActivityLogEntity = "programs"
 	ActivityLogEntityProgramRegistrationTemplates ActivityLogEntity = "program_registration_templates"
 	ActivityLogEntityProgramRegistrations         ActivityLogEntity = "program_registrations"
+	ActivityLogEntityProgramRegistrationReports   ActivityLogEntity = "program_registration_reports"
 	ActivityLogEntityPayrollRuns                  ActivityLogEntity = "payroll_runs"
 	ActivityLogEntityPayrollItems                 ActivityLogEntity = "payroll_items"
 )
@@ -66,7 +68,7 @@ type GetActivityLogsReq struct {
 	EntityIDs          []string `json:"entity_ids" validate:"omitempty,dive,ulid"`
 	EntityName         string   `query:"entity_name"`
 	ActivityTypesQuery string   `query:"activity_types"`
-	ActivityTypes      []string `json:"activity_types" validate:"omitempty,dive,oneof=create update delete"`
+	ActivityTypes      []string `json:"activity_types" validate:"omitempty,dive,oneof=create update delete error"`
 	SortBy             string   `query:"sort_by" validate:"oneof=created_at"`
 	SortType           string   `query:"sort_type" validate:"oneof=asc desc"`
 	StartDate          string   `query:"start_date" validate:"omitempty,datetime=2006-01-02"`
