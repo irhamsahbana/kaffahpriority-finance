@@ -98,7 +98,7 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 		// in place so the copy can proceed (mirrors UpdateRegistrationV2 and the
 		// multi-allocation flow).
 		if !isPaid {
-			if err := r.overwriteCopyRegistration(ctx, tx, *collisionID); err != nil {
+			if err := r.overwriteCopyRegistration(ctx, tx, *collisionID, item.RegisId); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -132,22 +132,25 @@ func (r *reportRepo) checkCopyRegistrationExists(ctx context.Context, tx *sqlx.T
 	return false, nil
 }
 
-func (r *reportRepo) overwriteCopyRegistration(ctx context.Context, tx *sqlx.Tx, registrationID string) error {
+func (r *reportRepo) overwriteCopyRegistration(ctx context.Context, tx *sqlx.Tx, registrationID, sourceRegisID string) error {
 	ctx, span := tracing.StartSpan(ctx, "repo.overwriteCopyRegistration")
 	defer span.End()
 
-	// The unpaid allocation is replaced by marking it as paid now, matching the
-	// behavior of the multi-allocation overwrite. Fee columns are left untouched.
+	// The unpaid allocation is replaced by marking it as paid, matching the
+	// behavior of the multi-allocation overwrite. The paid_at follows the
+	// payment date of the cloned (source) registration. Fee columns are left untouched.
 	query := `
 		UPDATE program_registrations
 		SET
 			is_paid = TRUE,
-			paid_at = NOW(),
+			paid_at = src.paid_at,
 			updated_at = NOW()
-		WHERE id = ?
+		FROM program_registrations src
+		WHERE program_registrations.id = ?
+			AND src.id = ?
 	`
 
-	if _, err := tx.ExecContext(ctx, tx.Rebind(query), registrationID); err != nil {
+	if _, err := tx.ExecContext(ctx, tx.Rebind(query), registrationID, sourceRegisID); err != nil {
 		log.Ctx(ctx).Error().Err(err).Str("registration_id", registrationID).Msg("failed to overwrite unpaid registration")
 		return err
 	}
