@@ -68,32 +68,45 @@ func (r *reportRepo) buildLecturersWagesQuery(req *entity.GetExportedLecturersWa
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			CASE
 				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
 				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
 			END AS acquisition_rights,
 			pr.program_meetings,
-			CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
 			COALESCE(pr.initial_fee, (
 				CASE
 					WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
-					WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-					ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+					WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+					ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 				END
 				)
 			) AS initial_fee,
 			(
 				COALESCE(pr.night_learning_fee, 0) +
 				COALESCE(pr.foreign_learning_fee, 0) +
+				COALESCE(pr.pc_fee, 0) +
+				COALESCE(pr.mt_fee, 0) +
+				COALESCE(pr.cl_fee, 0) +
+				COALESCE(pr.ms_fee, 0) +
+				COALESCE(pr.sc_fee, 0) +
+				COALESCE(pr.ln_fee, 0) +
 				COALESCE(pr.initial_fee,
 					CASE
-						WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-						ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+						WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+						ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 					END
 				)
 			) AS real_fee,
 			pr.is_full_fee,
-			CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee,
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee,
 			-- pr.mentor_detail_fee_used,
 			CASE
 				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
@@ -168,6 +181,27 @@ func (r *reportRepo) formatProgramName(d *lecturerWageDao) {
 	}
 	if d.IsITP {
 		d.ProgramName = d.ProgramName + " + ITP"
+	}
+	if d.IsSSP {
+		d.ProgramName = d.ProgramName + " + SSP"
+	}
+	if d.PCFee != nil && *d.PCFee > 0 {
+		d.ProgramName = d.ProgramName + " + PC"
+	}
+	if d.MTFee != nil && *d.MTFee > 0 {
+		d.ProgramName = d.ProgramName + " + MT"
+	}
+	if d.CLFee != nil && *d.CLFee > 0 {
+		d.ProgramName = d.ProgramName + " + CL"
+	}
+	if d.MSFee != nil && *d.MSFee > 0 {
+		d.ProgramName = d.ProgramName + " + MS"
+	}
+	if d.SCFee != nil && *d.SCFee > 0 {
+		d.ProgramName = d.ProgramName + " + SC"
+	}
+	if d.LNFee != nil && *d.LNFee > 0 {
+		d.ProgramName = d.ProgramName + " + LN"
 	}
 }
 

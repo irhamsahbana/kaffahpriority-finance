@@ -45,6 +45,13 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.is_paid AS has_payment,
 			(
 				CASE
@@ -68,12 +75,12 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 				), 0)
 			)::int AS acquisition_rights,
 			pr.program_meetings,
-			CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting,
 			COALESCE(pr.initial_fee, (
 				CASE
 					WHEN pr.initial_fee IS NOT NULL THEN pr.initial_fee
-					WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-					ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+					WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+					ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 				END
 				)
 			) AS initial_fee,
@@ -83,17 +90,23 @@ func (r *reportRepo) GetLecturersWages(ctx context.Context, req *entity.GetLectu
 					ELSE (
 						COALESCE(pr.night_learning_fee, 0) +
 						COALESCE(pr.foreign_learning_fee, 0) +
+						COALESCE(pr.pc_fee, 0) +
+						COALESCE(pr.mt_fee, 0) +
+						COALESCE(pr.cl_fee, 0) +
+						COALESCE(pr.ms_fee, 0) +
+						COALESCE(pr.sc_fee, 0) +
+						COALESCE(pr.ln_fee, 0) +
 						COALESCE(pr.initial_fee,
 					CASE
-						WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-						ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+						WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+						ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 					END
 				)
 				)
 				END
 			) AS real_fee,
 			pr.is_full_fee,
-			CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee,
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee,
 			CASE
 				WHEN pr.program_meetings < 1 THEN 0
 				WHEN pr.is_paid = TRUE THEN pr.mentor_detail_fee_used
@@ -468,8 +481,8 @@ func (r *reportRepo) GetLecturersWagesAggregate(ctx context.Context, req *entity
 							COALESCE(pr.foreign_learning_fee, 0) +
 						COALESCE(pr.initial_fee,
 							CASE
-								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+								ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
 						)
 					)
@@ -630,10 +643,16 @@ func (r *reportRepo) GetLecturersWagesAggregateYearly(ctx context.Context, req *
 							(
 								COALESCE(pr.night_learning_fee, 0) +
 								COALESCE(pr.foreign_learning_fee, 0) +
+								COALESCE(pr.pc_fee, 0) +
+								COALESCE(pr.mt_fee, 0) +
+								COALESCE(pr.cl_fee, 0) +
+								COALESCE(pr.ms_fee, 0) +
+								COALESCE(pr.sc_fee, 0) +
+								COALESCE(pr.ln_fee, 0) +
 								COALESCE(pr.initial_fee,
 									CASE
-										WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-										ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+										WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+										ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 									END
 							)
 						)
@@ -756,6 +775,60 @@ func (r *reportRepo) UpdateLecturersWage(ctx context.Context, req *entity.Update
 			args = append(args, req.NL.Val)
 		} else {
 			queryParts = append(queryParts, "night_learning_fee = NULL")
+		}
+	}
+
+	if req.PCFee.Present {
+		if req.PCFee.Valid {
+			queryParts = append(queryParts, "pc_fee = ?")
+			args = append(args, req.PCFee.Val)
+		} else {
+			queryParts = append(queryParts, "pc_fee = NULL")
+		}
+	}
+
+	if req.MTFee.Present {
+		if req.MTFee.Valid {
+			queryParts = append(queryParts, "mt_fee = ?")
+			args = append(args, req.MTFee.Val)
+		} else {
+			queryParts = append(queryParts, "mt_fee = NULL")
+		}
+	}
+
+	if req.CLFee.Present {
+		if req.CLFee.Valid {
+			queryParts = append(queryParts, "cl_fee = ?")
+			args = append(args, req.CLFee.Val)
+		} else {
+			queryParts = append(queryParts, "cl_fee = NULL")
+		}
+	}
+
+	if req.MSFee.Present {
+		if req.MSFee.Valid {
+			queryParts = append(queryParts, "ms_fee = ?")
+			args = append(args, req.MSFee.Val)
+		} else {
+			queryParts = append(queryParts, "ms_fee = NULL")
+		}
+	}
+
+	if req.SCFee.Present {
+		if req.SCFee.Valid {
+			queryParts = append(queryParts, "sc_fee = ?")
+			args = append(args, req.SCFee.Val)
+		} else {
+			queryParts = append(queryParts, "sc_fee = NULL")
+		}
+	}
+
+	if req.LNFee.Present {
+		if req.LNFee.Valid {
+			queryParts = append(queryParts, "ln_fee = ?")
+			args = append(args, req.LNFee.Val)
+		} else {
+			queryParts = append(queryParts, "ln_fee = NULL")
 		}
 	}
 
@@ -924,10 +997,16 @@ func (r *reportRepo) GetRealFee(ctx context.Context, tx *sqlx.Tx, registrationID
 		SELECT
 			COALESCE(pr.night_learning_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
+			COALESCE(pr.pc_fee, 0) +
+			COALESCE(pr.mt_fee, 0) +
+			COALESCE(pr.cl_fee, 0) +
+			COALESCE(pr.ms_fee, 0) +
+			COALESCE(pr.sc_fee, 0) +
+			COALESCE(pr.ln_fee, 0) +
 			COALESCE(pr.initial_fee,
 				CASE
-					WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-					ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+					WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+					ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 				END
 			) AS real_fee
 		FROM

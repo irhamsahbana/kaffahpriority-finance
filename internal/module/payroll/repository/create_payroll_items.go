@@ -19,6 +19,7 @@ func (r *payrollRepo) CreatePayrollItems(ctx context.Context, items []entity.Pay
 			lecturer_id, lecturer_name, student_id, student_name,
 			program_id, program_name, marketer_id, marketer_name,
 			foreign_learning_fee, night_learning_fee, is_itp,
+			is_ssp, pc_fee, mt_fee, cl_fee, ms_fee, sc_fee, ln_fee,
 			program_meetings, is_meeting_full, wage_per_meeting, initial_wage,
 			full_wage, wage, acquisition_rights, created_at, updated_at
 		) VALUES (
@@ -26,6 +27,7 @@ func (r *payrollRepo) CreatePayrollItems(ctx context.Context, items []entity.Pay
 			:lecturer_id, :lecturer_name, :student_id, :student_name,
 			:program_id, :program_name, :marketer_id, :marketer_name,
 			:foreign_learning_fee, :night_learning_fee, :is_itp,
+			:is_ssp, :pc_fee, :mt_fee, :cl_fee, :ms_fee, :sc_fee, :ln_fee,
 			:program_meetings, :is_meeting_full, :wage_per_meeting, :initial_wage,
 			:full_wage, :wage, :acquisition_rights, :created_at, :updated_at
 		)

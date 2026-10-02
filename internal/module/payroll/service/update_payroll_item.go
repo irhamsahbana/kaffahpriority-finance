@@ -60,6 +60,13 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 	}
 	req.NightLearningFee = &nl
 
+	if err := entity.ValidateUpgrades(
+		itemBefore.IsITP || (req.IsITP != nil && *req.IsITP),
+		itemBefore.IsSSP || (req.IsSSP != nil && *req.IsSSP),
+	); err != nil {
+		return err
+	}
+
 	if req.InitialWage != nil {
 		if meetings < 1 {
 			zero := decimal.Zero

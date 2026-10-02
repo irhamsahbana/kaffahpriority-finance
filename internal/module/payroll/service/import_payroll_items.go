@@ -19,7 +19,7 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 	ctx, span := tracing.StartSpan(ctx, "service.ImportPayrollItems")
 	defer span.End()
 
-	const (
+	var (
 		sheetName = "Rekap Gaji"
 		// colNo              = "A"
 		colProgramMeetings = "F" // Jumlah Tatap Muka
@@ -29,9 +29,15 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		colIsMeetingFull = "J" // TF/F
 		colForeignFee    = "K" // FL
 		colNightFee      = "L" // NL
-		colKeepWage      = "P" // Keep Gaji
-		// colAcqRights       = "Q" // Hak Akuisisi
-		colID = "S" // Payroll Item ID
+		colPCFee         = "M" // PC
+		colMTFee         = "N" // MT
+		colCLFee         = "O" // CL
+		colMSFee         = "P" // MS
+		colSCFee         = "Q" // SC
+		colLNFee         = "R" // LN
+		colKeepWage      = "V" // Keep Gaji
+		// colAcqRights       = "W" // Hak Akuisisi
+		colID = "Y" // Payroll Item ID
 	)
 
 	var errs = errmsg.NewCustomErrors(400)
@@ -59,6 +65,37 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		}, nil
 	}
 
+	headerColumns := make(map[string]string)
+	hasFeatureColumns := false
+	for columnIndex, header := range rows[0] {
+		column, _ := excelize.ColumnNumberToName(columnIndex + 1)
+		headerColumns[strings.ToUpper(strings.TrimSpace(header))] = column
+		if strings.EqualFold(strings.TrimSpace(header), "PC") {
+			hasFeatureColumns = true
+		}
+	}
+	columnFor := func(header string, fallback string) string {
+		if column, exists := headerColumns[strings.ToUpper(header)]; exists {
+			return column
+		}
+		return fallback
+	}
+
+	colProgramMeetings = columnFor("JUMLAH", colProgramMeetings)
+	colWagePerMeeting = columnFor("HITUNGAN", colWagePerMeeting)
+	colFullWage = columnFor("UJROH FULL", colFullWage)
+	colIsMeetingFull = columnFor("TF/F", colIsMeetingFull)
+	colForeignFee = columnFor("FL", colForeignFee)
+	colNightFee = columnFor("NL", colNightFee)
+	colPCFee = columnFor("PC", "")
+	colMTFee = columnFor("MT", "")
+	colCLFee = columnFor("CL", "")
+	colMSFee = columnFor("MS", "")
+	colSCFee = columnFor("SC", "")
+	colLNFee = columnFor("LN", "")
+	colKeepWage = columnFor("KEEP GAJI", map[bool]string{true: "V", false: "P"}[hasFeatureColumns])
+	colID = columnFor("PAYROLL ITEM ID", map[bool]string{true: "Y", false: "S"}[hasFeatureColumns])
+
 	req.Items = make([]entity.ImportedPayrollItems, 0, len(rows)-1)
 	rawValue := excelize.Options{RawCellValue: true}
 
@@ -75,6 +112,12 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		isFullStr, _ := f.GetCellValue(sheetName, cell(colIsMeetingFull, rowIdx))
 		flStr, _ := f.GetCellValue(sheetName, cell(colForeignFee, rowIdx), rawValue)
 		nlStr, _ := f.GetCellValue(sheetName, cell(colNightFee, rowIdx), rawValue)
+		pcStr, _ := f.GetCellValue(sheetName, cell(colPCFee, rowIdx), rawValue)
+		mtStr, _ := f.GetCellValue(sheetName, cell(colMTFee, rowIdx), rawValue)
+		clStr, _ := f.GetCellValue(sheetName, cell(colCLFee, rowIdx), rawValue)
+		msStr, _ := f.GetCellValue(sheetName, cell(colMSFee, rowIdx), rawValue)
+		scStr, _ := f.GetCellValue(sheetName, cell(colSCFee, rowIdx), rawValue)
+		lnStr, _ := f.GetCellValue(sheetName, cell(colLNFee, rowIdx), rawValue)
 		keepWageStr, _ := f.GetCellValue(sheetName, cell(colKeepWage, rowIdx), rawValue)
 		// acqStr, _ := f.GetCellValue(sheetName, cell(colAcqRights, rowIdx))
 
@@ -89,6 +132,12 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		isFullStr = strings.TrimSpace(isFullStr)
 		flStr = strings.TrimSpace(flStr)
 		nlStr = strings.TrimSpace(nlStr)
+		pcStr = strings.TrimSpace(pcStr)
+		mtStr = strings.TrimSpace(mtStr)
+		clStr = strings.TrimSpace(clStr)
+		msStr = strings.TrimSpace(msStr)
+		scStr = strings.TrimSpace(scStr)
+		lnStr = strings.TrimSpace(lnStr)
 		keepWageStr = strings.TrimSpace(keepWageStr)
 		keepWageStr = strings.ReplaceAll(keepWageStr, ",", "")
 		// acqStr = strings.TrimSpace(acqStr)
@@ -183,6 +232,36 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		} else {
 			zero := decimal.Zero
 			item.NightLearningFee = &zero
+		}
+
+		featureColumns := []struct {
+			name string
+			raw  string
+			dest **float64
+		}{
+			{"PC", pcStr, &item.PCFee},
+			{"MT", mtStr, &item.MTFee},
+			{"CL", clStr, &item.CLFee},
+			{"MS", msStr, &item.MSFee},
+			{"SC", scStr, &item.SCFee},
+			{"LN", lnStr, &item.LNFee},
+		}
+		for _, feature := range featureColumns {
+			if feature.raw == "" {
+				*feature.dest = nil
+				continue
+			}
+			fee, err := decimal.NewFromString(feature.raw)
+			if err != nil {
+				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("%s tidak valid: %s", feature.name, feature.raw))
+				continue
+			}
+			if fee.LessThan(decimal.Zero) {
+				_ = errs.Add(fmt.Sprintf("row_%d", rowIdx), fmt.Sprintf("%s tidak boleh negatif", feature.name))
+				continue
+			}
+			feeValue := fee.InexactFloat64()
+			*feature.dest = &feeValue
 		}
 
 		keepWage := decimal.Zero

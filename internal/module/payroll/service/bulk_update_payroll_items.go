@@ -47,6 +47,13 @@ func (s *payrollService) BulkUpdatePayrollItems(ctx context.Context, req *entity
 		}
 		req.Data[i].NightLearningFee = &nl
 
+		if err := entity.ValidateUpgrades(
+			itemBefore.IsITP || (itemReq.IsITP != nil && *itemReq.IsITP),
+			itemBefore.IsSSP || (itemReq.IsSSP != nil && *itemReq.IsSSP),
+		); err != nil {
+			return err
+		}
+
 		var initialWage decimal.Decimal
 		if isFull {
 			initialWage = itemBefore.FullWage

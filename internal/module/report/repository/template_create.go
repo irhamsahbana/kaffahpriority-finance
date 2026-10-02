@@ -68,6 +68,13 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			foreign_learning_fee,
 			night_learning_fee,
 			is_itp,
+			is_ssp,
+			pc_fee,
+			mt_fee,
+			cl_fee,
+			ms_fee,
+			sc_fee,
+			ln_fee,
 			marketer_commission_fee,
 			overpayment_fee,
 			hr_fee,
@@ -84,7 +91,7 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 			?,
 			?,
 			?,
-			?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 
@@ -97,6 +104,13 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		req.FLFee,
 		req.NLFee,
 		req.IsITP,
+		req.IsSSP,
+		req.PCFee,
+		req.MTFee,
+		req.CLFee,
+		req.MSFee,
+		req.SCFee,
+		req.LNFee,
 		req.MarketerCommissionFee,
 		req.OverpaymentFee,
 		req.HRFee,

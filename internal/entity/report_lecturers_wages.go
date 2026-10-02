@@ -54,6 +54,8 @@ type LecturersWageItem struct {
 	FL                   *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NL                   *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP                bool             `json:"is_itp" db:"is_itp"`
+	IsSSP                bool             `json:"is_ssp" db:"is_ssp"`
+	FeatureFees
 	ProgramMeetings      int              `json:"program_meetings" db:"program_meetings"`
 	ProgramFeePerMeeting decimal.Decimal  `json:"program_fee_per_meeting" db:"program_fee_per_meeting"`
 	IsFullFee            bool             `json:"is_full_fee" db:"is_full_fee"`                       //

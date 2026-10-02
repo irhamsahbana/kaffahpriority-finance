@@ -46,6 +46,13 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
@@ -81,6 +88,12 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			pr.program_fee +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
+			COALESCE(pr.pc_fee, 0) +
+			COALESCE(pr.mt_fee, 0) +
+			COALESCE(pr.cl_fee, 0) +
+			COALESCE(pr.ms_fee, 0) +
+			COALESCE(pr.sc_fee, 0) +
+			COALESCE(pr.ln_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
 			(
@@ -89,6 +102,12 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 				+ COALESCE(pr.overpayment_fee, 0)
 				+ COALESCE(pr.night_learning_fee, 0)
 				+ COALESCE(pr.foreign_learning_fee, 0)
+				+ COALESCE(pr.pc_fee, 0)
+				+ COALESCE(pr.mt_fee, 0)
+				+ COALESCE(pr.cl_fee, 0)
+				+ COALESCE(pr.ms_fee, 0)
+				+ COALESCE(pr.sc_fee, 0)
+				+ COALESCE(pr.ln_fee, 0)
 				- COALESCE(pr.marketer_commission_fee, 0)
 				- COALESCE(pr.marketer_gifts_fee, 0)
 				- COALESCE(pr.hr_fee, 0)
@@ -239,6 +258,14 @@ func (r *reportRepo) GetUnusedRegistrations(ctx context.Context, req *entity.Get
 			query += ` AND pr.is_itp = TRUE`
 		} else {
 			query += ` AND pr.is_itp = FALSE`
+		}
+	}
+
+	if req.IsSSP != "" {
+		if req.IsSSP == "true" {
+			query += ` AND pr.is_ssp = TRUE`
+		} else {
+			query += ` AND pr.is_ssp = FALSE`
 		}
 	}
 

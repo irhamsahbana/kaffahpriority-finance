@@ -15,6 +15,7 @@ type GetRegistrationsReq struct {
 	Timezone       string `query:"timezone" validate:"required,timezone"`
 	IsPaid         string `query:"is_paid" validate:"omitempty,oneof=true false"`
 	IsITP          string `query:"is_itp" validate:"omitempty,oneof=true false"`
+	IsSSP          string `query:"is_ssp" validate:"omitempty,oneof=true false"`
 	IsStarted      string `query:"is_started" validate:"omitempty,oneof=true false"`
 
 	IDs        []string `query:"ids" validate:"omitempty,dive,ulid"`
@@ -105,6 +106,8 @@ type RegisItem struct {
 	FLFee                      *float64     `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NLFee                      *float64     `json:"night_learning_fee" db:"night_learning_fee"`
 	IsITP                      bool         `json:"is_itp" db:"is_itp"`
+	IsSSP                      bool         `json:"is_ssp" db:"is_ssp"`
+	FeatureFees
 	AcquisitionRights          int          `json:"acquisition_rights" db:"acquisition_rights"`
 	MarketerCommissionFee      float64      `json:"marketer_commission_fee" db:"marketer_commission_fee"`
 	OverpaymentFee             *float64     `json:"overpayment_fee" db:"overpayment_fee"`
@@ -315,6 +318,8 @@ type WageRecapRegistration struct {
 	IsFL  bool `db:"is_fl" json:"is_fl"`
 	IsNL  bool `db:"is_nl" json:"is_nl"`
 	IsITP bool `db:"is_itp" json:"is_itp"`
+	IsSSP bool `db:"is_ssp" json:"is_ssp"`
+	FeatureFees
 
 	Data *WageRecapRegistrationData `db:"data" json:"data"`
 }

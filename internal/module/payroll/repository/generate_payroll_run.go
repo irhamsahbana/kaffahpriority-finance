@@ -164,6 +164,13 @@ func (_ *payrollRepo) fetchRegistrationTemplates(ctx context.Context, tx *sqlx.T
 			COALESCE(prt.foreign_learning_fee, 0) AS foreign_learning_fee,
 			COALESCE(prt.night_learning_fee, 0) AS night_learning_fee,
 			prt.is_itp,
+			prt.is_ssp,
+			prt.pc_fee,
+			prt.mt_fee,
+			prt.cl_fee,
+			prt.ms_fee,
+			prt.sc_fee,
+			prt.ln_fee,
 			p.price_per_meeting,
 			p.full_fee,
 			p.acquisition_rights,
@@ -214,9 +221,14 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 		acquisitionRights := t.AcquisitionRights
 
 		if t.IsITP {
-			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(2))
-			fullWage = fullWage.Mul(decimal.NewFromInt(2))
-			acquisitionRights = acquisitionRights * 2
+			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			fullWage = fullWage.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			acquisitionRights = acquisitionRights * entity.UpgradeMultiplier
+		}
+		if t.IsSSP {
+			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			fullWage = fullWage.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			acquisitionRights = acquisitionRights * entity.UpgradeMultiplier
 		}
 
 		notes := ""
@@ -240,7 +252,16 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			MarketerName:        t.MarketerName,
 			ForeignLearningFee:  t.ForeignLearningFee,
 			NightLearningFee:    t.NightLearningFee,
+			FeatureFees: entity.FeatureFees{
+				PCFee: decimalPtr(t.PCFee),
+				MTFee: decimalPtr(t.MTFee),
+				CLFee: decimalPtr(t.CLFee),
+				MSFee: decimalPtr(t.MSFee),
+				SCFee: decimalPtr(t.SCFee),
+				LNFee: decimalPtr(t.LNFee),
+			},
 			IsITP:               t.IsITP,
+			IsSSP:               t.IsSSP,
 			ProgramMeetings:     0,
 			IsMeetingFull:       false,
 			WagePerMeeting:      wagePerMeeting,
@@ -276,6 +297,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			lecturer_id, lecturer_name, student_id, student_name,
 			program_id, program_name, marketer_id, marketer_name,
 			foreign_learning_fee, night_learning_fee, is_itp,
+			is_ssp, pc_fee, mt_fee, cl_fee, ms_fee, sc_fee, ln_fee,
 			program_meetings, is_meeting_full, wage_per_meeting,
 			full_wage, wage, acquisition_rights, notes, created_at, updated_at
 		) VALUES (
@@ -283,6 +305,7 @@ func (r *payrollRepo) createPayrollItemsFromTemplates(ctx context.Context, tx *s
 			:lecturer_id, :lecturer_name, :student_id, :student_name,
 			:program_id, :program_name, :marketer_id, :marketer_name,
 			:foreign_learning_fee, :night_learning_fee, :is_itp,
+			:is_ssp, :pc_fee, :mt_fee, :cl_fee, :ms_fee, :sc_fee, :ln_fee,
 			:program_meetings, :is_meeting_full, :wage_per_meeting,
 			:full_wage, :wage, :acquisition_rights, :notes, :created_at, :updated_at
 		)
@@ -531,8 +554,20 @@ type templateData struct {
 	ForeignLearningFee  decimal.Decimal `db:"foreign_learning_fee"`
 	NightLearningFee    decimal.Decimal `db:"night_learning_fee"`
 	IsITP               bool            `db:"is_itp"`
+	IsSSP               bool            `db:"is_ssp"`
+	PCFee               decimal.Decimal `db:"pc_fee"`
+	MTFee               decimal.Decimal `db:"mt_fee"`
+	CLFee               decimal.Decimal `db:"cl_fee"`
+	MSFee               decimal.Decimal `db:"ms_fee"`
+	SCFee               decimal.Decimal `db:"sc_fee"`
+	LNFee               decimal.Decimal `db:"ln_fee"`
 	PricePerMeeting     decimal.Decimal `db:"price_per_meeting"`
 	FullFee             decimal.Decimal `db:"full_fee"`
 	AcquisitionRights   uint64          `db:"acquisition_rights"`
 	CreatedAt           time.Time       `db:"created_at"`
+}
+
+func decimalPtr(value decimal.Decimal) *float64 {
+	fee := value.InexactFloat64()
+	return &fee
 }

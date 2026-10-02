@@ -65,6 +65,13 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 			COALESCE(prt.foreign_learning_fee, 0) AS foreign_learning_fee,
 			COALESCE(prt.night_learning_fee, 0) AS night_learning_fee,
 			prt.is_itp,
+			prt.is_ssp,
+			prt.pc_fee,
+			prt.mt_fee,
+			prt.cl_fee,
+			prt.ms_fee,
+			prt.sc_fee,
+			prt.ln_fee,
 			p.price_per_meeting,
 			p.full_fee,
 			p.acquisition_rights,
@@ -138,9 +145,14 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 		acquisitionRights := t.AcquisitionRights
 
 		if t.IsITP {
-			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(2))
-			fullWage = fullWage.Mul(decimal.NewFromInt(2))
-			acquisitionRights = acquisitionRights * 2
+			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			fullWage = fullWage.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			acquisitionRights = acquisitionRights * entity.UpgradeMultiplier
+		}
+		if t.IsSSP {
+			wagePerMeeting = wagePerMeeting.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			fullWage = fullWage.Mul(decimal.NewFromInt(entity.UpgradeMultiplier))
+			acquisitionRights = acquisitionRights * entity.UpgradeMultiplier
 		}
 
 		item := entity.PayrollItem{
@@ -159,7 +171,16 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 			MarketerName:        t.MarketerName,
 			ForeignLearningFee:  t.ForeignLearningFee,
 			NightLearningFee:    t.NightLearningFee,
+			FeatureFees: entity.FeatureFees{
+				PCFee: decimalPtr(t.PCFee),
+				MTFee: decimalPtr(t.MTFee),
+				CLFee: decimalPtr(t.CLFee),
+				MSFee: decimalPtr(t.MSFee),
+				SCFee: decimalPtr(t.SCFee),
+				LNFee: decimalPtr(t.LNFee),
+			},
 			IsITP:               t.IsITP,
+			IsSSP:               t.IsSSP,
 			ProgramMeetings:     0,
 			IsMeetingFull:       false,
 			WagePerMeeting:      wagePerMeeting,
@@ -178,6 +199,7 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 				lecturer_id, lecturer_name, student_id, student_name,
 				program_id, program_name, marketer_id, marketer_name,
 				foreign_learning_fee, night_learning_fee, is_itp,
+				is_ssp, pc_fee, mt_fee, cl_fee, ms_fee, sc_fee, ln_fee,
 				program_meetings, is_meeting_full, wage_per_meeting,
 				full_wage, wage, acquisition_rights, notes, created_at, updated_at
 			) VALUES (
@@ -185,6 +207,7 @@ func (r *payrollRepo) CreatePayrollItem(ctx context.Context, req *entity.CreateP
 				:lecturer_id, :lecturer_name, :student_id, :student_name,
 				:program_id, :program_name, :marketer_id, :marketer_name,
 				:foreign_learning_fee, :night_learning_fee, :is_itp,
+				:is_ssp, :pc_fee, :mt_fee, :cl_fee, :ms_fee, :sc_fee, :ln_fee,
 				:program_meetings, :is_meeting_full, :wage_per_meeting,
 				:full_wage, :wage, :acquisition_rights, :notes, :created_at, :updated_at
 			)

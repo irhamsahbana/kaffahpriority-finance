@@ -41,6 +41,13 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
@@ -67,11 +74,20 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			pr.allocated_at,
 			pr.created_at,
 			pr.updated_at,
-			pr.notes,
+			CASE
+				WHEN pr.category = 'additional' THEN pr.notes_for_category
+				ELSE pr.notes
+			END AS notes,
 			pr.program_fee +
 			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
+			COALESCE(pr.pc_fee, 0) +
+			COALESCE(pr.mt_fee, 0) +
+			COALESCE(pr.cl_fee, 0) +
+			COALESCE(pr.ms_fee, 0) +
+			COALESCE(pr.sc_fee, 0) +
+			COALESCE(pr.ln_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
 			(
@@ -80,6 +96,12 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 				+ COALESCE(pr.overpayment_fee, 0)
 				+ COALESCE(pr.night_learning_fee, 0)
 				+ COALESCE(pr.foreign_learning_fee, 0)
+				+ COALESCE(pr.pc_fee, 0)
+				+ COALESCE(pr.mt_fee, 0)
+				+ COALESCE(pr.cl_fee, 0)
+				+ COALESCE(pr.ms_fee, 0)
+				+ COALESCE(pr.sc_fee, 0)
+				+ COALESCE(pr.ln_fee, 0)
 				- COALESCE(pr.marketer_commission_fee, 0)
 				- COALESCE(pr.marketer_gifts_fee, 0)
 				- COALESCE(pr.hr_fee, 0)
@@ -213,6 +235,28 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 
 		if resp.Items[i].IsITP {
 			resp.Items[i].ProgramName += " + ITP"
+		}
+
+		if resp.Items[i].IsSSP {
+			resp.Items[i].ProgramName += " + SSP"
+		}
+		if resp.Items[i].PCFee != nil && *resp.Items[i].PCFee > 0 {
+			resp.Items[i].ProgramName += " + PC"
+		}
+		if resp.Items[i].MTFee != nil && *resp.Items[i].MTFee > 0 {
+			resp.Items[i].ProgramName += " + MT"
+		}
+		if resp.Items[i].CLFee != nil && *resp.Items[i].CLFee > 0 {
+			resp.Items[i].ProgramName += " + CL"
+		}
+		if resp.Items[i].MSFee != nil && *resp.Items[i].MSFee > 0 {
+			resp.Items[i].ProgramName += " + MS"
+		}
+		if resp.Items[i].SCFee != nil && *resp.Items[i].SCFee > 0 {
+			resp.Items[i].ProgramName += " + SC"
+		}
+		if resp.Items[i].LNFee != nil && *resp.Items[i].LNFee > 0 {
+			resp.Items[i].ProgramName += " + LN"
 		}
 
 		registrationIds = append(registrationIds, resp.Items[i].ID)

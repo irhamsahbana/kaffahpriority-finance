@@ -7,6 +7,13 @@ import (
 	portsUser "codebase-app/internal/ports/module/user"
 )
 
+func ptrFloat(value *float64) float64 {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
 var _ ports.PayrollService = &payrollService{}
 
 type payrollService struct {

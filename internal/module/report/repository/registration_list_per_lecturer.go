@@ -427,7 +427,14 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			-- Get FL, NL, ITP from template directly
 			CASE WHEN prt.foreign_learning_fee IS NOT NULL AND prt.foreign_learning_fee > 0 THEN TRUE ELSE FALSE END AS is_fl,
 			CASE WHEN prt.night_learning_fee IS NOT NULL AND prt.night_learning_fee > 0 THEN TRUE ELSE FALSE END AS is_nl,
-			prt.is_itp
+			prt.is_itp,
+			prt.is_ssp,
+			prt.pc_fee,
+			prt.mt_fee,
+			prt.cl_fee,
+			prt.ms_fee,
+			prt.sc_fee,
+			prt.ln_fee
 		FROM
 			program_registration_templates prt
 		JOIN
@@ -479,7 +486,14 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			l.id,
 			prt.foreign_learning_fee,
 			prt.night_learning_fee,
-			prt.is_itp
+			prt.is_itp,
+			prt.is_ssp,
+			prt.pc_fee,
+			prt.mt_fee,
+			prt.cl_fee,
+			prt.ms_fee,
+			prt.sc_fee,
+			prt.ln_fee
 		ORDER BY
 			l.academic_manager_id ASC,
 			l.id ASC,
@@ -578,6 +592,13 @@ func (r *reportRepo) GetRegistrationsPerLecturerV2(ctx context.Context, req *ent
 			MAX(c.foreign_learning_fee) AS foreign_learning_fee,
 			MAX(c.night_learning_fee) AS night_learning_fee,
 			BOOL_OR(c.is_itp) AS is_itp,
+			BOOL_OR(c.is_ssp) AS is_ssp,
+			MAX(c.pc_fee) AS pc_fee,
+			MAX(c.mt_fee) AS mt_fee,
+			MAX(c.cl_fee) AS cl_fee,
+			MAX(c.ms_fee) AS ms_fee,
+			MAX(c.sc_fee) AS sc_fee,
+			MAX(c.ln_fee) AS ln_fee,
 			CASE
 				WHEN MAX(c.program_meetings) > 0 THEN TRUE
 				ELSE FALSE

@@ -32,7 +32,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 
 		items := req.Items[start:end]
 		values := make([]string, 0, len(items))
-		args := make([]any, 0, len(items)*9)
+		args := make([]any, 0, len(items)*15)
 		for _, item := range items {
 			var fl *float64
 			if item.ForeignLearningFee != nil {
@@ -44,8 +44,16 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				val := item.NightLearningFee.InexactFloat64()
 				nl = &val
 			}
+			featureValues := []*float64{
+				item.PCFee, item.MTFee, item.CLFee,
+				item.MSFee, item.SCFee, item.LNFee,
+			}
+			features := make([]*float64, 0, len(featureValues))
+			for _, value := range featureValues {
+				features = append(features, value)
+			}
 
-			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::numeric, ?::numeric)")
+			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric)")
 			args = append(args,
 				item.ID,
 				item.ProgramMeetings,
@@ -53,6 +61,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				item.IsMeetingFull,
 				fl,
 				nl,
+				features[0], features[1], features[2], features[3], features[4], features[5],
 				item.Wage.InexactFloat64(),
 				item.FullWage.InexactFloat64(),
 			)
@@ -67,6 +76,12 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				is_meeting_full = v.is_meeting_full,
 				foreign_learning_fee = v.foreign_learning_fee,
 				night_learning_fee = v.night_learning_fee,
+				pc_fee = v.pc_fee,
+				mt_fee = v.mt_fee,
+				cl_fee = v.cl_fee,
+				ms_fee = v.ms_fee,
+				sc_fee = v.sc_fee,
+				ln_fee = v.ln_fee,
 				wage = v.wage,
 				full_wage = v.full_wage
 			FROM (
@@ -78,6 +93,12 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				is_meeting_full,
 				foreign_learning_fee,
 				night_learning_fee,
+				pc_fee,
+				mt_fee,
+				cl_fee,
+				ms_fee,
+				sc_fee,
+				ln_fee,
 				wage,
 				full_wage
 			)
@@ -89,6 +110,12 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 					OR p.is_meeting_full IS DISTINCT FROM v.is_meeting_full
 					OR p.foreign_learning_fee IS DISTINCT FROM v.foreign_learning_fee
 					OR p.night_learning_fee IS DISTINCT FROM v.night_learning_fee
+					OR p.pc_fee IS DISTINCT FROM v.pc_fee
+					OR p.mt_fee IS DISTINCT FROM v.mt_fee
+					OR p.cl_fee IS DISTINCT FROM v.cl_fee
+					OR p.ms_fee IS DISTINCT FROM v.ms_fee
+					OR p.sc_fee IS DISTINCT FROM v.sc_fee
+					OR p.ln_fee IS DISTINCT FROM v.ln_fee
 					OR p.wage IS DISTINCT FROM v.wage
 					OR p.full_wage IS DISTINCT FROM v.full_wage
 					OR p.initial_wage = 0

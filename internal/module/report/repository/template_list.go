@@ -41,6 +41,13 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			prt.foreign_learning_fee,
 			prt.night_learning_fee,
 			prt.is_itp,
+			prt.is_ssp,
+			prt.pc_fee,
+			prt.mt_fee,
+			prt.cl_fee,
+			prt.ms_fee,
+			prt.sc_fee,
+			prt.ln_fee,
 			prt.marketer_commission_fee,
 			prt.overpayment_fee,
 			prt.hr_fee,
@@ -62,6 +69,12 @@ func (r *reportRepo) GetTemplates(ctx context.Context, req *entity.GetTemplatesR
 			COALESCE(prt.program_fee, 0) +
 			COALESCE(prt.foreign_learning_fee, 0) +
 			COALESCE(prt.night_learning_fee, 0) +
+			COALESCE(prt.pc_fee, 0) +
+			COALESCE(prt.mt_fee, 0) +
+			COALESCE(prt.cl_fee, 0) +
+			COALESCE(prt.ms_fee, 0) +
+			COALESCE(prt.sc_fee, 0) +
+			COALESCE(prt.ln_fee, 0) +
 			COALESCE(prt.overpayment_fee, 0)
 			AS monthly_fee,
 			EXISTS (

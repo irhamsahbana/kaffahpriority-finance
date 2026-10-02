@@ -30,12 +30,19 @@ func (r *payrollRepo) GetSourceDataForPayroll(ctx context.Context, period string
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.program_meetings,
 			pr.is_full_fee AS is_meeting_full,
 			
-			CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS wage_per_meeting,
-			
-			CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_wage,
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS wage_per_meeting,
+
+			CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_wage,
 			
 			(
 				CASE
@@ -43,10 +50,16 @@ func (r *payrollRepo) GetSourceDataForPayroll(ctx context.Context, period string
 					ELSE (
 						COALESCE(pr.night_learning_fee, 0) +
 						COALESCE(pr.foreign_learning_fee, 0) +
+						COALESCE(pr.pc_fee, 0) +
+						COALESCE(pr.mt_fee, 0) +
+						COALESCE(pr.cl_fee, 0) +
+						COALESCE(pr.ms_fee, 0) +
+						COALESCE(pr.sc_fee, 0) +
+						COALESCE(pr.ln_fee, 0) +
 						COALESCE(pr.initial_fee,
 							CASE
-								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+								WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+								ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
 						)
 					)

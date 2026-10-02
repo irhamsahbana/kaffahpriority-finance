@@ -102,6 +102,12 @@ func (r *reportRepo) GetLecturerPrograms(ctx context.Context, req *entity.GetLec
 				COALESCE(prt.program_fee, 0) +
 				COALESCE(prt.foreign_learning_fee, 0) +
 				COALESCE(prt.night_learning_fee, 0) +
+				COALESCE(prt.pc_fee, 0) +
+				COALESCE(prt.mt_fee, 0) +
+				COALESCE(prt.cl_fee, 0) +
+				COALESCE(prt.ms_fee, 0) +
+				COALESCE(prt.sc_fee, 0) +
+				COALESCE(prt.ln_fee, 0) +
 				COALESCE(prt.overpayment_fee, 0)
 				AS monthly_fee,
 				CASE

@@ -38,6 +38,13 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 			pr.administration_fee,
 			pr.foreign_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.program_meetings,
 			pr.initial_fee,
 			pr.is_full_fee,
@@ -72,6 +79,12 @@ func (r *reportRepo) GetRegistration(ctx context.Context, req *entity.GetRegistr
 				+ COALESCE(pr.overpayment_fee, 0)
 				+ COALESCE(pr.night_learning_fee, 0)
 				+ COALESCE(pr.foreign_learning_fee, 0)
+				+ COALESCE(pr.pc_fee, 0)
+				+ COALESCE(pr.mt_fee, 0)
+				+ COALESCE(pr.cl_fee, 0)
+				+ COALESCE(pr.ms_fee, 0)
+				+ COALESCE(pr.sc_fee, 0)
+				+ COALESCE(pr.ln_fee, 0)
 				- COALESCE(pr.marketer_commission_fee, 0)
 				- COALESCE(pr.marketer_gifts_fee, 0)
 				- COALESCE(pr.hr_fee, 0)

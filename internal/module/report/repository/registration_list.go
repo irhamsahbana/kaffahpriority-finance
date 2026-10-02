@@ -54,6 +54,13 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			pr.marketer_commission_fee,
 			pr.overpayment_fee,
 			pr.hr_fee,
@@ -94,6 +101,12 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
+			COALESCE(pr.pc_fee, 0) +
+			COALESCE(pr.mt_fee, 0) +
+			COALESCE(pr.cl_fee, 0) +
+			COALESCE(pr.ms_fee, 0) +
+			COALESCE(pr.sc_fee, 0) +
+			COALESCE(pr.ln_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
 			(
@@ -102,6 +115,12 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 				+ COALESCE(pr.overpayment_fee, 0)
 				+ COALESCE(pr.night_learning_fee, 0)
 				+ COALESCE(pr.foreign_learning_fee, 0)
+				+ COALESCE(pr.pc_fee, 0)
+				+ COALESCE(pr.mt_fee, 0)
+				+ COALESCE(pr.cl_fee, 0)
+				+ COALESCE(pr.ms_fee, 0)
+				+ COALESCE(pr.sc_fee, 0)
+				+ COALESCE(pr.ln_fee, 0)
 				- COALESCE(pr.marketer_commission_fee, 0)
 				- COALESCE(pr.marketer_gifts_fee, 0)
 				- COALESCE(pr.hr_fee, 0)
@@ -280,6 +299,14 @@ func (r *reportRepo) GetRegistrations(ctx context.Context, req *entity.GetRegist
 		}
 	}
 
+	if req.IsSSP != "" {
+		if req.IsSSP == "true" {
+			query += ` AND pr.is_ssp = TRUE`
+		} else {
+			query += ` AND pr.is_ssp = FALSE`
+		}
+	}
+
 	sortByMap := map[string]string{
 		"created_at":   "pr.created_at",
 		"paid_at":      "pr.paid_at",
@@ -394,6 +421,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			pr.foreign_learning_fee,
 			pr.night_learning_fee,
 			pr.is_itp,
+			pr.is_ssp,
+			pr.pc_fee,
+			pr.mt_fee,
+			pr.cl_fee,
+			pr.ms_fee,
+			pr.sc_fee,
+			pr.ln_fee,
 			CASE
 				WHEN COALESCE(pr.hr_detail_fee, 0) <= 0 THEN 0
 				ELSE FLOOR(COALESCE(pr.hr_detail_fee, 0) / 40000)
@@ -430,6 +464,12 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			COALESCE(pr.administration_fee, 0) +
 			COALESCE(pr.foreign_learning_fee, 0) +
 			COALESCE(pr.night_learning_fee, 0) +
+			COALESCE(pr.pc_fee, 0) +
+			COALESCE(pr.mt_fee, 0) +
+			COALESCE(pr.cl_fee, 0) +
+			COALESCE(pr.ms_fee, 0) +
+			COALESCE(pr.sc_fee, 0) +
+			COALESCE(pr.ln_fee, 0) +
 			COALESCE(pr.overpayment_fee, 0)
 			AS monthly_fee,
 			(
@@ -438,6 +478,12 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 				+ COALESCE(pr.overpayment_fee, 0)
 				+ COALESCE(pr.night_learning_fee, 0)
 				+ COALESCE(pr.foreign_learning_fee, 0)
+				+ COALESCE(pr.pc_fee, 0)
+				+ COALESCE(pr.mt_fee, 0)
+				+ COALESCE(pr.cl_fee, 0)
+				+ COALESCE(pr.ms_fee, 0)
+				+ COALESCE(pr.sc_fee, 0)
+				+ COALESCE(pr.ln_fee, 0)
 				- COALESCE(pr.marketer_commission_fee, 0)
 				- COALESCE(pr.marketer_gifts_fee, 0)
 				- COALESCE(pr.hr_fee, 0)
@@ -504,6 +550,28 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 		if resp.Items[i].IsITP {
 			resp.Items[i].ProgramName += " + ITP"
 			resp.TotalITP++
+		}
+
+		if resp.Items[i].IsSSP {
+			resp.Items[i].ProgramName += " + SSP"
+		}
+		if resp.Items[i].PCFee != nil && *resp.Items[i].PCFee > 0 {
+			resp.Items[i].ProgramName += " + PC"
+		}
+		if resp.Items[i].MTFee != nil && *resp.Items[i].MTFee > 0 {
+			resp.Items[i].ProgramName += " + MT"
+		}
+		if resp.Items[i].CLFee != nil && *resp.Items[i].CLFee > 0 {
+			resp.Items[i].ProgramName += " + CL"
+		}
+		if resp.Items[i].MSFee != nil && *resp.Items[i].MSFee > 0 {
+			resp.Items[i].ProgramName += " + MS"
+		}
+		if resp.Items[i].SCFee != nil && *resp.Items[i].SCFee > 0 {
+			resp.Items[i].ProgramName += " + SC"
+		}
+		if resp.Items[i].LNFee != nil && *resp.Items[i].LNFee > 0 {
+			resp.Items[i].ProgramName += " + LN"
 		}
 
 		registrationIds = append(registrationIds, resp.Items[i].ID)
@@ -864,6 +932,7 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 						ELSE FALSE
 					END AS is_nl,
 					pr.is_itp
+				, pr.is_ssp, pr.pc_fee, pr.mt_fee, pr.cl_fee, pr.ms_fee, pr.sc_fee, pr.ln_fee
 				FROM
 					program_registrations pr
 				LEFT JOIN
@@ -905,6 +974,27 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				}
 				if academicManagers[i].Items[j].Items[k].IsITP {
 					academicManagers[i].Items[j].Items[k].ProgramName += " + ITP"
+				}
+				if academicManagers[i].Items[j].Items[k].IsSSP {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + SSP"
+				}
+				if academicManagers[i].Items[j].Items[k].PCFee != nil && *academicManagers[i].Items[j].Items[k].PCFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + PC"
+				}
+				if academicManagers[i].Items[j].Items[k].MTFee != nil && *academicManagers[i].Items[j].Items[k].MTFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + MT"
+				}
+				if academicManagers[i].Items[j].Items[k].CLFee != nil && *academicManagers[i].Items[j].Items[k].CLFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + CL"
+				}
+				if academicManagers[i].Items[j].Items[k].MSFee != nil && *academicManagers[i].Items[j].Items[k].MSFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + MS"
+				}
+				if academicManagers[i].Items[j].Items[k].SCFee != nil && *academicManagers[i].Items[j].Items[k].SCFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + SC"
+				}
+				if academicManagers[i].Items[j].Items[k].LNFee != nil && *academicManagers[i].Items[j].Items[k].LNFee > 0 {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + LN"
 				}
 
 				queryAddStudents := `
@@ -955,13 +1045,13 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				query := `
 					SELECT
 						pr.program_meetings, -- jumlah
-						CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting, -- hitungan
-						CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee, -- ujroh full
+						CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END AS program_fee_per_meeting, -- hitungan
+						CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END AS full_fee, -- ujroh full
 						pr.is_full_fee,
 						COALESCE(pr.initial_fee,
 							CASE
-								WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-								ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+								WHEN pr.is_full_fee = TRUE THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+								ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 							END
 						) AS initial_fee, -- ujroh awal
 						pr.foreign_learning_fee, -- fl
@@ -974,8 +1064,8 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 									COALESCE(pr.foreign_learning_fee, 0) +
 									COALESCE(pr.initial_fee,
 										CASE
-											WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp THEN pr.full_fee * 2 ELSE pr.full_fee END)
-											ELSE (CASE WHEN pr.is_itp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
+											WHEN pr.is_full_fee THEN (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.full_fee * 2 ELSE pr.full_fee END)
+											ELSE (CASE WHEN pr.is_itp OR pr.is_ssp THEN pr.program_fee_per_meeting * 2 ELSE pr.program_fee_per_meeting END) * pr.program_meetings
 										END
 									)
 							END
