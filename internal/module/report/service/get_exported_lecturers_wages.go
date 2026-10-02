@@ -51,21 +51,27 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 	f.SetCellValue(sheetName, "J1", "TF/F")       // editable
 	f.SetCellValue(sheetName, "K1", "FL")         // editable
 	f.SetCellValue(sheetName, "L1", "NL")         // editable
-	f.SetCellValue(sheetName, "M1", "Ujroh Real")
-	f.SetCellValue(sheetName, "N1", "Keterangan") // editable
-	f.SetCellValue(sheetName, "O1", "Keep Gaji")
-	f.SetCellValue(sheetName, "P1", "Angka")
-	f.SetCellValue(sheetName, "Q1", "MPA")
-	f.SetCellValue(sheetName, "R1", "ID")
-	f.SetColWidth(sheetName, "B", "Q", 20)
+	f.SetCellValue(sheetName, "M1", "PC")         // editable
+	f.SetCellValue(sheetName, "N1", "MT")         // editable
+	f.SetCellValue(sheetName, "O1", "CL")         // editable
+	f.SetCellValue(sheetName, "P1", "MS")         // editable
+	f.SetCellValue(sheetName, "Q1", "SC")         // editable
+	f.SetCellValue(sheetName, "R1", "LN")         // editable
+	f.SetCellValue(sheetName, "S1", "Ujroh Real")
+	f.SetCellValue(sheetName, "T1", "Keterangan") // editable
+	f.SetCellValue(sheetName, "U1", "Keep Gaji")
+	f.SetCellValue(sheetName, "V1", "Angka")
+	f.SetCellValue(sheetName, "W1", "MPA")
+	f.SetCellValue(sheetName, "X1", "ID")
+	f.SetColWidth(sheetName, "B", "W", 20)
 
-	currencyCols := []string{"G", "H", "I", "K", "L", "M", "O"}
+	currencyCols := []string{"G", "H", "I", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "U"}
 	for _, col := range currencyCols {
 		_ = f.SetColStyle(sheetName, col, currencyStyle)
 	}
 
-	f.SetCellStyle(sheetName, "A1", "Q1", headerStyle)
-	editableHeaders := []string{"F", "I", "J", "K", "L"}
+	f.SetCellStyle(sheetName, "A1", "W1", headerStyle)
+	editableHeaders := []string{"F", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R"}
 	for _, col := range editableHeaders {
 		f.SetCellStyle(sheetName, col+"1", col+"1", headerEditableStyle)
 	}
@@ -100,18 +106,18 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		// kalau ganti lecturer (bukan item pertama), sisip 1 baris kosong
 		if index != 0 && (curLecturer != prevLecturer || curAcademicManager != prevAcademicManager) {
 			if curAcademicManager != prevAcademicManager {
-				f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
-				f.SetCellStyle(sheetName, fmt.Sprintf("M%v", row), fmt.Sprintf("M%v", row), currencyBoldStyle)
+				f.SetCellValue(sheetName, fmt.Sprintf("S%v", row), amTotalRealFee)
+				f.SetCellStyle(sheetName, fmt.Sprintf("S%v", row), fmt.Sprintf("S%v", row), currencyBoldStyle)
 				amTotalRealFee = 0
 			}
-			row++ // spare 1 row kosong
+			row++ // spare 1 baris kosong
 		}
 
 		ProgramFeePerMeeting, _ := item.ProgramFeePerMeeting.Float64()
 		FullFee, _ := item.FullFee.Float64()
 		RealFee, _ := item.RealFee.Float64()
 
-		f.SetCellValue(sheetName, fmt.Sprintf("R%v", row), item.RegistrationID)
+		f.SetCellValue(sheetName, fmt.Sprintf("X%v", row), item.RegistrationID)
 		f.SetCellValue(sheetName, fmt.Sprintf("A%v", row), seq)
 		if item.AcademicManagerName != nil {
 			f.SetCellValue(sheetName, fmt.Sprintf("B%v", row), *item.AcademicManagerName)
@@ -139,16 +145,25 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 			NL, _ := item.NL.Float64()
 			f.SetCellValue(sheetName, fmt.Sprintf("L%v", row), NL)
 		}
-		f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), RealFee)
+		// feature fees (PC, MT, CL, MS, SC, LN)
+		for column, value := range map[string]*float64{
+			"M": item.PCFee, "N": item.MTFee, "O": item.CLFee,
+			"P": item.MSFee, "Q": item.SCFee, "R": item.LNFee,
+		} {
+			if value != nil && *value != 0 {
+				f.SetCellValue(sheetName, fmt.Sprintf("%s%v", column, row), *value)
+			}
+		}
+		f.SetCellValue(sheetName, fmt.Sprintf("S%v", row), RealFee)
 		if item.Notes != nil {
-			f.SetCellValue(sheetName, fmt.Sprintf("N%v", row), *item.Notes)
+			f.SetCellValue(sheetName, fmt.Sprintf("T%v", row), *item.Notes)
 		}
 		if item.MentorDetailFeeUsed != nil {
 			MentorDetailFeeUsed, _ := item.MentorDetailFeeUsed.Float64()
-			f.SetCellValue(sheetName, fmt.Sprintf("O%v", row), MentorDetailFeeUsed)
+			f.SetCellValue(sheetName, fmt.Sprintf("U%v", row), MentorDetailFeeUsed)
 		}
-		f.SetCellValue(sheetName, fmt.Sprintf("P%v", row), item.AccquisitionRights)
-		f.SetCellValue(sheetName, fmt.Sprintf("Q%v", row), item.MarketerName)
+		f.SetCellValue(sheetName, fmt.Sprintf("V%v", row), item.AccquisitionRights)
+		f.SetCellValue(sheetName, fmt.Sprintf("W%v", row), item.MarketerName)
 
 		amTotalRealFee += RealFee
 
@@ -159,8 +174,8 @@ func (s *reportService) GetExportedLecturersWages(ctx context.Context, req *enti
 		seq++
 	}
 
-	f.SetCellValue(sheetName, fmt.Sprintf("M%v", row), amTotalRealFee)
-	f.SetCellStyle(sheetName, fmt.Sprintf("M%v", row), fmt.Sprintf("M%v", row), currencyBoldStyle)
+	f.SetCellValue(sheetName, fmt.Sprintf("S%v", row), amTotalRealFee)
+	f.SetCellStyle(sheetName, fmt.Sprintf("S%v", row), fmt.Sprintf("S%v", row), currencyBoldStyle)
 
 	// timestampe in unix
 	tmstmp := time.Now().Unix()

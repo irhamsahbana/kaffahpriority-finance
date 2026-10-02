@@ -23,16 +23,8 @@ func (s *reportService) ImportLecturersWages(
 	defer span.End()
 
 	const (
-		fnName       = "service::ImportLecturersWages"
-		sheetName    = "Sheet1"
-		colNo        = "A"
-		colJumlah    = "F" // editable
-		colUjrohAwal = "I" // editable
-		colTFF       = "J" // editable
-		colFL        = "K" // editable
-		colNL        = "L" // editable
-		colNotes     = "N" // editable
-		colID        = "R" // registrationId, key update
+		fnName    = "service::ImportLecturersWages"
+		sheetName = "Sheet1"
 	)
 
 	var errs = errmsg.NewCustomErrors(400)
@@ -58,6 +50,46 @@ func (s *reportService) ImportLecturersWages(
 		return nil
 	}
 
+	// Map header name -> column letter, so the parser survives column
+	// reordering between export versions (old files have no PC-LN columns).
+	headerToCol := map[string]string{}
+	for i, header := range rows[0] {
+		header = strings.TrimSpace(header)
+		if header == "" {
+			continue
+		}
+		colLetter, err := excelize.ColumnNumberToName(i + 1)
+		if err != nil {
+			continue
+		}
+		headerToCol[header] = colLetter
+	}
+	lookupCol := func(name string) (string, bool) {
+		col, ok := headerToCol[name]
+		return col, ok
+	}
+
+	// required columns (exist in both old and new export layouts)
+	colJumlah, okJumlah := lookupCol("Jumlah")
+	colUjrohAwal, okAwal := lookupCol("Ujroh Awal")
+	colTFF, okTFF := lookupCol("TF/F")
+	colID, okID := lookupCol("ID")
+	if !okJumlah || !okAwal || !okTFF || !okID {
+		log.Error().Any("headers", headerToCol).Msgf("%s - required columns not found", fnName)
+		return errmsg.NewCustomErrors(400).SetMessage("format file tidak valid: kolom Jumlah, Ujroh Awal, TF/F, atau ID tidak ditemukan")
+	}
+
+	// optional columns (PC-LN only exist in the new export layout)
+	colFL, okFL := lookupCol("FL")
+	colNL, okNL := lookupCol("NL")
+	colPC, okPC := lookupCol("PC")
+	colMT, okMT := lookupCol("MT")
+	colCL, okCL := lookupCol("CL")
+	colMS, okMS := lookupCol("MS")
+	colSC, okSC := lookupCol("SC")
+	colLN, okLN := lookupCol("LN")
+	colNotes, okNotes := lookupCol("Keterangan")
+
 	req.Registrations = make([]entity.ImportedLecturersWages, 0, len(rows)-1)
 	rawValue := excelize.Options{RawCellValue: true}
 
@@ -65,23 +97,17 @@ func (s *reportService) ImportLecturersWages(
 	for i := 1; i < len(rows); i++ {
 		rowIdx := i + 1 // indeks Excel satuan, dimulai dari 1
 
-		no, _ := f.GetCellValue(sheetName, cell(colNo, rowIdx))
+		no := fmt.Sprintf("%v", rowIdx)
 		registrationId, _ := f.GetCellValue(sheetName, cell(colID, rowIdx))
 		jumlahStr, _ := f.GetCellValue(sheetName, cell(colJumlah, rowIdx))   // F
 		awalStr, _ := f.CalcCellValue(sheetName, cell(colUjrohAwal, rowIdx)) // I
 		tfFlag, _ := f.GetCellValue(sheetName, cell(colTFF, rowIdx))         // J
-		flStr, _ := f.GetCellValue(sheetName, cell(colFL, rowIdx), rawValue) // K
-		nlStr, _ := f.GetCellValue(sheetName, cell(colNL, rowIdx), rawValue) // L
-		notesStr, _ := f.GetCellValue(sheetName, cell(colNotes, rowIdx))     // N
 
 		registrationId = strings.TrimSpace(registrationId)
 		jumlahStr = strings.TrimSpace(jumlahStr)
 		awalStr = strings.TrimSpace(awalStr)
 		awalStr = strings.ReplaceAll(awalStr, ",", "")
 		tfFlag = strings.TrimSpace(tfFlag)
-		flStr = strings.TrimSpace(flStr)
-		nlStr = strings.TrimSpace(nlStr)
-		notesStr = strings.TrimSpace(notesStr)
 
 		// skip baris kosong
 		if registrationId == "" {
@@ -125,36 +151,63 @@ func (s *reportService) ImportLecturersWages(
 			data.IsFullFee = false
 		}
 
-		// field FL
-		if flStr != "" {
-			fl, err := decimal.NewFromString(flStr)
+		// parseOptionalFee membaca kolom fee opsional (kosong = tidak diupdate)
+		parseOptionalFee := func(col, label string) *decimal.Decimal {
+			if col == "" {
+				return nil
+			}
+			str, _ := f.GetCellValue(sheetName, cell(col, rowIdx), rawValue)
+			str = strings.TrimSpace(str)
+			if str == "" {
+				return nil
+			}
+			val, err := decimal.NewFromString(str)
 			if err != nil {
-				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL bukan angka yang valid: %s", flStr))
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("%s bukan angka yang valid: %s", label, str))
+				return nil
 			}
-			if fl.LessThan(decimal.Zero) {
-				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("FL tidak boleh negatif: %s", flStr))
+			if val.LessThan(decimal.Zero) {
+				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("%s tidak boleh negatif: %s", label, str))
+				return nil
 			}
-			data.FL = &fl
+			return &val
 		}
 
-		// field NL
-		if nlStr != "" {
-			nl, err := decimal.NewFromString(nlStr)
-			if err != nil {
-				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL bukan angka yang valid: %s", nlStr))
-			}
-			if nl.LessThan(decimal.Zero) {
-				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), fmt.Sprintf("NL tidak boleh negatif: %s", nlStr))
-			}
-			data.NL = &nl
+		if okFL {
+			data.FL = parseOptionalFee(colFL, "FL")
+		}
+		if okNL {
+			data.NL = parseOptionalFee(colNL, "NL")
+		}
+		if okPC {
+			data.PC = parseOptionalFee(colPC, "PC")
+		}
+		if okMT {
+			data.MT = parseOptionalFee(colMT, "MT")
+		}
+		if okCL {
+			data.CL = parseOptionalFee(colCL, "CL")
+		}
+		if okMS {
+			data.MS = parseOptionalFee(colMS, "MS")
+		}
+		if okSC {
+			data.SC = parseOptionalFee(colSC, "SC")
+		}
+		if okLN {
+			data.LN = parseOptionalFee(colLN, "LN")
 		}
 
 		// field notes
-		if notesStr != "" {
-			if len(notesStr) > 255 {
-				_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "notes tidak boleh lebih dari 255 karakter")
+		if okNotes {
+			notesStr, _ := f.GetCellValue(sheetName, cell(colNotes, rowIdx)) // T
+			notesStr = strings.TrimSpace(notesStr)
+			if notesStr != "" {
+				if len(notesStr) > 255 {
+					_ = errs.Add(fmt.Sprintf("file.%s.%s", sheetName, no), "notes tidak boleh lebih dari 255 karakter")
+				}
+				data.Notes = &notesStr
 			}
-			data.Notes = &notesStr
 		}
 
 		req.Registrations = append(req.Registrations, data)
