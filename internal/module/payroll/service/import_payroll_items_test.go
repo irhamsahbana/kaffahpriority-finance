@@ -3,11 +3,13 @@ package service
 import (
 	"bytes"
 	"context"
+	"math"
 	"strconv"
 	"testing"
 
 	"codebase-app/internal/entity"
 	ports "codebase-app/internal/ports/module/payroll"
+	"codebase-app/pkg/errmsg"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/shopspring/decimal"
@@ -227,6 +229,283 @@ func TestImportPayrollItems_UnwrittenFeatureCell_MapsToZero(t *testing.T) {
 	}
 }
 
+// runImportExpectErr drives ImportPayrollItems expecting a rejection. The
+// service must fail with *errmsg.CustomError and never touch the repository.
+func runImportExpectErr(t *testing.T, xlsx []byte) (*capturingRepo, *errmsg.CustomError) {
+	t.Helper()
+
+	repo := &capturingRepo{}
+	svc := NewPayrollService(Config{Repo: repo})
+	resp, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+		File:     bytes.NewReader(xlsx),
+		FileName: "rekap-gaji.xlsx",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if resp != nil {
+		t.Fatalf("expected nil response on rejection, got %+v", resp)
+	}
+	cerr, ok := err.(*errmsg.CustomError)
+	if !ok {
+		t.Fatalf("expected *errmsg.CustomError, got %T: %v", err, err)
+	}
+	if repo.importCalls != 0 {
+		t.Fatalf("expected 0 repo calls (no partial writes), got %d", repo.importCalls)
+	}
+	return repo, cerr
+}
+
+// assertReject asserts the 400 rejection carries exactly the keyed per-row
+// errors: same key set, each with the exact message slice.
+func assertReject(t *testing.T, cerr *errmsg.CustomError, want map[string][]string) {
+	t.Helper()
+
+	if cerr.Code != 400 {
+		t.Fatalf("expected code 400, got %d", cerr.Code)
+	}
+	if len(cerr.Errors) != len(want) {
+		t.Fatalf("expected %d error keys, got %d: %v", len(want), len(cerr.Errors), cerr.Errors)
+	}
+	for key, wantMsgs := range want {
+		gotMsgs, exists := cerr.Errors[key]
+		if !exists {
+			t.Fatalf("missing error key %q, got %v", key, cerr.Errors)
+		}
+		if len(gotMsgs) != len(wantMsgs) {
+			t.Fatalf("%s: expected %d message(s), got %d: %v", key, len(wantMsgs), len(gotMsgs), gotMsgs)
+		}
+		for i := range wantMsgs {
+			if gotMsgs[i] != wantMsgs[i] {
+				t.Fatalf("%s[%d]: expected %q, got %q", key, i, wantMsgs[i], gotMsgs[i])
+			}
+		}
+	}
+}
+
+// TestImportPayrollItems_InvalidFeeCell_RejectsEntireImport pins 3.1: a
+// thousands-separated PC value ("45,000") in physical sheet row 5 (data rows
+// 2-4 present, no blank rows) fails the raw parse and rejects the whole
+// import. The message embeds the raw cell value verbatim.
+func TestImportPayrollItems_InvalidFeeCell_RejectsEntireImport(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("M", "45,000"),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_5": {"PC tidak valid: 45,000"},
+	})
+}
+
+// TestImportPayrollItems_NegativeFeeCell_RejectsEntireImport pins 3.2: a
+// negative PC fee in physical sheet row 5 rejects the import with exactly one
+// message for that row (the negative branch adds one error, then continues).
+func TestImportPayrollItems_NegativeFeeCell_RejectsEntireImport(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("M", -1),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_5": {"PC tidak boleh negatif"},
+	})
+}
+
+// TestImportPayrollItems_FeeErrorsAccumulate_NoPartialWrites pins 3.3:
+// invalid fee cells at rows 2 and 4 (row 3 valid) accumulate into a single
+// 400 carrying both keyed errors and no key for the valid row; the repository
+// is never invoked.
+func TestImportPayrollItems_FeeErrorsAccumulate_NoPartialWrites(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("M", "abc"),
+		sentinelRow("", nil),
+		sentinelRow("M", "7,50"),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_2": {"PC tidak valid: abc"},
+		"row_4": {"PC tidak valid: 7,50"},
+	})
+}
+
+// baseRow returns the non-fee columns every fixture row needs: JUMLAH 10,
+// HITUNGAN 1000, UJROH FULL 1000, TF/F "F", KEEP GAJI 25000, and a valid ULID.
+func baseRow() map[string]any {
+	return map[string]any{
+		"F": 10, "G": 1000.0, "H": 1000.0, "J": "F",
+		"V": 25000.0, "Y": ulid.Make().String(),
+	}
+}
+
+func TestImportPayrollItems_AllSixFeatureCellsEmpty_RowImportsAsZeroes(t *testing.T) {
+	// Blank forms are exercised separately: unwritten (nil) mirrors the
+	// export round-trip where zero fees are omitted, "" is an explicitly
+	// cleared cell. FL/NL are left empty too, so this is the truly
+	// all-empty row.
+	for _, form := range []struct {
+		label string
+		val   any // nil = unwritten
+	}{
+		{"unwritten", nil},
+		{"empty_string", ""},
+	} {
+		t.Run(form.label, func(t *testing.T) {
+			row := baseRow()
+			for _, fc := range featureCols {
+				if form.val != nil {
+					row[fc.col] = form.val
+				}
+			}
+
+			xlsx := buildFixture(t, []map[string]any{row})
+			repo, resp := runImport(t, xlsx) // runImport fails the test on any error
+
+			if repo.importCalls != 1 {
+				t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+			}
+			if resp.TotalProcessed != 1 {
+				t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+			}
+			items := repo.importArgs[0].Items
+			if len(items) != 1 {
+				t.Fatalf("expected 1 item, got %d", len(items))
+			}
+
+			// Captured-argument assertions stand in for DB-level NOT NULL
+			// checks: the pq error string is deliberately never asserted.
+			for _, fc := range featureCols {
+				assertFee(t, fc.get(items[0]), 0, fc.name)
+			}
+			assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
+			assertDecimal(t, items[0].NightLearningFee, 0, "NL")
+		})
+	}
+}
+
+func TestImportPayrollItems_MixedRow_EmptyCellsZeroKeptValuesPreserved(t *testing.T) {
+	// PC unwritten, MT "", MS unwritten -> empty; CL/SC/LN non-empty.
+	// SC carries an explicit written 0 so a parsed zero is distinguishable
+	// from a blank-mapped zero only by route, both must land on &0.0.
+	// FL and NL are left unwritten on purpose: their parse path is separate
+	// from the six *float64 feature branches and must resolve to non-nil
+	// *decimal.Decimal pointers to decimal.Zero.
+	row := baseRow()
+	row["O"] = 1234.5
+	row["Q"] = 0
+	row["R"] = 2500.75
+
+	xlsx := buildFixture(t, []map[string]any{row})
+	repo, resp := runImport(t, xlsx)
+
+	if repo.importCalls != 1 {
+		t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+	}
+	if resp.TotalProcessed != 1 {
+		t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+	}
+	items := repo.importArgs[0].Items
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+
+	want := map[string]float64{"PC": 0, "MT": 0, "MS": 0, "CL": 1234.5, "SC": 0, "LN": 2500.75}
+	for _, fc := range featureCols {
+		assertFee(t, fc.get(items[0]), want[fc.name], fc.name)
+	}
+	assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 0, "NL")
+}
+
+// TestImportPayrollItems_PCColumnNumericEdgeMatrix pins the fee parser's
+// grammar: cells parse via decimal.NewFromString then InexactFloat64 (not
+// strconv.ParseFloat). Rejection cases must surface exactly one message under
+// key row_2 and never reach the repository.
+//
+// Each case runs against its own isolated fixture containing exactly one data
+// row at sheet row 2, so the 1e400 case's captured +Inf pointer cannot collide
+// with any other case and every rejection provably aborts the whole import.
+func TestImportPayrollItems_PCColumnNumericEdgeMatrix(t *testing.T) {
+	cases := []struct {
+		name     string
+		cellVal  string
+		ok       bool
+		fee      float64 // ok && !overflow: expected PCFee value
+		overflow bool    // ok && PCFee is +Inf (1e400 infrastructure path)
+		errMsg   string  // !ok: the exact single message under key row_2
+	}{
+		{name: "scientific_notation_1e3_stores_1000", cellVal: "1e3", ok: true, fee: 1000},
+		{name: "leading_plus_sign_5_stores_5", cellVal: "+5", ok: true, fee: 5},
+		{name: "exponent_overflow_1e400_stores_plus_inf", cellVal: "1e400", ok: true, overflow: true},
+		{name: "reject_nan", cellVal: "NaN", errMsg: "PC tidak valid: NaN"},
+		{name: "reject_inf", cellVal: "Inf", errMsg: "PC tidak valid: Inf"},
+		{name: "reject_plus_inf", cellVal: "+Inf", errMsg: "PC tidak valid: +Inf"},
+		{name: "reject_minus_inf", cellVal: "-Inf", errMsg: "PC tidak valid: -Inf"},
+		{name: "reject_hex_float", cellVal: "0x1p3", errMsg: "PC tidak valid: 0x1p3"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			xlsx := buildFixture(t, []map[string]any{sentinelRow("M", tc.cellVal)})
+			repo := &capturingRepo{}
+			svc := NewPayrollService(Config{Repo: repo})
+			resp, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+				File:     bytes.NewReader(xlsx),
+				FileName: "rekap-gaji.xlsx",
+			})
+
+			if tc.ok {
+				if err != nil {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+				if resp.TotalProcessed != 1 || resp.TotalUpdated != 1 {
+					t.Fatalf("expected success response {1, 1}, got {processed: %d, updated: %d}", resp.TotalProcessed, resp.TotalUpdated)
+				}
+				if repo.importCalls != 1 {
+					t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+				}
+				items := repo.importArgs[0].Items
+				if len(items) != 1 {
+					t.Fatalf("expected 1 item, got %d", len(items))
+				}
+				fee := items[0].PCFee
+				if fee == nil {
+					t.Fatal("PCFee: expected non-nil *float64, got nil")
+				}
+				if tc.overflow {
+					if !math.IsInf(*fee, 1) {
+						t.Fatalf("PCFee: expected +Inf, got %v", *fee)
+					}
+				} else if *fee != tc.fee {
+					t.Fatalf("PCFee: expected %v, got %v", tc.fee, *fee)
+				}
+				// Guard against column mix-ups: MT sentinel must stay intact.
+				assertFee(t, items[0].MTFee, 1001, "MT")
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected rejection with %q, got success", tc.errMsg)
+			}
+			if repo.importCalls != 0 {
+				t.Fatalf("expected 0 repo calls, got %d", repo.importCalls)
+			}
+			cerr, ok := err.(*errmsg.CustomError)
+			if !ok {
+				t.Fatalf("expected *errmsg.CustomError, got %T", err)
+			}
+			msgs := cerr.Errors["row_2"]
+			if len(msgs) != 1 || msgs[0] != tc.errMsg {
+				t.Fatalf("expected Errors[row_2] = [%q], got %#v", tc.errMsg, msgs)
+			}
+		})
+	}
+}
+
 // legacyHeaders mirrors the pre-feature-fee template: no PC-LN headers,
 // KEEP GAJI at P, PAYROLL ITEM ID at S.
 var legacyHeaders = map[string]string{
@@ -416,73 +695,41 @@ func TestImportPayrollItems_LegacyLayout_EmptyIDCell_SkipsRow(t *testing.T) {
 	}
 }
 
-// baseRow returns the non-fee columns every fixture row needs: JUMLAH 10,
-// HITUNGAN 1000, UJROH FULL 1000, TF/F "F", KEEP GAJI 25000, and a valid ULID.
-func baseRow() map[string]any {
-	return map[string]any{
-		"F": 10, "G": 1000.0, "H": 1000.0, "J": "F",
-		"V": 25000.0, "Y": ulid.Make().String(),
+// runImportForError drives ImportPayrollItems expecting validation errors and
+// returns the untouched repo plus the *errmsg.CustomError for key assertions.
+func runImportForError(t *testing.T, xlsx []byte) (*capturingRepo, *errmsg.CustomError) {
+	t.Helper()
+
+	repo := &capturingRepo{}
+	svc := NewPayrollService(Config{Repo: repo})
+	_, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+		File:     bytes.NewReader(xlsx),
+		FileName: "rekap-gaji.xlsx",
+	})
+	if err == nil {
+		t.Fatal("ImportPayrollItems returned nil error, expected validation errors")
 	}
+	cerr, ok := err.(*errmsg.CustomError)
+	if !ok {
+		t.Fatalf("expected *errmsg.CustomError, got %T", err)
+	}
+	return repo, cerr
 }
 
-func TestImportPayrollItems_AllSixFeatureCellsEmpty_RowImportsAsZeroes(t *testing.T) {
-	// Blank forms are exercised separately: unwritten (nil) mirrors the
-	// export round-trip where zero fees are omitted, "" is an explicitly
-	// cleared cell. FL/NL are left empty too, so this is the truly
-	// all-empty row.
-	for _, form := range []struct {
-		label string
-		val   any // nil = unwritten
-	}{
-		{"unwritten", nil},
-		{"empty_string", ""},
-	} {
-		t.Run(form.label, func(t *testing.T) {
-			row := baseRow()
-			for _, fc := range featureCols {
-				if form.val != nil {
-					row[fc.col] = form.val
-				}
-			}
-
-			xlsx := buildFixture(t, []map[string]any{row})
-			repo, resp := runImport(t, xlsx) // runImport fails the test on any error
-
-			if repo.importCalls != 1 {
-				t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
-			}
-			if resp.TotalProcessed != 1 {
-				t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
-			}
-			items := repo.importArgs[0].Items
-			if len(items) != 1 {
-				t.Fatalf("expected 1 item, got %d", len(items))
-			}
-
-			// Captured-argument assertions stand in for DB-level NOT NULL
-			// checks: the pq error string is deliberately never asserted.
-			for _, fc := range featureCols {
-				assertFee(t, fc.get(items[0]), 0, fc.name)
-			}
-			assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
-			assertDecimal(t, items[0].NightLearningFee, 0, "NL")
-		})
+// TestImportPayrollItems_DuplicatePCHeader_RightmostWins pins the duplicate
+// header resolution: headerColumns is assigned in a left-to-right loop over
+// rows[0] (import_payroll_items.go:70-76), so the rightmost occurrence of a
+// duplicated header deterministically overwrites the leftmost one.
+func TestImportPayrollItems_DuplicatePCHeader_RightmostWins(t *testing.T) {
+	headers := map[string]string{
+		"F": "JUMLAH", "G": "HITUNGAN", "H": "UJROH FULL", "J": "TF/F",
+		"M": "PC", "N": "MT", "O": "CL", "P": "MS", "Q": "SC", "R": "LN",
+		"S": "FL", "T": "NL", "V": "KEEP GAJI", "Y": "PAYROLL ITEM ID",
+		"X": "PC",
 	}
-}
-
-func TestImportPayrollItems_MixedRow_EmptyCellsZeroKeptValuesPreserved(t *testing.T) {
-	// PC unwritten, MT "", MS unwritten -> empty; CL/SC/LN non-empty.
-	// SC carries an explicit written 0 so a parsed zero is distinguishable
-	// from a blank-mapped zero only by route, both must land on &0.0.
-	// FL and NL are left unwritten on purpose: their parse path is separate
-	// from the six *float64 feature branches and must resolve to non-nil
-	// *decimal.Decimal pointers to decimal.Zero.
-	row := baseRow()
-	row["O"] = 1234.5
-	row["Q"] = 0
-	row["R"] = 2500.75
-
-	xlsx := buildFixture(t, []map[string]any{row})
+	row := sentinelRow("", nil)
+	row["X"] = 999
+	xlsx := buildFixtureWithHeaders(t, headers, []map[string]any{row})
 	repo, resp := runImport(t, xlsx)
 
 	if repo.importCalls != 1 {
@@ -496,10 +743,77 @@ func TestImportPayrollItems_MixedRow_EmptyCellsZeroKeptValuesPreserved(t *testin
 		t.Fatalf("expected 1 item, got %d", len(items))
 	}
 
-	want := map[string]float64{"PC": 0, "MT": 0, "MS": 0, "CL": 1234.5, "SC": 0, "LN": 2500.75}
-	for _, fc := range featureCols {
-		assertFee(t, fc.get(items[0]), want[fc.name], fc.name)
+	// X1's "PC" wins; the 1000 sentinel at M is ignored.
+	assertFee(t, items[0].PCFee, 999, "PC")
+	for _, other := range featureCols[1:] {
+		assertFee(t, other.get(items[0]), other.sentinel, other.name)
 	}
-	assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
-	assertDecimal(t, items[0].NightLearningFee, 0, "NL")
+	assertDecimal(t, items[0].ForeignLearningFee, 500, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 500, "NL")
+}
+
+// TestImportPayrollItems_OnlyPCHeader_OtherFeesZero pins per-column
+// independence: a missing MT-LN header resolves to the "" fallback column and
+// its cells read as empty, routing to the raw == "" zero branch.
+func TestImportPayrollItems_OnlyPCHeader_OtherFeesZero(t *testing.T) {
+	headers := map[string]string{
+		"F": "JUMLAH", "G": "HITUNGAN", "H": "UJROH FULL", "J": "TF/F",
+		"M": "PC", "S": "FL", "T": "NL", "V": "KEEP GAJI", "Y": "PAYROLL ITEM ID",
+	}
+	row := map[string]any{
+		"F": 10, "G": 1000.0, "H": 1000.0, "J": "F",
+		"M": 1000,
+		"S": 500.0, "T": 500.0, "V": 25000.0,
+		"Y": ulid.Make().String(),
+	}
+	xlsx := buildFixtureWithHeaders(t, headers, []map[string]any{row})
+	repo, resp := runImport(t, xlsx)
+
+	if repo.importCalls != 1 {
+		t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+	}
+	if resp.TotalProcessed != 1 {
+		t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+	}
+	items := repo.importArgs[0].Items
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+
+	assertFee(t, items[0].PCFee, 1000, "PC")
+	for _, other := range featureCols[1:] {
+		assertFee(t, other.get(items[0]), 0, other.name)
+	}
+	assertDecimal(t, items[0].ForeignLearningFee, 500, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 500, "NL")
+}
+
+// TestImportPayrollItems_InteriorBlankRow_KeepsSheetRowNumbering pins
+// GetRows interior-blank numbering: excelize collapses a fully blank sheet
+// row from the returned slice, and the service's rowIdx = i+1 re-derives the
+// original sheet row, so the error key stays row_4 (never row_3).
+func TestImportPayrollItems_InteriorBlankRow_KeepsSheetRowNumbering(t *testing.T) {
+	xlsx := buildFixtureWithHeaders(t, fixtureHeaders, []map[string]any{
+		sentinelRow("", nil),       // sheet row 2: valid
+		{},                         // sheet row 3: completely unwritten
+		sentinelRow("M", "45,000"), // sheet row 4: invalid PC
+	})
+	repo, cerr := runImportForError(t, xlsx)
+
+	if repo.importCalls != 0 {
+		t.Fatalf("expected 0 repo calls, got %d", repo.importCalls)
+	}
+	msgs, ok := cerr.Errors["row_4"]
+	if !ok {
+		t.Fatalf("expected error key row_4, got keys %v", cerr.Errors)
+	}
+	if len(msgs) != 1 || msgs[0] != "PC tidak valid: 45,000" {
+		t.Fatalf("expected exactly [PC tidak valid: 45,000], got %v", msgs)
+	}
+	if _, exists := cerr.Errors["row_3"]; exists {
+		t.Fatalf("unexpected error key row_3 for blank row: %v", cerr.Errors)
+	}
+	if len(cerr.Errors) != 1 {
+		t.Fatalf("expected only row_4 key, got %v", cerr.Errors)
+	}
 }
