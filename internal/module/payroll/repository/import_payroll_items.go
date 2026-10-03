@@ -32,7 +32,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 
 		items := req.Items[start:end]
 		values := make([]string, 0, len(items))
-		args := make([]any, 0, len(items)*15)
+		args := make([]any, 0, len(items)*14)
 		for _, item := range items {
 			var fl *float64
 			if item.ForeignLearningFee != nil {
@@ -53,7 +53,7 @@ func (r *payrollRepo) ImportPayrollItems(ctx context.Context, req *entity.Import
 				features = append(features, value)
 			}
 
-			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric)")
+			values = append(values, "(?::text, ?::integer, ?::numeric, ?::boolean, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric, ?::numeric)")
 			args = append(args,
 				item.ID,
 				item.ProgramMeetings,
