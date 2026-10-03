@@ -694,3 +694,126 @@ func TestImportPayrollItems_LegacyLayout_EmptyIDCell_SkipsRow(t *testing.T) {
 		t.Fatalf("ID: expected %s, got %s", validID, items[0].ID)
 	}
 }
+
+// runImportForError drives ImportPayrollItems expecting validation errors and
+// returns the untouched repo plus the *errmsg.CustomError for key assertions.
+func runImportForError(t *testing.T, xlsx []byte) (*capturingRepo, *errmsg.CustomError) {
+	t.Helper()
+
+	repo := &capturingRepo{}
+	svc := NewPayrollService(Config{Repo: repo})
+	_, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+		File:     bytes.NewReader(xlsx),
+		FileName: "rekap-gaji.xlsx",
+	})
+	if err == nil {
+		t.Fatal("ImportPayrollItems returned nil error, expected validation errors")
+	}
+	cerr, ok := err.(*errmsg.CustomError)
+	if !ok {
+		t.Fatalf("expected *errmsg.CustomError, got %T", err)
+	}
+	return repo, cerr
+}
+
+// TestImportPayrollItems_DuplicatePCHeader_RightmostWins pins the duplicate
+// header resolution: headerColumns is assigned in a left-to-right loop over
+// rows[0] (import_payroll_items.go:70-76), so the rightmost occurrence of a
+// duplicated header deterministically overwrites the leftmost one.
+func TestImportPayrollItems_DuplicatePCHeader_RightmostWins(t *testing.T) {
+	headers := map[string]string{
+		"F": "JUMLAH", "G": "HITUNGAN", "H": "UJROH FULL", "J": "TF/F",
+		"M": "PC", "N": "MT", "O": "CL", "P": "MS", "Q": "SC", "R": "LN",
+		"S": "FL", "T": "NL", "V": "KEEP GAJI", "Y": "PAYROLL ITEM ID",
+		"X": "PC",
+	}
+	row := sentinelRow("", nil)
+	row["X"] = 999
+	xlsx := buildFixtureWithHeaders(t, headers, []map[string]any{row})
+	repo, resp := runImport(t, xlsx)
+
+	if repo.importCalls != 1 {
+		t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+	}
+	if resp.TotalProcessed != 1 {
+		t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+	}
+	items := repo.importArgs[0].Items
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+
+	// X1's "PC" wins; the 1000 sentinel at M is ignored.
+	assertFee(t, items[0].PCFee, 999, "PC")
+	for _, other := range featureCols[1:] {
+		assertFee(t, other.get(items[0]), other.sentinel, other.name)
+	}
+	assertDecimal(t, items[0].ForeignLearningFee, 500, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 500, "NL")
+}
+
+// TestImportPayrollItems_OnlyPCHeader_OtherFeesZero pins per-column
+// independence: a missing MT-LN header resolves to the "" fallback column and
+// its cells read as empty, routing to the raw == "" zero branch.
+func TestImportPayrollItems_OnlyPCHeader_OtherFeesZero(t *testing.T) {
+	headers := map[string]string{
+		"F": "JUMLAH", "G": "HITUNGAN", "H": "UJROH FULL", "J": "TF/F",
+		"M": "PC", "S": "FL", "T": "NL", "V": "KEEP GAJI", "Y": "PAYROLL ITEM ID",
+	}
+	row := map[string]any{
+		"F": 10, "G": 1000.0, "H": 1000.0, "J": "F",
+		"M": 1000,
+		"S": 500.0, "T": 500.0, "V": 25000.0,
+		"Y": ulid.Make().String(),
+	}
+	xlsx := buildFixtureWithHeaders(t, headers, []map[string]any{row})
+	repo, resp := runImport(t, xlsx)
+
+	if repo.importCalls != 1 {
+		t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+	}
+	if resp.TotalProcessed != 1 {
+		t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+	}
+	items := repo.importArgs[0].Items
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+
+	assertFee(t, items[0].PCFee, 1000, "PC")
+	for _, other := range featureCols[1:] {
+		assertFee(t, other.get(items[0]), 0, other.name)
+	}
+	assertDecimal(t, items[0].ForeignLearningFee, 500, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 500, "NL")
+}
+
+// TestImportPayrollItems_InteriorBlankRow_KeepsSheetRowNumbering pins
+// GetRows interior-blank numbering: excelize collapses a fully blank sheet
+// row from the returned slice, and the service's rowIdx = i+1 re-derives the
+// original sheet row, so the error key stays row_4 (never row_3).
+func TestImportPayrollItems_InteriorBlankRow_KeepsSheetRowNumbering(t *testing.T) {
+	xlsx := buildFixtureWithHeaders(t, fixtureHeaders, []map[string]any{
+		sentinelRow("", nil),       // sheet row 2: valid
+		{},                         // sheet row 3: completely unwritten
+		sentinelRow("M", "45,000"), // sheet row 4: invalid PC
+	})
+	repo, cerr := runImportForError(t, xlsx)
+
+	if repo.importCalls != 0 {
+		t.Fatalf("expected 0 repo calls, got %d", repo.importCalls)
+	}
+	msgs, ok := cerr.Errors["row_4"]
+	if !ok {
+		t.Fatalf("expected error key row_4, got keys %v", cerr.Errors)
+	}
+	if len(msgs) != 1 || msgs[0] != "PC tidak valid: 45,000" {
+		t.Fatalf("expected exactly [PC tidak valid: 45,000], got %v", msgs)
+	}
+	if _, exists := cerr.Errors["row_3"]; exists {
+		t.Fatalf("unexpected error key row_3 for blank row: %v", cerr.Errors)
+	}
+	if len(cerr.Errors) != 1 {
+		t.Fatalf("expected only row_4 key, got %v", cerr.Errors)
+	}
+}
