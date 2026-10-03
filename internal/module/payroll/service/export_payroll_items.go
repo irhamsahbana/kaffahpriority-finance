@@ -288,6 +288,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 				f.SetCellStyle(sheetName, fmt.Sprintf("J%v", lastRow), fmt.Sprintf("J%v", lastRow), editableStyle)
 				f.SetCellStyle(sheetName, fmt.Sprintf("K%v", lastRow), fmt.Sprintf("K%v", lastRow), editableStyle)
 				f.SetCellStyle(sheetName, fmt.Sprintf("L%v", lastRow), fmt.Sprintf("L%v", lastRow), editableStyle)
+				f.SetCellStyle(sheetName, fmt.Sprintf("M%v", lastRow), fmt.Sprintf("R%v", lastRow), editableStyle)
 				f.SetCellStyle(sheetName, fmt.Sprintf("V%v", lastRow), fmt.Sprintf("V%v", lastRow), editableStyle)
 
 				if itemIndex+1 != len(lecturer.Items) {
