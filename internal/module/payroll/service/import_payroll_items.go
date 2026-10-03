@@ -248,7 +248,8 @@ func (s *payrollService) ImportPayrollItems(ctx context.Context, req *entity.Imp
 		}
 		for _, feature := range featureColumns {
 			if feature.raw == "" {
-				*feature.dest = nil
+				zero := 0.0
+				*feature.dest = &zero
 				continue
 			}
 			fee, err := decimal.NewFromString(feature.raw)
