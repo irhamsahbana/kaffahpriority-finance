@@ -3,11 +3,13 @@ package service
 import (
 	"bytes"
 	"context"
+	"math"
 	"strconv"
 	"testing"
 
 	"codebase-app/internal/entity"
 	ports "codebase-app/internal/ports/module/payroll"
+	"codebase-app/pkg/errmsg"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/shopspring/decimal"
@@ -216,6 +218,91 @@ func TestImportPayrollItems_UnwrittenFeatureCell_MapsToZero(t *testing.T) {
 	for _, fc := range featureCols {
 		t.Run(fc.name, func(t *testing.T) {
 			runFeatureCellCase(t, fc, nil)
+		})
+	}
+}
+
+// TestImportPayrollItems_PCColumnNumericEdgeMatrix pins the fee parser's
+// grammar: cells parse via decimal.NewFromString then InexactFloat64 (not
+// strconv.ParseFloat). Rejection cases must surface exactly one message under
+// key row_2 and never reach the repository.
+//
+// Each case runs against its own isolated fixture containing exactly one data
+// row at sheet row 2, so the 1e400 case's captured +Inf pointer cannot collide
+// with any other case and every rejection provably aborts the whole import.
+func TestImportPayrollItems_PCColumnNumericEdgeMatrix(t *testing.T) {
+	cases := []struct {
+		name     string
+		cellVal  string
+		ok       bool
+		fee      float64 // ok && !overflow: expected PCFee value
+		overflow bool    // ok && PCFee is +Inf (1e400 infrastructure path)
+		errMsg   string  // !ok: the exact single message under key row_2
+	}{
+		{name: "scientific_notation_1e3_stores_1000", cellVal: "1e3", ok: true, fee: 1000},
+		{name: "leading_plus_sign_5_stores_5", cellVal: "+5", ok: true, fee: 5},
+		{name: "exponent_overflow_1e400_stores_plus_inf", cellVal: "1e400", ok: true, overflow: true},
+		{name: "reject_nan", cellVal: "NaN", errMsg: "PC tidak valid: NaN"},
+		{name: "reject_inf", cellVal: "Inf", errMsg: "PC tidak valid: Inf"},
+		{name: "reject_plus_inf", cellVal: "+Inf", errMsg: "PC tidak valid: +Inf"},
+		{name: "reject_minus_inf", cellVal: "-Inf", errMsg: "PC tidak valid: -Inf"},
+		{name: "reject_hex_float", cellVal: "0x1p3", errMsg: "PC tidak valid: 0x1p3"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			xlsx := buildFixture(t, []map[string]any{sentinelRow("M", tc.cellVal)})
+			repo := &capturingRepo{}
+			svc := NewPayrollService(Config{Repo: repo})
+			resp, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+				File:     bytes.NewReader(xlsx),
+				FileName: "rekap-gaji.xlsx",
+			})
+
+			if tc.ok {
+				if err != nil {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+				if resp.TotalProcessed != 1 || resp.TotalUpdated != 1 {
+					t.Fatalf("expected success response {1, 1}, got {processed: %d, updated: %d}", resp.TotalProcessed, resp.TotalUpdated)
+				}
+				if repo.importCalls != 1 {
+					t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+				}
+				items := repo.importArgs[0].Items
+				if len(items) != 1 {
+					t.Fatalf("expected 1 item, got %d", len(items))
+				}
+				fee := items[0].PCFee
+				if fee == nil {
+					t.Fatal("PCFee: expected non-nil *float64, got nil")
+				}
+				if tc.overflow {
+					if !math.IsInf(*fee, 1) {
+						t.Fatalf("PCFee: expected +Inf, got %v", *fee)
+					}
+				} else if *fee != tc.fee {
+					t.Fatalf("PCFee: expected %v, got %v", tc.fee, *fee)
+				}
+				// Guard against column mix-ups: MT sentinel must stay intact.
+				assertFee(t, items[0].MTFee, 1001, "MT")
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected rejection with %q, got success", tc.errMsg)
+			}
+			if repo.importCalls != 0 {
+				t.Fatalf("expected 0 repo calls, got %d", repo.importCalls)
+			}
+			cerr, ok := err.(*errmsg.CustomError)
+			if !ok {
+				t.Fatalf("expected *errmsg.CustomError, got %T", err)
+			}
+			msgs := cerr.Errors["row_2"]
+			if len(msgs) != 1 || msgs[0] != tc.errMsg {
+				t.Fatalf("expected Errors[row_2] = [%q], got %#v", tc.errMsg, msgs)
+			}
 		})
 	}
 }
