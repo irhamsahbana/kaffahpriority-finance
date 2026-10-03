@@ -9,6 +9,7 @@ digihub-app
 .opencode
 .vscode
 .qoder
+.sokudo
 backups
 logs
 storage
