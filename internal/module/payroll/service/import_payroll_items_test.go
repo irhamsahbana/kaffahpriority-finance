@@ -8,6 +8,7 @@ import (
 
 	"codebase-app/internal/entity"
 	ports "codebase-app/internal/ports/module/payroll"
+	"codebase-app/pkg/errmsg"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/shopspring/decimal"
@@ -218,4 +219,108 @@ func TestImportPayrollItems_UnwrittenFeatureCell_MapsToZero(t *testing.T) {
 			runFeatureCellCase(t, fc, nil)
 		})
 	}
+}
+
+// runImportExpectErr drives ImportPayrollItems expecting a rejection. The
+// service must fail with *errmsg.CustomError and never touch the repository.
+func runImportExpectErr(t *testing.T, xlsx []byte) (*capturingRepo, *errmsg.CustomError) {
+	t.Helper()
+
+	repo := &capturingRepo{}
+	svc := NewPayrollService(Config{Repo: repo})
+	resp, err := svc.ImportPayrollItems(context.Background(), &entity.ImportPayrollItemsReq{
+		File:     bytes.NewReader(xlsx),
+		FileName: "rekap-gaji.xlsx",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if resp != nil {
+		t.Fatalf("expected nil response on rejection, got %+v", resp)
+	}
+	cerr, ok := err.(*errmsg.CustomError)
+	if !ok {
+		t.Fatalf("expected *errmsg.CustomError, got %T: %v", err, err)
+	}
+	if repo.importCalls != 0 {
+		t.Fatalf("expected 0 repo calls (no partial writes), got %d", repo.importCalls)
+	}
+	return repo, cerr
+}
+
+// assertReject asserts the 400 rejection carries exactly the keyed per-row
+// errors: same key set, each with the exact message slice.
+func assertReject(t *testing.T, cerr *errmsg.CustomError, want map[string][]string) {
+	t.Helper()
+
+	if cerr.Code != 400 {
+		t.Fatalf("expected code 400, got %d", cerr.Code)
+	}
+	if len(cerr.Errors) != len(want) {
+		t.Fatalf("expected %d error keys, got %d: %v", len(want), len(cerr.Errors), cerr.Errors)
+	}
+	for key, wantMsgs := range want {
+		gotMsgs, exists := cerr.Errors[key]
+		if !exists {
+			t.Fatalf("missing error key %q, got %v", key, cerr.Errors)
+		}
+		if len(gotMsgs) != len(wantMsgs) {
+			t.Fatalf("%s: expected %d message(s), got %d: %v", key, len(wantMsgs), len(gotMsgs), gotMsgs)
+		}
+		for i := range wantMsgs {
+			if gotMsgs[i] != wantMsgs[i] {
+				t.Fatalf("%s[%d]: expected %q, got %q", key, i, wantMsgs[i], gotMsgs[i])
+			}
+		}
+	}
+}
+
+// TestImportPayrollItems_InvalidFeeCell_RejectsEntireImport pins 3.1: a
+// thousands-separated PC value ("45,000") in physical sheet row 5 (data rows
+// 2-4 present, no blank rows) fails the raw parse and rejects the whole
+// import. The message embeds the raw cell value verbatim.
+func TestImportPayrollItems_InvalidFeeCell_RejectsEntireImport(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("M", "45,000"),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_5": {"PC tidak valid: 45,000"},
+	})
+}
+
+// TestImportPayrollItems_NegativeFeeCell_RejectsEntireImport pins 3.2: a
+// negative PC fee in physical sheet row 5 rejects the import with exactly one
+// message for that row (the negative branch adds one error, then continues).
+func TestImportPayrollItems_NegativeFeeCell_RejectsEntireImport(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("", nil),
+		sentinelRow("M", -1),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_5": {"PC tidak boleh negatif"},
+	})
+}
+
+// TestImportPayrollItems_FeeErrorsAccumulate_NoPartialWrites pins 3.3:
+// invalid fee cells at rows 2 and 4 (row 3 valid) accumulate into a single
+// 400 carrying both keyed errors and no key for the valid row; the repository
+// is never invoked.
+func TestImportPayrollItems_FeeErrorsAccumulate_NoPartialWrites(t *testing.T) {
+	xlsx := buildFixture(t, []map[string]any{
+		sentinelRow("M", "abc"),
+		sentinelRow("", nil),
+		sentinelRow("M", "7,50"),
+	})
+	_, cerr := runImportExpectErr(t, xlsx)
+	assertReject(t, cerr, map[string][]string{
+		"row_2": {"PC tidak valid: abc"},
+		"row_4": {"PC tidak valid: 7,50"},
+	})
 }
