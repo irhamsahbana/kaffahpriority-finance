@@ -219,3 +219,91 @@ func TestImportPayrollItems_UnwrittenFeatureCell_MapsToZero(t *testing.T) {
 		})
 	}
 }
+
+// baseRow returns the non-fee columns every fixture row needs: JUMLAH 10,
+// HITUNGAN 1000, UJROH FULL 1000, TF/F "F", KEEP GAJI 25000, and a valid ULID.
+func baseRow() map[string]any {
+	return map[string]any{
+		"F": 10, "G": 1000.0, "H": 1000.0, "J": "F",
+		"V": 25000.0, "Y": ulid.Make().String(),
+	}
+}
+
+func TestImportPayrollItems_AllSixFeatureCellsEmpty_RowImportsAsZeroes(t *testing.T) {
+	// Blank forms are exercised separately: unwritten (nil) mirrors the
+	// export round-trip where zero fees are omitted, "" is an explicitly
+	// cleared cell. FL/NL are left empty too, so this is the truly
+	// all-empty row.
+	for _, form := range []struct {
+		label string
+		val   any // nil = unwritten
+	}{
+		{"unwritten", nil},
+		{"empty_string", ""},
+	} {
+		t.Run(form.label, func(t *testing.T) {
+			row := baseRow()
+			for _, fc := range featureCols {
+				if form.val != nil {
+					row[fc.col] = form.val
+				}
+			}
+
+			xlsx := buildFixture(t, []map[string]any{row})
+			repo, resp := runImport(t, xlsx) // runImport fails the test on any error
+
+			if repo.importCalls != 1 {
+				t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+			}
+			if resp.TotalProcessed != 1 {
+				t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+			}
+			items := repo.importArgs[0].Items
+			if len(items) != 1 {
+				t.Fatalf("expected 1 item, got %d", len(items))
+			}
+
+			// Captured-argument assertions stand in for DB-level NOT NULL
+			// checks: the pq error string is deliberately never asserted.
+			for _, fc := range featureCols {
+				assertFee(t, fc.get(items[0]), 0, fc.name)
+			}
+			assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
+			assertDecimal(t, items[0].NightLearningFee, 0, "NL")
+		})
+	}
+}
+
+func TestImportPayrollItems_MixedRow_EmptyCellsZeroKeptValuesPreserved(t *testing.T) {
+	// PC unwritten, MT "", MS unwritten -> empty; CL/SC/LN non-empty.
+	// SC carries an explicit written 0 so a parsed zero is distinguishable
+	// from a blank-mapped zero only by route, both must land on &0.0.
+	// FL and NL are left unwritten on purpose: their parse path is separate
+	// from the six *float64 feature branches and must resolve to non-nil
+	// *decimal.Decimal pointers to decimal.Zero.
+	row := baseRow()
+	row["O"] = 1234.5
+	row["Q"] = 0
+	row["R"] = 2500.75
+
+	xlsx := buildFixture(t, []map[string]any{row})
+	repo, resp := runImport(t, xlsx)
+
+	if repo.importCalls != 1 {
+		t.Fatalf("expected 1 repo call, got %d", repo.importCalls)
+	}
+	if resp.TotalProcessed != 1 {
+		t.Fatalf("expected TotalProcessed 1, got %d", resp.TotalProcessed)
+	}
+	items := repo.importArgs[0].Items
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+
+	want := map[string]float64{"PC": 0, "MT": 0, "MS": 0, "CL": 1234.5, "SC": 0, "LN": 2500.75}
+	for _, fc := range featureCols {
+		assertFee(t, fc.get(items[0]), want[fc.name], fc.name)
+	}
+	assertDecimal(t, items[0].ForeignLearningFee, 0, "FL")
+	assertDecimal(t, items[0].NightLearningFee, 0, "NL")
+}
