@@ -95,22 +95,25 @@ func (r *reportRepo) CreateTemplate(ctx context.Context, req *entity.CreateTempl
 		)
 	`
 
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
+
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramID,
 		Id, req.UserID, req.ProgramID, req.LecturerID, req.MarketerID, req.StudentID,
 		pq.Array(req.Days), req.Notes, req.ProgramFee,
-
 		req.AdministrationFee,
 		req.FLFee,
 		req.NLFee,
 		req.IsITP,
 		req.IsSSP,
-		req.PCFee,
-		req.MTFee,
-		req.CLFee,
-		req.MSFee,
-		req.SCFee,
-		req.LNFee,
+		fees.PCFee,
+		fees.MTFee,
+		fees.CLFee,
+		fees.MSFee,
+		fees.SCFee,
+		fees.LNFee,
 		req.MarketerCommissionFee,
 		req.OverpaymentFee,
 		req.HRFee,
