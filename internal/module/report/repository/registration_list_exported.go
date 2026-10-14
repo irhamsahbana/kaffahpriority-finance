@@ -233,13 +233,6 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 			resp.Items[i].ProgramName += " + NL"
 		}
 
-		if resp.Items[i].IsITP {
-			resp.Items[i].ProgramName += " + ITP"
-		}
-
-		if resp.Items[i].IsSSP {
-			resp.Items[i].ProgramName += " + SSP"
-		}
 		if resp.Items[i].PCFee != nil && *resp.Items[i].PCFee > 0 {
 			resp.Items[i].ProgramName += " + PC"
 		}
@@ -257,6 +250,12 @@ func (r *reportRepo) GetExportedRegistrations(ctx context.Context, req *entity.G
 		}
 		if resp.Items[i].LNFee != nil && *resp.Items[i].LNFee > 0 {
 			resp.Items[i].ProgramName += " + LN"
+		}
+		if resp.Items[i].IsITP {
+			resp.Items[i].ProgramName += " + ITP"
+		}
+		if resp.Items[i].IsSSP {
+			resp.Items[i].ProgramName += " + SSP"
 		}
 
 		registrationIds = append(registrationIds, resp.Items[i].ID)
