@@ -179,12 +179,6 @@ func (r *reportRepo) formatProgramName(d *lecturerWageDao) {
 	if d.NL != nil {
 		d.ProgramName = d.ProgramName + " + NL"
 	}
-	if d.IsITP {
-		d.ProgramName = d.ProgramName + " + ITP"
-	}
-	if d.IsSSP {
-		d.ProgramName = d.ProgramName + " + SSP"
-	}
 	if d.PCFee != nil && *d.PCFee > 0 {
 		d.ProgramName = d.ProgramName + " + PC"
 	}
@@ -202,6 +196,12 @@ func (r *reportRepo) formatProgramName(d *lecturerWageDao) {
 	}
 	if d.LNFee != nil && *d.LNFee > 0 {
 		d.ProgramName = d.ProgramName + " + LN"
+	}
+	if d.IsITP {
+		d.ProgramName = d.ProgramName + " + ITP"
+	}
+	if d.IsSSP {
+		d.ProgramName = d.ProgramName + " + SSP"
 	}
 }
 

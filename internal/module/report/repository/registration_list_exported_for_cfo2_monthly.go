@@ -219,15 +219,6 @@ func (r *reportRepo) enrichRegistrationsCFO2(items []entity.RegisItem) ([]entity
 			items[i].ProgramName += " + NL"
 		}
 
-		if items[i].IsITP {
-			items[i].ProgramName += " + ITP"
-			totalITP++
-		}
-
-		if items[i].IsSSP {
-			items[i].ProgramName += " + SSP"
-		}
-
 		if items[i].PCFee != nil && *items[i].PCFee > 0 {
 			items[i].ProgramName += " + PC"
 		}
@@ -245,6 +236,13 @@ func (r *reportRepo) enrichRegistrationsCFO2(items []entity.RegisItem) ([]entity
 		}
 		if items[i].LNFee != nil && *items[i].LNFee > 0 {
 			items[i].ProgramName += " + LN"
+		}
+		if items[i].IsITP {
+			items[i].ProgramName += " + ITP"
+			totalITP++
+		}
+		if items[i].IsSSP {
+			items[i].ProgramName += " + SSP"
 		}
 
 		registrationIds = append(registrationIds, items[i].ID)

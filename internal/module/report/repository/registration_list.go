@@ -547,14 +547,6 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 			resp.Items[i].ProgramName += " + NL"
 		}
 
-		if resp.Items[i].IsITP {
-			resp.Items[i].ProgramName += " + ITP"
-			resp.TotalITP++
-		}
-
-		if resp.Items[i].IsSSP {
-			resp.Items[i].ProgramName += " + SSP"
-		}
 		if resp.Items[i].PCFee != nil && *resp.Items[i].PCFee > 0 {
 			resp.Items[i].ProgramName += " + PC"
 		}
@@ -572,6 +564,13 @@ func (r *reportRepo) GetExportedRegistrationsForCFO2MonthlyUnused(
 		}
 		if resp.Items[i].LNFee != nil && *resp.Items[i].LNFee > 0 {
 			resp.Items[i].ProgramName += " + LN"
+		}
+		if resp.Items[i].IsITP {
+			resp.Items[i].ProgramName += " + ITP"
+			resp.TotalITP++
+		}
+		if resp.Items[i].IsSSP {
+			resp.Items[i].ProgramName += " + SSP"
 		}
 
 		registrationIds = append(registrationIds, resp.Items[i].ID)
@@ -972,12 +971,6 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				if academicManagers[i].Items[j].Items[k].IsNL {
 					academicManagers[i].Items[j].Items[k].ProgramName += " + NL"
 				}
-				if academicManagers[i].Items[j].Items[k].IsITP {
-					academicManagers[i].Items[j].Items[k].ProgramName += " + ITP"
-				}
-				if academicManagers[i].Items[j].Items[k].IsSSP {
-					academicManagers[i].Items[j].Items[k].ProgramName += " + SSP"
-				}
 				if academicManagers[i].Items[j].Items[k].PCFee != nil && *academicManagers[i].Items[j].Items[k].PCFee > 0 {
 					academicManagers[i].Items[j].Items[k].ProgramName += " + PC"
 				}
@@ -995,6 +988,12 @@ func (r *reportRepo) GetExportedRegistrationsForWageRecapMonthly(
 				}
 				if academicManagers[i].Items[j].Items[k].LNFee != nil && *academicManagers[i].Items[j].Items[k].LNFee > 0 {
 					academicManagers[i].Items[j].Items[k].ProgramName += " + LN"
+				}
+				if academicManagers[i].Items[j].Items[k].IsITP {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + ITP"
+				}
+				if academicManagers[i].Items[j].Items[k].IsSSP {
+					academicManagers[i].Items[j].Items[k].ProgramName += " + SSP"
 				}
 
 				queryAddStudents := `
