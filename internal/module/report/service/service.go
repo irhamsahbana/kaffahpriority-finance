@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
 	"time"
@@ -72,7 +73,7 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -99,7 +100,7 @@ func (s *reportService) DeleteTemplate(ctx context.Context, req *entity.GetTempl
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return nil
 }
@@ -143,7 +144,7 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -181,7 +182,7 @@ func (s *reportService) UpdateRegistration(ctx context.Context, req *entity.Upda
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return resp, nil
 }
@@ -210,7 +211,7 @@ func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *ent
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -248,7 +249,7 @@ func (s *reportService) UpdateRegistrationLecturer(ctx context.Context, req *ent
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return resp, nil
 }
@@ -277,7 +278,7 @@ func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entit
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -315,7 +316,7 @@ func (s *reportService) UpdateRegistrationIsPaid(ctx context.Context, req *entit
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return resp, nil
 }
@@ -365,7 +366,7 @@ func (s *reportService) RegistrationsMarkAsUsed(ctx context.Context, req *entity
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -409,7 +410,7 @@ func (s *reportService) RegistrationsMarkAsUsed(ctx context.Context, req *entity
 					Msgf("failed to create activity log")
 			}
 		}
-	}()
+	})
 
 	return nil
 }
@@ -487,7 +488,7 @@ func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.Upd
 		return err
 	}
 
-	go func() {
+	errtrack.SafeGo(ctx, func() {
 		user, err := s.userRepo.GetMe(ctx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).
@@ -525,7 +526,7 @@ func (s *reportService) UpdateLecturersWage(ctx context.Context, req *entity.Upd
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return nil
 }
@@ -562,7 +563,7 @@ func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistr
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -600,7 +601,7 @@ func (s *reportService) DistributeHRFee(ctx context.Context, req *entity.HRDistr
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return nil
 }
@@ -629,7 +630,7 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -667,7 +668,7 @@ func (s *reportService) UseHRfeeForLecturer(ctx context.Context, req *entity.Use
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return nil
 }
@@ -707,7 +708,7 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 	generateErr := s.repo.GenerateRegistrationReports(ctx, req)
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -739,7 +740,7 @@ func (s *reportService) GenerateRegistrationReports(ctx context.Context, req *en
 			log.Ctx(childCtx).Error().Err(err).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return generateErr
 }
@@ -771,7 +772,7 @@ func (s *reportService) CreateAdditionalRegistration(ctx context.Context, req *e
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -808,7 +809,7 @@ func (s *reportService) CreateAdditionalRegistration(ctx context.Context, req *e
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return resp, nil
 }

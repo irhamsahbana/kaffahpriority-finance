@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
 	"codebase-app/pkg/errmsg"
@@ -59,7 +60,7 @@ func (s *payrollService) ResetPayrollRunItems(ctx context.Context, req *entity.R
 
 	// 5. Async Activity Log
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).Msg("failed to get user data for activity log")
@@ -83,7 +84,7 @@ func (s *payrollService) ResetPayrollRunItems(ctx context.Context, req *entity.R
 		} else {
 			log.Ctx(childCtx).Info().Msg("Activity log created successfully")
 		}
-	}()
+	})
 
 	return nil
 }

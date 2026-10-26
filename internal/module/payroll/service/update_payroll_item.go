@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
 	"codebase-app/pkg/errmsg"
@@ -97,7 +98,7 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 
 	// Async Activity Log
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
@@ -121,7 +122,7 @@ func (s *payrollService) UpdatePayrollItem(ctx context.Context, req *entity.Upda
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).Msg("failed to create activity log")
 		}
-	}()
+	})
 
 	return nil
 }

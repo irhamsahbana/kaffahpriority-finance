@@ -3,6 +3,7 @@ package cmd
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/logging"
 	"context"
 	"flag"
@@ -49,6 +50,15 @@ func RunConsumer(_ *flag.FlagSet, _ []string) {
 
 	// email consumer
 	cctxEmail, err := EmailConsumer.Consume(func(msg jetstream.Msg) {
+		// Report the panic, then re-panic to keep the previous crash-and-restart behavior.
+		defer func() {
+			if r := recover(); r != nil {
+				errtrack.CaptureRecovered(context.Background(), r, map[string]string{"nats.subject": msg.Subject()})
+				errtrack.Flush()
+				panic(r)
+			}
+		}()
+
 		switch msg.Subject() {
 		case "email.verification":
 			EmailVerificationHandler(msg)

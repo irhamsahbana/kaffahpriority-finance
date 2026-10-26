@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/errtrack"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -11,6 +13,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -41,8 +44,9 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 	// If run once flag is set, execute backup immediately and exit
 	if *runOnce {
 		log.Info().Msg("running backup once")
-		if err := executeBackupJob(); err != nil {
+		if err := runBackupJob(); err != nil {
 			log.Error().Err(err).Msg("backup job failed")
+			errtrack.Flush() // os.Exit skips deferred calls
 			os.Exit(1)
 		}
 		log.Info().Msg("backup job completed successfully")
@@ -73,21 +77,21 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 	case "daily":
 		job, err = s.NewJob(
 			gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(23, 59, 59))), // Daily at 23:59:59 Asia/Makassar
-			gocron.NewTask(executeBackupJob),
+			gocron.NewTask(runBackupJob),
 			gocron.WithName("daily-backup"),
 			gocron.WithTags("backup", "database", "dropbox"),
 		)
 	case "hourly":
 		job, err = s.NewJob(
 			gocron.DurationJob(time.Hour), // Every hour
-			gocron.NewTask(executeBackupJob),
+			gocron.NewTask(runBackupJob),
 			gocron.WithName("hourly-backup"),
 			gocron.WithTags("backup", "database", "dropbox"),
 		)
 	case "weekly":
 		job, err = s.NewJob(
 			gocron.WeeklyJob(1, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 59))), // Weekly on Sunday at 23:59:59
-			gocron.NewTask(executeBackupJob),
+			gocron.NewTask(runBackupJob),
 			gocron.WithName("weekly-backup"),
 			gocron.WithTags("backup", "database", "dropbox"),
 		)
@@ -95,7 +99,7 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 		// Try to parse as cron expression
 		job, err = s.NewJob(
 			gocron.CronJob(*schedule, false), // Custom cron expression
-			gocron.NewTask(executeBackupJob),
+			gocron.NewTask(runBackupJob),
 			gocron.WithName("custom-backup"),
 			gocron.WithTags("backup", "database", "dropbox"),
 		)
@@ -119,6 +123,28 @@ func RunCronjob(cmd *flag.FlagSet, args []string) {
 	// Wait for interrupt signal
 	<-c
 	log.Info().Msg("received shutdown signal, stopping scheduler")
+}
+
+// runBackupJob wraps executeBackupJob so failures and panics reach error tracking;
+// gocron swallows both silently, and the -once mode has no recovery at all.
+func runBackupJob() (err error) {
+	tags := map[string]string{"job": "backup"}
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().
+				Interface("panic", r).
+				Str("stack", string(debug.Stack())).
+				Msg("recovered from panic in backup job")
+			errtrack.CaptureRecovered(context.Background(), r, tags)
+			err = fmt.Errorf("backup job panicked: %v", r)
+		}
+	}()
+
+	if err = executeBackupJob(); err != nil {
+		errtrack.CaptureError(context.Background(), err, tags)
+	}
+	return err
 }
 
 // executeBackupJob performs the actual backup operation

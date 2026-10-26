@@ -4,6 +4,7 @@ import (
 	"codebase-app/cmd"
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/errtrack"
 	"os"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 func main() {
 	os.Args = initialize()
+	defer errtrack.Flush()
 
 	serverCmd := flag.NewFlagSet("server", flag.ExitOnError)
 	seedCmd := flag.NewFlagSet("seed", flag.ExitOnError)
@@ -25,7 +27,7 @@ func main() {
 	if len(os.Args) < 2 {
 		log.Info().Msg("No command provided, defaulting to 'server'")
 		cmd.RunServer(serverCmd, os.Args[1:])
-		os.Exit(0)
+		return // not os.Exit, so the deferred Flush runs
 	}
 
 	switch os.Args[1] {
@@ -45,7 +47,7 @@ func main() {
 		log.Info().Msg("Invalid command provided, defaulting to 'server' with provided flags")
 		if os.Args[1][0] == '-' { // check if the first argument is a flag
 			cmd.RunServer(serverCmd, os.Args[1:])
-			os.Exit(0)
+			return // not os.Exit, so the deferred Flush runs
 		}
 
 		cmd.RunServer(serverCmd, os.Args[2:]) // default to server if invalid command and flags are provided
@@ -70,6 +72,23 @@ func initialize() (newArgs []string) {
 		config.WithPath(*configPath),
 		config.WithFilename(*configFilename),
 	).Initialize()
+
+	// Initialized here so every subcommand (server, consumer, cronjob, ws, ...) reports errors.
+	envs := config.Envs
+	release := ""
+	if envs.App.Version != "" {
+		release = envs.App.Name + "@" + envs.App.Version
+	}
+	if err := errtrack.Init(errtrack.Config{
+		DSN:         envs.ErrorTracking.DSN,
+		Environment: envs.App.Environtment,
+		Release:     release,
+		SampleRate:  envs.ErrorTracking.SampleRate,
+	}); err != nil {
+		log.Error().Err(err).Msg("Failed to initialize error tracking, continuing without it")
+	} else if errtrack.Enabled() {
+		log.Info().Msg("Error tracking initialized")
+	}
 
 	adapter.Adapters = &adapter.Adapter{}
 

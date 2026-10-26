@@ -120,6 +120,8 @@ func RunServer(cmd *flag.FlagSet, args []string) {
 	app.Use(middleware.RequestID)
 	app.Use(middleware.WithAppLogger(log.Logger))
 	app.Use(middleware.WithTracing(envs.App.Name))
+	// Reports 5xx responses; must stay between RequestID and Recover
+	app.Use(middleware.ErrorCapture())
 
 	// Application Recover Middleware
 	// Placed after Tracing to ensure panic is recorded in the span
