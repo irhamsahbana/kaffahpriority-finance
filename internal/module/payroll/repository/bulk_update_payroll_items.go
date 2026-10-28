@@ -38,6 +38,10 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 			setParts = append(setParts, "is_itp = :is_itp")
 			args["is_itp"] = *item.IsITP
 		}
+		if item.IsSSP != nil {
+			setParts = append(setParts, "is_ssp = :is_ssp")
+			args["is_ssp"] = *item.IsSSP
+		}
 		if item.ForeignLearningFee != nil {
 			setParts = append(setParts, "foreign_learning_fee = :foreign_learning_fee")
 			args["foreign_learning_fee"] = *item.ForeignLearningFee
@@ -45,6 +49,15 @@ func (r *payrollRepo) BulkUpdatePayrollItems(ctx context.Context, req *entity.Bu
 		if item.NightLearningFee != nil {
 			setParts = append(setParts, "night_learning_fee = :night_learning_fee")
 			args["night_learning_fee"] = *item.NightLearningFee
+		}
+		for field, value := range map[string]*float64{
+			"pc_fee": item.PCFee, "mt_fee": item.MTFee, "cl_fee": item.CLFee,
+			"ms_fee": item.MSFee, "sc_fee": item.SCFee, "ln_fee": item.LNFee,
+		} {
+			if value != nil {
+				setParts = append(setParts, field+" = :"+field)
+				args[field] = *value
+			}
 		}
 		if item.Wage != nil {
 			setParts = append(setParts, "wage = :wage")

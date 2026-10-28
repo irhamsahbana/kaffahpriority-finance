@@ -69,7 +69,17 @@ func (s *payrollService) GetPayrollItems(ctx context.Context, req *entity.GetPay
 			if items[i].ProgramMeetings == 0 {
 				items[i].RealWage = decimal.Zero
 			} else {
-				items[i].RealWage = items[i].InitialWage.Add(items[i].ForeignLearningFee).Add(items[i].NightLearningFee)
+				items[i].RealWage = items[i].InitialWage.
+					Add(items[i].ForeignLearningFee).
+					Add(items[i].NightLearningFee).
+					Add(decimal.NewFromFloat(entity.TotalFeatureFee(entity.FeatureFeeValues{
+						PCFee: ptrFloat(items[i].PCFee),
+						MTFee: ptrFloat(items[i].MTFee),
+						CLFee: ptrFloat(items[i].CLFee),
+						MSFee: ptrFloat(items[i].MSFee),
+						SCFee: ptrFloat(items[i].SCFee),
+						LNFee: ptrFloat(items[i].LNFee),
+					})))
 			}
 		}
 	}

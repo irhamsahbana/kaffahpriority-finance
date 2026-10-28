@@ -47,6 +47,13 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
 			is_itp = ?,
+			is_ssp = ?,
+			pc_fee = ?,
+			mt_fee = ?,
+			cl_fee = ?,
+			ms_fee = ?,
+			sc_fee = ?,
+			ln_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
@@ -60,10 +67,15 @@ func (r *reportRepo) UpdateTemplate(ctx context.Context, req *entity.UpdateTempl
 			AND deleted_at IS NULL
 	`
 
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
+
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes,
-		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
+		req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP, req.IsSSP,
+		fees.PCFee, fees.MTFee, fees.CLFee, fees.MSFee, fees.SCFee, fees.LNFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
 		req.CreatedAt,

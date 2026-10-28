@@ -18,6 +18,12 @@ type ImportedLecturersWages struct {
 	ProgramMeetings int              `json:"program_meetings"`
 	FL              *decimal.Decimal `json:"foreign_learning_fee"`
 	NL              *decimal.Decimal `json:"night_learning_fee"`
+	PC              *decimal.Decimal `json:"pc_fee"`
+	MT              *decimal.Decimal `json:"mt_fee"`
+	CL              *decimal.Decimal `json:"cl_fee"`
+	MS              *decimal.Decimal `json:"ms_fee"`
+	SC              *decimal.Decimal `json:"sc_fee"`
+	LN              *decimal.Decimal `json:"ln_fee"`
 	InitialFee      decimal.Decimal  `json:"initial_fee"`
 	IsFullFee       bool             `json:"is_full_fee"`
 	Notes           *string          `json:"notes"`

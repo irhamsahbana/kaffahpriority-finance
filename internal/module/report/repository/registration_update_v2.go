@@ -202,15 +202,12 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 		return err
 	}
 
-	// only check this if req.isITP is changed
-	isITPChanged := false
-	if req.IsITP != currentReg.IsITP {
-		isITPChanged = true
-	}
+	// Reset upgrade-derived fees when either upgrade flag changes.
+	upgradeChanged := req.IsITP != currentReg.IsITP || req.IsSSP != currentReg.IsSSP
 
 	var multiplier int64 = 1
-	if req.IsITP {
-		multiplier = 2
+	if req.IsITP || req.IsSSP {
+		multiplier = entity.UpgradeMultiplier
 	}
 	// if category is "additional, skip this and set mentorDetailFee to take all value form req.hrFee"
 	var mentorDetailFee float64
@@ -224,7 +221,7 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 	}
 
 	var programAcquisitionRights int64 = int64(currentReg.ProgramAcquisitionRights)
-	if isITPChanged {
+	if upgradeChanged {
 		programAcquisitionRights = multiplier * program.AcquisitionRights
 		hrDetailFee = 40000 * float64(programAcquisitionRights)
 		if req.Category == "additional" {
@@ -249,6 +246,12 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 			administration_fee = ?,
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
+			pc_fee = ?,
+			mt_fee = ?,
+			cl_fee = ?,
+			ms_fee = ?,
+			sc_fee = ?,
+			ln_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
@@ -261,6 +264,7 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 			notes = ?,
 			notes_for_category = ?,
 			is_itp = ?,
+			is_ssp = ?,
 			paid_at = ?,
 			allocated_at = ?,
 			mentor_detail_fee_used = CASE WHEN ? THEN NULL ELSE mentor_detail_fee_used END,
@@ -295,16 +299,21 @@ func (r *reportRepo) updateRegistrationMetadata(ctx context.Context, tx *sqlx.Tx
 		return err
 	}
 
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
+
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		req.LecturerId, req.MarketerId,
 		program.Name, program.PricePerMeeting, program.FullFee, programAcquisitionRights, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		fees.PCFee, fees.MTFee, fees.CLFee, fees.MSFee, fees.SCFee, fees.LNFee,
 		req.MarketerCommissionFee, req.OverpaymentFee,
 		req.HRFee,
 		mentorDetailFee,
 		hrDetailFee,
 		req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes, req.NotesForCategory,
-		req.IsITP,
+		req.IsITP, req.IsSSP,
 		parsedPaidAt.Format(time.RFC3339), parsedAllocatedAt.Format(time.RFC3339),
 		shouldResetFees, // reset mentor_detail_fee_used
 		shouldResetFees, // reset notes_for_fund_distributions
@@ -428,8 +437,8 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 	}
 
 	var multiplier int64 = 1
-	if req.IsITP {
-		multiplier = 2
+	if req.IsITP || req.IsSSP {
+		multiplier = entity.UpgradeMultiplier
 	}
 	programAcquisitionRights := multiplier * program.AcquisitionRights
 	hrDetailFee := 40000 * programAcquisitionRights
@@ -448,6 +457,12 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 			administration_fee = ?,
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
+			pc_fee = ?,
+			mt_fee = ?,
+			cl_fee = ?,
+			ms_fee = ?,
+			sc_fee = ?,
+			ln_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
@@ -459,11 +474,16 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 			days = ?,
 			notes = ?,
 			is_itp = ?,
+			is_ssp = ?,
 			updated_at = NOW()
 		WHERE
 			template_id = ?
 			AND deleted_at IS NULL
 	`
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
+
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		newTemplateID,
 		req.LecturerId, req.MarketerId,
@@ -475,6 +495,7 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 		req.AdministrationFee,
 		req.FLFee,
 		req.NLFee,
+		fees.PCFee, fees.MTFee, fees.CLFee, fees.MSFee, fees.SCFee, fees.LNFee,
 		program.CommissionFee,
 		req.OverpaymentFee,
 		req.HRFee,
@@ -485,7 +506,7 @@ func (r *reportRepo) migrateRegistrationsToNewTemplate(ctx context.Context, tx *
 		req.ClosingFeeForReward,
 		pq.Array(req.Days),
 		req.Notes,
-		req.IsITP,
+		req.IsITP, req.IsSSP,
 		oldTemplateID,
 	)
 	if err != nil {
@@ -521,6 +542,13 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 			foreign_learning_fee,
 			night_learning_fee,
 			is_itp,
+			is_ssp,
+			pc_fee,
+			mt_fee,
+			cl_fee,
+			ms_fee,
+			sc_fee,
+			ln_fee,
 			marketer_commission_fee,
 			overpayment_fee,
 			hr_fee,
@@ -532,15 +560,20 @@ func (r *reportRepo) createRegistrationTemplate(ctx context.Context, tx *sqlx.Tx
 			?,
 			?, ?, ?, ?,
 			?,
-			?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
+
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
 
 	_, err = tx.ExecContext(ctx, tx.Rebind(query),
 		newTemplateId, req.UserID, req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		pq.Array(req.Days), req.Notes, req.ProgramFee,
 		program.PricePerMeeting,
-		req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP,
+		req.AdministrationFee, req.FLFee, req.NLFee, req.IsITP, req.IsSSP,
+		fees.PCFee, fees.MTFee, fees.CLFee, fees.MSFee, fees.SCFee, fees.LNFee,
 		program.CommissionFee,
 		req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward,
@@ -601,6 +634,12 @@ func (r *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx
 			administration_fee = ?,
 			foreign_learning_fee = ?,
 			night_learning_fee = ?,
+			pc_fee = ?,
+			mt_fee = ?,
+			cl_fee = ?,
+			ms_fee = ?,
+			sc_fee = ?,
+			ln_fee = ?,
 			marketer_commission_fee = ?,
 			overpayment_fee = ?,
 			hr_fee = ?,
@@ -610,18 +649,24 @@ func (r *reportRepo) executeUpdateExistingTemplate(ctx context.Context, tx *sqlx
 			days = ?,
 			notes = ?,
 			is_itp = ?,
+			is_ssp = ?,
 			updated_at = NOW()
 		WHERE
 			id = ?
 			AND deleted_at IS NULL
 	`
 
+	// Feature-fee columns are NOT NULL DEFAULT 0; coalesce nil pointers to 0
+	// so an explicit NULL never violates the constraint.
+	fees := entity.FeatureFeeValuesFromPointers(req.FeatureFees)
+
 	_, err := tx.ExecContext(ctx, tx.Rebind(query),
 		req.ProgramId, req.LecturerId, req.MarketerId, req.StudentId,
 		req.ProgramId, req.ProgramFee, req.AdministrationFee, req.FLFee, req.NLFee,
+		fees.PCFee, fees.MTFee, fees.CLFee, fees.MSFee, fees.SCFee, fees.LNFee,
 		req.MarketerCommissionFee, req.OverpaymentFee, req.HRFee, req.MarketerGiftsFee,
 		req.ClosingFeeForOffice, req.ClosingFeeForReward, pq.Array(req.Days), req.Notes,
-		req.IsITP,
+		req.IsITP, req.IsSSP,
 		templateID,
 	)
 	if err != nil {

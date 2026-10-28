@@ -16,6 +16,12 @@ type UpdateLecturersWageReq struct {
 	InitialFee           gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
 	FL                   gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
 	NL                   gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
+	PCFee                gonull.Nullable[decimal.Decimal] `json:"pc_fee"`
+	MTFee                gonull.Nullable[decimal.Decimal] `json:"mt_fee"`
+	CLFee                gonull.Nullable[decimal.Decimal] `json:"cl_fee"`
+	MSFee                gonull.Nullable[decimal.Decimal] `json:"ms_fee"`
+	SCFee                gonull.Nullable[decimal.Decimal] `json:"sc_fee"`
+	LNFee                gonull.Nullable[decimal.Decimal] `json:"ln_fee"`
 	IsFullFee            gonull.Nullable[bool]            `json:"is_full_fee"`
 	ProgramFeePerMeeting gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
 	Notes                gonull.Nullable[string]          `json:"notes"`
@@ -38,6 +44,30 @@ func (r *UpdateLecturersWageReq) Validate() error {
 
 	if r.NL.Present && r.NL.Val.LessThan(decimal.Zero) {
 		_ = err.Add("night_learning_fee", "night_learning_fee must be greater than or equal to 0")
+	}
+
+	if r.PCFee.Present && r.PCFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("pc_fee", "pc_fee must be greater than or equal to 0")
+	}
+
+	if r.MTFee.Present && r.MTFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("mt_fee", "mt_fee must be greater than or equal to 0")
+	}
+
+	if r.CLFee.Present && r.CLFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("cl_fee", "cl_fee must be greater than or equal to 0")
+	}
+
+	if r.MSFee.Present && r.MSFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("ms_fee", "ms_fee must be greater than or equal to 0")
+	}
+
+	if r.SCFee.Present && r.SCFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("sc_fee", "sc_fee must be greater than or equal to 0")
+	}
+
+	if r.LNFee.Present && r.LNFee.Val.LessThan(decimal.Zero) {
+		_ = err.Add("ln_fee", "ln_fee must be greater than or equal to 0")
 	}
 
 	if r.IsFullFee.Present && !r.IsFullFee.Valid {
@@ -72,6 +102,12 @@ type UpdateLecturersWageResp struct {
 	InitialFee           gonull.Nullable[decimal.Decimal] `json:"initial_fee"`
 	FL                   gonull.Nullable[decimal.Decimal] `json:"foreign_learning_fee"`
 	NL                   gonull.Nullable[decimal.Decimal] `json:"night_learning_fee"`
+	PCFee                gonull.Nullable[decimal.Decimal] `json:"pc_fee"`
+	MTFee                gonull.Nullable[decimal.Decimal] `json:"mt_fee"`
+	CLFee                gonull.Nullable[decimal.Decimal] `json:"cl_fee"`
+	MSFee                gonull.Nullable[decimal.Decimal] `json:"ms_fee"`
+	SCFee                gonull.Nullable[decimal.Decimal] `json:"sc_fee"`
+	LNFee                gonull.Nullable[decimal.Decimal] `json:"ln_fee"`
 	IsFullFee            gonull.Nullable[bool]            `json:"is_full_fee"`
 	ProgramFeePerMeeting gonull.Nullable[decimal.Decimal] `json:"program_fee_per_meeting"`
 }

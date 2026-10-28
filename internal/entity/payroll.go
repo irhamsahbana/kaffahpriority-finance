@@ -144,8 +144,10 @@ type UpdatePayrollItemReq struct {
 	AdditionalStudents []AddStudent     `json:"additional_students" validate:"omitempty,dive"`
 	IsMeetingFull      *bool            `json:"is_meeting_full"`
 	IsITP              *bool            `json:"is_itp"`
+	IsSSP              *bool            `json:"is_ssp"`
 	ForeignLearningFee *decimal.Decimal `json:"foreign_learning_fee"`
 	NightLearningFee   *decimal.Decimal `json:"night_learning_fee"`
+	FeatureFees
 	Wage               *decimal.Decimal `json:"wage"`
 	InitialWage        *decimal.Decimal `json:"initial_wage"`
 	WagePerMeeting     *decimal.Decimal `json:"wage_per_meeting"`
@@ -200,6 +202,7 @@ type ImportedPayrollItems struct {
 	IsMeetingFull      bool             `json:"is_meeting_full" db:"is_meeting_full"`
 	ForeignLearningFee *decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NightLearningFee   *decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
+	FeatureFees
 	AcquisitionRights  *uint64          `json:"acquisition_rights" db:"acquisition_rights"`
 	Wage               decimal.Decimal  `json:"wage" db:"wage"`
 	FullWage           decimal.Decimal  `json:"full_wage" db:"full_wage"`

@@ -17,6 +17,7 @@ type UpdateRegistrationReq struct {
 	AdministrationFee     *float64     `json:"administration_fee" validate:"omitempty,min=0"`
 	FLFee                 *float64     `json:"foreign_learning_fee" validate:"omitempty,min=0"`
 	NLFee                 *float64     `json:"night_learning_fee" validate:"omitempty,min=0"`
+	FeatureFees
 	MarketerCommissionFee float64      `json:"marketer_commission_fee" validate:"min=0"`
 	OverpaymentFee        *float64     `json:"overpayment_fee" validate:"omitempty,min=0"`
 	HRFee                 float64      `json:"hr_fee" validate:"min=0"`
@@ -28,6 +29,7 @@ type UpdateRegistrationReq struct {
 	Notes                 *string      `json:"notes" validate:"omitempty,max=255"`
 	NotesForCategory      *string      `json:"notes_for_category" validate:"omitempty,max=255"`
 	IsITP                 bool         `json:"is_itp"`
+	IsSSP                 bool         `json:"is_ssp"`
 	Category              string       `json:"category"`
 	IsUpdateTemplate      bool         `json:"is_update_template"`
 	PaidAt                string       `json:"paid_at" validate:"required,datetime=2006-01-02"`
@@ -38,6 +40,10 @@ type UpdateRegistrationReq struct {
 
 func (r *UpdateRegistrationReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
+
+	if validateErr := ValidateUpgrades(r.IsITP, r.IsSSP); validateErr != nil {
+		return validateErr
+	}
 
 	for i, s := range r.Students {
 		if s.StudentID != nil && s.Name != nil {

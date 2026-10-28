@@ -39,7 +39,17 @@ func (s *payrollService) GetPayrollItemDetail(ctx context.Context, req *entity.G
 	if item.ProgramMeetings == 0 {
 		item.RealWage = decimal.Zero
 	} else {
-		item.RealWage = item.InitialWage.Add(item.ForeignLearningFee).Add(item.NightLearningFee)
+		item.RealWage = item.InitialWage.
+			Add(item.ForeignLearningFee).
+			Add(item.NightLearningFee).
+			Add(decimal.NewFromFloat(entity.TotalFeatureFee(entity.FeatureFeeValues{
+				PCFee: ptrFloat(item.PCFee),
+				MTFee: ptrFloat(item.MTFee),
+				CLFee: ptrFloat(item.CLFee),
+				MSFee: ptrFloat(item.MSFee),
+				SCFee: ptrFloat(item.SCFee),
+				LNFee: ptrFloat(item.LNFee),
+			})))
 	}
 
 	return &entity.GetPayrollItemDetailResp{

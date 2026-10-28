@@ -27,7 +27,7 @@ func (r *payrollRepo) GetPayrollItemsPeriodically(ctx context.Context, req *enti
 	)
 
 	// Perhitungan agregasi:
-	// - wage: Menjumlahkan gaji efektif per baris. Jika program_meetings = 0 maka 0, -- ini sebenarnya real_wage bukan wage
+			// - wage: Menjumlahkan gaji efektif per baris. Jika program_meetings = 0 maka 0, -- ini sebenarnya real_wage bukan wage
 	//   selain itu dijumlahkan initial_wage + foreign_learning_fee + night_learning_fee.
 	//   Nilai NULL pada fee ditangani dengan COALESCE menjadi 0. Hasil per baris
 	//   kemudian di-SUM per grup, dan jika tidak ada data, COALESCE mengembalikan 0.
@@ -49,6 +49,12 @@ func (r *payrollRepo) GetPayrollItemsPeriodically(ctx context.Context, req *enti
 						ELSE pi.initial_wage
 							+ COALESCE(pi.foreign_learning_fee, 0)
 							+ COALESCE(pi.night_learning_fee, 0)
+							+ COALESCE(pi.pc_fee, 0)
+							+ COALESCE(pi.mt_fee, 0)
+							+ COALESCE(pi.cl_fee, 0)
+							+ COALESCE(pi.ms_fee, 0)
+							+ COALESCE(pi.sc_fee, 0)
+							+ COALESCE(pi.ln_fee, 0)
 					END
 				),
 				0
@@ -208,7 +214,7 @@ func (r *payrollRepo) GetPayrollReportsYearly(ctx context.Context, req *entity.G
 		monthQuery := `
 			SELECT
 				EXTRACT(MONTH FROM pr.created_at AT TIME ZONE ?) AS month,
-				COALESCE(SUM(CASE WHEN pi.program_meetings = 0 THEN 0 ELSE (pi.initial_wage + COALESCE(pi.foreign_learning_fee, 0) + COALESCE(pi.night_learning_fee, 0)) END), 0) AS wage,
+				COALESCE(SUM(CASE WHEN pi.program_meetings = 0 THEN 0 ELSE (pi.initial_wage + COALESCE(pi.foreign_learning_fee, 0) + COALESCE(pi.night_learning_fee, 0) + COALESCE(pi.pc_fee, 0) + COALESCE(pi.mt_fee, 0) + COALESCE(pi.cl_fee, 0) + COALESCE(pi.ms_fee, 0) + COALESCE(pi.sc_fee, 0) + COALESCE(pi.ln_fee, 0)) END), 0) AS wage,
 				COALESCE(SUM(CASE WHEN pi.wage > 0 THEN pi.acquisition_rights ELSE 0 END), 0) AS total_acquisition_rights
 			FROM
 				payroll_items pi

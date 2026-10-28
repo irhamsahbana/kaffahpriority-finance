@@ -23,6 +23,8 @@ type UpdateTemplateGeneralReq struct {
 	FLFee                 *float64 `json:"foreign_learning_fee" validate:"omitempty,min=0"`
 	NLFee                 *float64 `json:"night_learning_fee" validate:"omitempty,min=0"`
 	IsITP                 bool     `json:"is_itp"`
+	IsSSP                 bool     `json:"is_ssp"`
+	FeatureFees
 	MarketerCommissionFee float64  `json:"marketer_commission_fee" validate:"min=0"`
 	OverpaymentFee        *float64 `json:"overpayment_fee" validate:"omitempty,min=0"`
 	HRFee                 float64  `json:"hr_fee" validate:"min=0"`
@@ -33,6 +35,10 @@ type UpdateTemplateGeneralReq struct {
 
 func (req *UpdateTemplateGeneralReq) Validate() error {
 	err := errmsg.NewCustomErrors(400)
+
+	if validateErr := ValidateUpgrades(req.IsITP, req.IsSSP); validateErr != nil {
+		return validateErr
+	}
 
 	for i, s := range req.AdditionalStudents {
 		if s.StudentID != nil && s.Name != nil {

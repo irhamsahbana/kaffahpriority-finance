@@ -61,6 +61,10 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 		setParts = append(setParts, "is_itp = :is_itp")
 		args["is_itp"] = *req.IsITP
 	}
+	if req.IsSSP != nil {
+		setParts = append(setParts, "is_ssp = :is_ssp")
+		args["is_ssp"] = *req.IsSSP
+	}
 	if req.ForeignLearningFee != nil {
 		setParts = append(setParts, "foreign_learning_fee = :foreign_learning_fee")
 		args["foreign_learning_fee"] = *req.ForeignLearningFee
@@ -68,6 +72,15 @@ func (r *payrollRepo) UpdatePayrollItem(ctx context.Context, req *entity.UpdateP
 	if req.NightLearningFee != nil {
 		setParts = append(setParts, "night_learning_fee = :night_learning_fee")
 		args["night_learning_fee"] = *req.NightLearningFee
+	}
+	for field, value := range map[string]*float64{
+		"pc_fee": req.PCFee, "mt_fee": req.MTFee, "cl_fee": req.CLFee,
+		"ms_fee": req.MSFee, "sc_fee": req.SCFee, "ln_fee": req.LNFee,
+	} {
+		if value != nil {
+			setParts = append(setParts, field+" = :"+field)
+			args[field] = *value
+		}
 	}
 	if req.Wage != nil {
 		setParts = append(setParts, "wage = :wage")

@@ -41,7 +41,9 @@ type PayrollItem struct {
 	MarketerName        string          `json:"marketer_name" db:"marketer_name"`
 	ForeignLearningFee  decimal.Decimal `json:"foreign_learning_fee" db:"foreign_learning_fee"`
 	NightLearningFee    decimal.Decimal `json:"night_learning_fee" db:"night_learning_fee"`
+	FeatureFees
 	IsITP               bool            `json:"is_itp" db:"is_itp"`
+	IsSSP               bool            `json:"is_ssp" db:"is_ssp"`
 	ProgramMeetings     uint64          `json:"program_meetings" db:"program_meetings"`
 	IsMeetingFull       bool            `json:"is_meeting_full" db:"is_meeting_full"`
 	WagePerMeeting      decimal.Decimal `json:"wage_per_meeting" db:"wage_per_meeting"`
