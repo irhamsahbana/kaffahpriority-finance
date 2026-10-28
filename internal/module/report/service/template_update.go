@@ -2,6 +2,7 @@ package service
 
 import (
 	"codebase-app/internal/entity"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/tracing"
 	"codebase-app/pkg"
 	"context"
@@ -34,7 +35,7 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 	}
 
 	childCtx := pkg.GenerateChildContext(ctx, time.Minute/2)
-	go func() {
+	errtrack.SafeGo(childCtx, func() {
 		user, err := s.userRepo.GetMe(childCtx, &entity.GetMeReq{UserID: req.UserID})
 		if err != nil {
 			log.Ctx(childCtx).Error().Err(err).
@@ -70,7 +71,7 @@ func (s *reportService) UpdateTemplate(ctx context.Context, req *entity.UpdateTe
 				Any(entity.Payload, req).
 				Msgf("failed to create activity log")
 		}
-	}()
+	})
 
 	return resp, nil
 }

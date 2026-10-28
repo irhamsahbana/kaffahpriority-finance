@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/brianvoe/gofakeit/v7 v7.0.2
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
+	github.com/getsentry/sentry-go v0.45.0
 	github.com/go-co-op/gocron/v2 v2.16.4
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/gofiber/fiber/v2 v2.52.2

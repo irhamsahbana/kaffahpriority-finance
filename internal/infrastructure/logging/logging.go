@@ -2,6 +2,7 @@ package logging
 
 import (
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/errtrack"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -178,11 +179,14 @@ func initZerolog(cfg *Config) io.Writer {
 		Logger: otelLogger,
 	}
 
+	// Error-level logs are also fed to error tracking (no-op when it is disabled).
+	appWriter := zerolog.MultiLevelWriter(otelWriter, errtrack.LogWriter())
+
 	var logger zerolog.Logger
 	if cfg.AppEnv == "production" {
-		logger = zerolog.New(otelWriter).With().Timestamp().Caller().Logger().Level(zerolog.InfoLevel)
+		logger = zerolog.New(appWriter).With().Timestamp().Caller().Logger().Level(zerolog.InfoLevel)
 	} else {
-		logger = zerolog.New(otelWriter).With().Timestamp().Caller().Logger().Level(level)
+		logger = zerolog.New(appWriter).With().Timestamp().Caller().Logger().Level(level)
 	}
 	log.Logger = logger
 

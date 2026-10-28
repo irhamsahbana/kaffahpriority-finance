@@ -102,6 +102,11 @@ type Config struct {
 		Debug                bool   `env:"INSTRUMENTATION_DEBUG" env-default:"false"`
 		Enabled              bool   `env:"INSTRUMENTATION_ENABLED" env-default:"true"`
 	}
+	ErrorTracking struct {
+		// Empty DSN disables error tracking; never give it a default.
+		DSN        string  `env:"ERROR_TRACKING_DSN"`
+		SampleRate float64 `env:"ERROR_TRACKING_SAMPLE_RATE" env-default:"1.0"`
+	}
 }
 
 // Option is Configure type return func.

@@ -3,6 +3,7 @@ package cmd
 import (
 	"codebase-app/internal/adapter"
 	"codebase-app/internal/infrastructure/config"
+	"codebase-app/internal/infrastructure/errtrack"
 	"codebase-app/internal/infrastructure/logging"
 	"codebase-app/internal/middleware"
 	"context"
@@ -86,7 +87,7 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 	go func() {
 		log.Info().Msgf("Websocket server is running on port %s", WS_PORT)
 
-		http.Handle("/ws", Middleware(http.HandlerFunc(ws), middleware.AuthWs))
+		http.Handle("/ws", Middleware(http.HandlerFunc(ws), middleware.AuthWs, reportPanics))
 		err := server.ListenAndServe()
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error while running websocket server")
@@ -107,6 +108,22 @@ func RunWebsocket(cmd *flag.FlagSet, args []string) {
 	}
 
 	log.Info().Msg("Websocket server is gracefully stopped")
+}
+
+// reportPanics sends handler panics to error tracking, then re-panics so net/http
+// keeps its default behavior (log the panic and close the connection).
+func reportPanics(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				if rec != http.ErrAbortHandler {
+					errtrack.CaptureRecovered(r.Context(), rec, map[string]string{"http.route": r.URL.Path})
+				}
+				panic(rec)
+			}
+		}()
+		h.ServeHTTP(w, r)
+	})
 }
 
 func Middleware(h http.Handler, middleware ...func(http.Handler) http.Handler) http.Handler {

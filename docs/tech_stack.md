@@ -12,6 +12,10 @@
 - **Tracing**: OpenTelemetry (OTel) with support for:
   - OTLP Exporters (HTTP/gRPC)
   - Signoz, Jaeger, New Relic, etc.
+- **Error Tracking**: Sentry (`getsentry/sentry-go` v0.45, pinned for Go 1.24 compatibility) via `internal/infrastructure/errtrack`
+  - Enabled only when `ERROR_TRACKING_DSN` is set; works with any Sentry-compatible backend (e.g. GlitchTip)
+  - HTTP: `middleware.ErrorCapture` reports 5xx responses using the error logs written during the request; `middleware.Recover` reports panics
+  - Background goroutines must use `errtrack.SafeGo(ctx, fn)` instead of a bare `go func()`
 - **Testing**: testify
 - **Utilities**:
   - `gocron` for cron jobs
