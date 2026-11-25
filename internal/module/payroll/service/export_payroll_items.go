@@ -239,7 +239,7 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 			for itemIndex, item := range lecturer.Items {
 				f.SetCellValue(sheetName, fmt.Sprintf("C%v", lastRow), itemIndex+1)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%v", lastRow), item.StudentName)
-				f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), item.ProgramName)
+				f.SetCellValue(sheetName, fmt.Sprintf("E%v", lastRow), payrollProgramLabel(item))
 				f.SetCellValue(sheetName, fmt.Sprintf("X%v", lastRow), item.MarketerName)
 
 				f.SetCellValue(sheetName, fmt.Sprintf("F%v", lastRow), item.ProgramMeetings)
@@ -318,6 +318,35 @@ func (s *payrollService) ExportPayrollItemsPeriodically(ctx context.Context, req
 		FilePath: filepath,
 		FileName: filename,
 	}, nil
+}
+
+// payrollProgramLabel mirrors the web label: FL, NL, PC..LN, then ITP/SSP last.
+func payrollProgramLabel(item entity.PayrollItem) string {
+	label := item.ProgramName
+	if !item.ForeignLearningFee.IsZero() {
+		label += " + FL"
+	}
+	if !item.NightLearningFee.IsZero() {
+		label += " + NL"
+	}
+	for _, f := range []struct {
+		name  string
+		value *float64
+	}{
+		{"PC", item.PCFee}, {"MT", item.MTFee}, {"CL", item.CLFee},
+		{"MS", item.MSFee}, {"SC", item.SCFee}, {"LN", item.LNFee},
+	} {
+		if f.value != nil && *f.value != 0 {
+			label += " + " + f.name
+		}
+	}
+	if item.IsITP {
+		label += " + ITP"
+	}
+	if item.IsSSP {
+		label += " + SSP"
+	}
+	return label
 }
 
 func defaultBorderStyle() []excelize.Border {
