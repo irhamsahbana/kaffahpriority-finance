@@ -224,3 +224,21 @@ func TestRoundTripExportImport(t *testing.T) {
 		assertDecimalEqual(t, got.InitialWage, expectedInitialWage(want), "InitialWage")
 	}
 }
+
+func TestPayrollProgramLabel(t *testing.T) {
+	pc := 50000.0
+	zero := 0.0
+	item := entity.PayrollItem{
+		ProgramName:        "OP 2 Hr",
+		ForeignLearningFee: decimal.NewFromInt(100000),
+		NightLearningFee:   decimal.NewFromInt(100000),
+		FeatureFees:        entity.FeatureFees{PCFee: &pc, MTFee: &zero},
+		IsITP:              true,
+	}
+	if got, want := payrollProgramLabel(item), "OP 2 Hr + FL + NL + PC + ITP"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+	if got := payrollProgramLabel(entity.PayrollItem{ProgramName: "OR"}); got != "OR" {
+		t.Fatalf("got %q, want %q", got, "OR")
+	}
+}
